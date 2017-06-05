@@ -1,0 +1,63 @@
+hash: 8def635586207c3b4249587e88404946a00cf56be59ce5880897ffbed2314157
+updated: 2017-06-04T17:49:45.759503025-04:00
+imports:
+- name: github.com/asaskevich/govalidator
+  version: 4918b99a7cb949bb295f3c7bbaf24b577d806e35
+- name: github.com/aws/aws-sdk-go
+  version: 00fb2125993965df739fa3398b03bef3eb2e198f
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/protocol
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restxml
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/iam
+  - service/s3
+  - service/sqs
+  - service/sts
+- name: github.com/go-errors/errors
+  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+- name: github.com/go-ini/ini
+  version: 12f418cc7edc5a618a51407b7ac1f1f512139df3
+- name: github.com/google/uuid
+  version: 064e2069ce9c359c118179501254f67d7d37ba24
+- name: github.com/gruntwork-io/gruntwork-cli
+  version: 88f7193f5a28189d48d00153fbcbb1d66887f4a0
+  subpackages:
+  - entrypoint
+  - errors
+  - files
+  - logging
+- name: github.com/jmespath/go-jmespath
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
+- name: github.com/mattn/go-zglob
+  version: 95345c4e1c0ebc9d16a3284177f09360f4d20fab
+  subpackages:
+  - fastwalk
+- name: github.com/Sirupsen/logrus
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
+- name: github.com/urfave/cli
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+- name: golang.org/x/sys
+  version: dbc2be9168a660ef302e04b6ff6406de6f967473
+  subpackages:
+  - unix
+testImports: []

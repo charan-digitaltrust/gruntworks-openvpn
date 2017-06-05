@@ -1,0 +1,74 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# LAUNCH THE OPENVPN HOST
+# The OpenVPN host is the sole point of entry to the network. This way, we can make all other servers inaccessible from
+# the public Internet and focus our efforts on locking down the OpenVPN host.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ---------------------------------------------------------------------------------------------------------------------
+# CONFIGURE OUR AWS CONNECTION
+# ---------------------------------------------------------------------------------------------------------------------
+
+provider "aws" {
+  # The AWS region in which all resources will be created
+  region = "${var.aws_region}"
+}
+
+resource "aws_kms_key" "backups" {
+  description = "OpenVPN Backup Key"
+}
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# SETUP DATA STRUCTURES
+# ---------------------------------------------------------------------------------------------------------------------
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_availability_zones" "available" {}
+
+data "aws_subnet" "default" {
+  vpc_id = "${data.aws_vpc.default.id}"
+  availability_zone = "${data.aws_availability_zones.available.names[0]}"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# LAUNCH THE OPENVPN HOST
+# ---------------------------------------------------------------------------------------------------------------------
+module "openvpn" {
+  # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
+  # to a specific version of the modules, such as the following example:
+  # source = "git::git@github.com:gruntwork-io/module-openvpn.git//modules/openvpn-server?ref=v1.0.0"
+  source = "../../modules/openvpn-server"
+
+  name = "${var.name}"
+  instance_type = "c4.large"
+  ami = "${var.ami}"
+  keypair_name = "${var.keypair_name}"
+
+  # Since s3 bucket names are globally unique, create a random suffix so multiple customers'
+  # examples can work with just terraform apply and no need to change default vaules
+  backup_bucket_name = "${var.backup_bucket_name}-${uuid()}"
+
+  request_queue_name = "${var.request_queue_name}"
+  revocation_queue_name = "${var.revocation_queue_name}"
+  kms_key_arn = "${aws_kms_key.backups.arn}"
+  vpc_id = "${data.aws_vpc.default.id}"
+  subnet_id = "${data.aws_subnet.default.id}"
+
+  #WARNING: Only allow SSH from everywhere for test/dev, never in production
+  allow_ssh_from_cidr = true
+  allow_ssh_from_cidr_list = [
+    "0.0.0.0/0"
+  ]
+
+  ca_state = "NJ"
+  ca_country = "US"
+  ca_org_unit = "OpenVPN"
+  ca_email = "support@gruntwork.io"
+  ca_locality = "Marlboro"
+  ca_org = "Gruntwork"
+
+  #WARNING: Only set this to true for testing/dev, never in production
+  backup_bucket_force_destroy = "true"
+}

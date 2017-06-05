@@ -1,0 +1,10 @@
+openvpn-admin:
+  build: .
+  volumes:
+    - ./src:/go/src/github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src
+    - ./scripts:/go/src/github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/scripts
+    - $HOME/.aws:/root/.aws
+  environment:
+    # By leaving these blank, they should be read from the host machine and forwarded to the Docker container
+    AWS_ACCESS_KEY_ID:
+    AWS_SECRET_ACCESS_KEY:

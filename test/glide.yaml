@@ -1,0 +1,6 @@
+package: .
+import:
+- package: github.com/gruntwork-io/terratest
+- package: github.com/aws/aws-sdk-go
+- package: github.com/google/uuid
+- package: github.com/stretchr/testify
