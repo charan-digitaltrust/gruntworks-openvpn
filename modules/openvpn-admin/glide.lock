@@ -1,5 +1,5 @@
 hash: 8def635586207c3b4249587e88404946a00cf56be59ce5880897ffbed2314157
-updated: 2017-06-04T17:49:45.759503025-04:00
+updated: 2017-06-07T21:46:48.145562196-04:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 4918b99a7cb949bb295f3c7bbaf24b577d806e35
@@ -40,7 +40,7 @@ imports:
 - name: github.com/google/uuid
   version: 064e2069ce9c359c118179501254f67d7d37ba24
 - name: github.com/gruntwork-io/gruntwork-cli
-  version: 88f7193f5a28189d48d00153fbcbb1d66887f4a0
+  version: 42fe68b1d1fa4e4c524a0f06b8c61cc0db589e24
   subpackages:
   - entrypoint
   - errors

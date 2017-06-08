@@ -50,13 +50,13 @@ export PKCS11_PIN="dummy"
 # down TLS negotiation performance
 # as well as the one-time DH parms
 # generation process.
-export KEY_SIZE=4096
+export KEY_SIZE=__KEY_SIZE__
 
 # In how many days should the root CA key expire?
-export CA_EXPIRE=3650
+export CA_EXPIRE=__CA_EXPIRE__
 
 # In how many days should certificates expire?
-export KEY_EXPIRE=3650
+export KEY_EXPIRE=__KEY_EXPIRE__
 
 # These are the default values for fields
 # which will be placed in the certificate.

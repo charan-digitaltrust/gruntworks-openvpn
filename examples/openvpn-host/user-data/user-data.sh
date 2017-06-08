@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 # A script to configure initialize OpenVPN configuration and to start the background processors
 #
@@ -35,7 +36,12 @@ sudo init-openvpn  \
  --org "${ca_org}"  \
  --org-unit "${ca_org_unit}"  \
  --email "${ca_email}"  \
- --s3-bucket-name "${backup_bucket_name}"
+ --s3-bucket-name "${backup_bucket_name}"  \
+ --key-size "${key_size}" \
+ --ca-expiration-days "${ca_expiration_days}" \
+ --cert-expiration-days "${cert_expiration_days}" \
+ --vpn-subnet "${vpn_subnet}" \
+ ${routes}
 
 echo 'Restarting OpenVPN...'
 sudo /etc/init.d/openvpn restart

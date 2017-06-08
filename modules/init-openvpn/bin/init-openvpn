@@ -6,7 +6,7 @@ readonly CA_PATH="/etc/openvpn-ca"
 readonly OPENVPN_PATH="/etc/openvpn"
 readonly DEFAULT_KEY_SIZE=4096
 readonly DEFAULT_CA_EXPIRATION_DAYS=3650
-readonly DEFAULT_KEY_EXPIRATION_DAYS=3650
+readonly DEFAULT_CERT_EXPIRATION_DAYS=3650
 
 function print_usage {
     echo
@@ -25,7 +25,9 @@ function print_usage {
     echo -e "  --s3-bucket-name\t\t\tThe name of the S3 bucket that will be created to backup PKI assets."
     echo -e "  --key-size\t\t\tThe size of the DH keys (in bits). Defaults to 4096."
     echo -e "  --ca-expiration-days\t\t\tThe number of days the CA root certificate will be valid for. Defaults to 3650 (10 years)"
-    echo -e "  --key-expiration-days\t\t\tThe number of days the server and user certificates will be valid for. Defaults to 3650 (10 years)."
+    echo -e "  --cert-expiration-days\t\t\tThe number of days the server and user certificates will be valid for. Defaults to 3650 (10 years)."
+    echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
+    echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
     echo
     echo "Example:"
     echo
@@ -105,19 +107,128 @@ function restore_pki_assets_from_s3 {
 
 function copy_config_templates {
     echo "Copying OpenVPN config teamplates into place..."
-    cp /gruntwork/install-openvpn/openvpn.conf $OPENVPN_PATH/server.conf
     cp /gruntwork/install-openvpn/openvpn-client.ovpn $OPENVPN_PATH/
+}
+
+function generate_server_conf {
+    local vpnSubnet="$1"
+    local routes="$2"
+    local keySize="$3"
+    local dnsServer=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
+
+    cat << EOF > $OPENVPN_PATH/server.conf
+##
+## This is a configuration file for the OpenVPN Server.
+##
+##
+
+port 1194
+proto udp
+dev tun
+ca ca.crt
+cert server.crt
+key server.key  # This file should be kept secret
+dh dh$keySize.pem
+topology subnet
+crl-verify /etc/openvpn/crl.pem
+persist-key
+persist-tun
+server $vpnSubnet
+ifconfig-pool-persist ipp.txt
+
+# Certain Windows-specific network settings
+# can be pushed to clients, such as DNS
+# or WINS server addresses.
+push "dhcp-option DNS $dnsServer"
+
+keepalive 10 120
+cipher AES-256-CBC
+auth SHA256
+user  nobody
+group nogroup
+$routes
+
+status /var/log/openvpn-status.log
+log-append  /var/log/openvpn.log
+verb 9	# TODO: 4 for production
+daemon
+mute 20
+
+EOF
+}
+
+#Takes a subnet mask (255.255.255.0) and returns network portion bit length (24)
+function mask2CIDR {
+    local nbits=0
+    local IFS=.
+    for dec in $1 ; do
+        case $dec in
+            255) let nbits+=8;;
+            254) let nbits+=7;;
+            252) let nbits+=6;;
+            248) let nbits+=5;;
+            240) let nbits+=4;;
+            224) let nbits+=3;;
+            192) let nbits+=2;;
+            128) let nbits+=1;;
+            0);;
+            *) echo "Error: $dec is not a valid netmask"; exit 1
+        esac
+    done
+    echo "$nbits"
+}
+
+#Takes network portion bit length (24) and returns subnet mask (255.255.255.0)
+function cidr2mask {
+   local i mask=""
+   local full_octets=$(($1/8))
+   local partial_octet=$(($1%8))
+
+   for ((i=0;i<4;i+=1)); do
+    if [ $i -lt $full_octets ]; then
+      mask+=255
+    elif [ $i -eq $full_octets ]; then
+      mask+=$((256 - 2**(8-$partial_octet)))
+    else
+      mask+=0
+    fi
+    test $i -lt 3 && mask+=.
+  done
+
+  echo $mask
+}
+
+function extractMask {
+    local ipArray=($1)
+    local mask=${ipArray[1]}
+    echo $mask
+}
+
+function extractSubnet {
+    local ipArray=($1)
+    local subnet=${ipArray[0]}
+    echo $subnet
 }
 
 function configure_tcpip {
     echo "Configure TCP/IP settings..."
+    local subnet=$(extractSubnet "$1")
+    local mask=$(extractMask "$1")
+    local cidr=$(mask2CIDR $mask)
+    local subnet_cidr="$subnet/$cidr"
+    cp /gruntwork/install-openvpn/ufw-default /etc/default/ufw
+    sed "s~__VPN_SUBNET__~$subnet_cidr~g;" /gruntwork/install-openvpn/before.rules > /etc/ufw/before.rules
+
     # Enable TCP forwarding
     sysctl -w net.ipv4.ip_forward=1
 
-    # TIP: Make sure source/dest. checking is disabled!
-    # Add a rule to iptables for internet sharing from tun0 to eth0.
-    iptables -t nat -A POSTROUTING -o eth0 -s 10.200.0.0/24 -j MASQUERADE
+    #Add Firewall Rules
+    ufw allow 1194/udp
+    ufw allow OpenSSH
     iptables-save
+
+    ufw disable
+    ufw --force enable
 }
 
 function is_pki_bootstrapped {
@@ -129,7 +240,7 @@ function is_pki_bootstrapped {
 function generate_easy_rsa_variables_file {
     echo "Generating EASY_RSA variables file..."
     [[ -d "$CA_PATH" ]] || make-cadir $CA_PATH
-    sed "s~__KEY_COUNTRY__~$1~g; s~__KEY_PROVINCE__~$2~g; s~__KEY_CITY__~$3~g; s~__KEY_ORG__~$4~g; s~__KEY_EMAIL__~$5~g; s~__KEY_OU__~$6~g; s~__KEY_NAME__~$7~g;" /gruntwork/install-openvpn/vars.local >"$CA_PATH/vars.local"
+    sed "s~__KEY_COUNTRY__~$1~g; s~__KEY_PROVINCE__~$2~g; s~__KEY_CITY__~$3~g; s~__KEY_ORG__~$4~g; s~__KEY_EMAIL__~$5~g; s~__KEY_OU__~$6~g; s~__KEY_NAME__~$7~g; s~__KEY_SIZE__~$8~g; s~__CA_EXPIRE__~$9~g; s~__KEY_EXPIRE__~${10}~g;" /gruntwork/install-openvpn/vars.local >"$CA_PATH/vars.local"
 }
 
 function generate_pki {
@@ -173,7 +284,7 @@ function start_openvpn {
 function init_openvpn {
     local key_size="$DEFAULT_KEY_SIZE"
     local ca_expiration_days="$DEFAULT_CA_EXPIRATION_DAYS"
-    local key_expiration_days="$DEFAULT_KEY_EXPIRATION_DAYS"
+    local cert_expiration_days="$DEFAULT_CERT_EXPIRATION_DAYS"
 
     local locality=""
     local state=""
@@ -185,6 +296,8 @@ function init_openvpn {
     local access_secret=""
     local bucket_name=""
     local region=""
+    local vpn_subnet=""
+    local routes=( )
 
     while [[ $# -gt 0 ]]; do
         local key="$1"
@@ -226,8 +339,16 @@ function init_openvpn {
                 ca_expiration_days=$2
                 shift
                 ;;
-            --key-expiration-days)
-                key_expiration_days=$2
+            --cert-expiration-days)
+                cert_expiration_days=$2
+                shift
+                ;;
+            --vpn-subnet)
+                vpn_subnet=$2
+                shift
+                ;;
+            --vpn-route)
+                routes=("${routes[@]}" "$2")
                 shift
                 ;;
             --help)
@@ -254,7 +375,9 @@ function init_openvpn {
     assert_not_empty "--s3-bucket-name" "$bucket_name"
     assert_not_empty " --key-size" "$key_size"
     assert_not_empty "--ca-expiration-days" "$ca_expiration_days"
-    assert_not_empty "--key-expiration-days" "$key_expiration_days"
+    assert_not_empty "--cert-expiration-days" "$cert_expiration_days"
+    assert_not_empty "--vpn-route" "$routes"
+    assert_not_empty "--vpn-subnet" "$vpn_subnet"
 
     #Pre-Reqs
     assert_uid_is_root_or_sudo
@@ -265,15 +388,22 @@ function init_openvpn {
         prep_config_dir
         restore_pki_assets_from_s3 "$bucket_name"
     else
-        generate_easy_rsa_variables_file "$country" "$state" "$locality" "$org" "$email" "$org_unit" "server"
+        generate_easy_rsa_variables_file "$country" "$state" "$locality" "$org" "$email" "$org_unit" "server" "$key_size" "$ca_expiration_days" "$cert_expiration_days"
         prep_config_dir
         generate_pki
         backup_pki_assets_to_s3 "$bucket_name"
     fi
 
+    local routesStr=""
+    for i in "${routes[@]}"
+    do
+        routesStr="$routesStr"$'\n'"push route \"$i\""
+    done
+
     copy_config_templates
+    generate_server_conf "$vpn_subnet" "$routesStr" "$key_size"
     change_config_dir_permissions
-    configure_tcpip
+    configure_tcpip "$vpn_subnet"
     start_openvpn
 
     echo "Success!"

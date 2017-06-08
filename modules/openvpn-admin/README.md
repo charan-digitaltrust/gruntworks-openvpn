@@ -22,19 +22,19 @@ TODO: install instruction to download from GirHub releases page
 There are several sub-commands and switches that control the behavior of this utility.  
 
 |Command|Description|
-|---|---|
+|--------------|-----------------------------------|
 |request|Requests a new OpenVPN configuration from the server and writes it locally to disk as _username_.ovpn|
 |revoke|Revokes a user's certificate so that they may no longer connect to the OpenVPN server|
 |process-requests|A server-side process to respond to requests by generating a new user certificate request, signing it, generating a new OpenVPN configuration file and returning it to the requestor.
 |process-revokes|A server-side process to respond to revocation requests by revoking the user's valid certificate
 
 |Option|Description|Required|Default|
-|---|---|---|---|
-|--debug|Enable verbose logging to the console|Optional|
-|--aws-region|The region OpenVPN is installed in |request, revoke, process-requests, process-revokes||
-|--username|The name of the user you are making a certificate request or revocation request for.|revoke (required). request (optional)|IAM username (request command)|
-|--request-url|The url for the sqs queue used for making OpenVPN configuration (certificate) requests|Optional|finds url automatically|
-|--revoke-url|The url for the SQS queue used for making revocation requests|Optional|find url automatically|
+|--------------|----------------|------------|------------|
+|--debug       |Enable verbose logging to the console|Optional|
+|--aws-region  |The region OpenVPN is installed in |request, revoke, process-requests, process-revokes||
+|--username    |The name of the user you are making a certificate request or revocation request for.|revoke (required). request (optional)|IAM username (request command)|
+|--request-url |The url for the sqs queue used for making OpenVPN configuration (certificate) requests|Optional|finds url automatically|
+|--revoke-url  |The url for the SQS queue used for making revocation requests|Optional|find url automatically|
 
 
 ##### Permissions

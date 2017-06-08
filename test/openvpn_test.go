@@ -29,6 +29,10 @@ type openVpnTestSuite struct {
 	host               ssh.Host
 }
 
+func getRandomizedString(prefix string) (string) {
+	return fmt.Sprintf("%s-%s", prefix, strconv.FormatInt(time.Now().Unix(), 10))
+}
+
 func (suite *openVpnTestSuite) SetupSuite() {
 	suite.logger = terralog.NewLogger(TEST_NAME)
 	suite.resourceCollection = createBaseRandomResourceCollection(suite.T())
@@ -64,17 +68,12 @@ func (suite *openVpnTestSuite) SetupSuite() {
 	//Setup terratest
 	suite.terratestOptions = createBaseTerratestOptions(suite.T(), TEST_NAME, "../examples/openvpn-host", suite.resourceCollection)
 
-	suite.terratestOptions.Vars["name"] = fmt.Sprintf("tst-openvpn-host-%s", strconv.FormatInt(time.Now().Unix(), 10))
-	suite.terratestOptions.Vars["backup_bucket_name"] = "tst-openvpn"
-	suite.terratestOptions.Vars["request_queue_name"] = "tst-openvpn-requests"
-	suite.terratestOptions.Vars["revocation_queue_name"] = "tst-openvpn-revocations"
+	suite.terratestOptions.Vars["name"] = getRandomizedString("tst-openvpn-host")
+	suite.terratestOptions.Vars["backup_bucket_name"] = getRandomizedString("tst-openvpn")
+	suite.terratestOptions.Vars["request_queue_name"] = getRandomizedString("tst-openvpn-requests")
+	suite.terratestOptions.Vars["revocation_queue_name"] = getRandomizedString("tst-openvpn-revocations")
 	suite.terratestOptions.Vars["ami"] = suite.amiId
 	suite.terratestOptions.Vars["keypair_name"] = suite.resourceCollection.KeyPair.Name
-
-	// Ideally, we could write a bool "true" here, but since Terratest doesn't yet support bool values, we use 1 for now.
-	suite.terratestOptions.Vars["allow_ssh_from_cidr"] = 1
-	suite.terratestOptions.Vars["allow_ssh_from_cidr_list"] = []string{"0.0.0.0/0"}
-	suite.terratestOptions.Vars["backup_bucket_force_destroy"] = 1
 
 	suite.output, err = terratest.Apply(suite.terratestOptions)
 	assert.Nil(suite.T(), err, "Unexpected error when applying terraform templates: %v", err)

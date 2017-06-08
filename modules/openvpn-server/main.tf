@@ -47,7 +47,7 @@ resource "aws_launch_configuration" "openvpn" {
   image_id = "${var.ami}"
   instance_type = "${var.instance_type}"
   key_name = "${var.keypair_name}"
-  user_data = "${data.template_file.user_data.rendered}"
+  user_data = "${var.user_data}"
   security_groups = [
     "${aws_security_group.openvpn.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.openvpn.name}"
@@ -187,6 +187,11 @@ resource "aws_iam_role_policy" "openvpn" {
   role = "${aws_iam_role.openvpn.id}"
 
   policy = "${data.aws_iam_policy_document.openvpn.json}"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Define a baseline set of permissions required by OpenVPN
@@ -223,23 +228,11 @@ data "aws_region" "current" {
   current = true
 }
 
-data "template_file" "user_data" {
-  template = "${file("${path.module}/user-data/boot-openvpn.sh")}"
-
-  vars {
-    backup_bucket_name = "${lower(var.backup_bucket_name)}"
-    ca_country = "${upper(var.ca_country)}"
-    ca_state = "${var.ca_state}"
-    ca_locality = "${var.ca_locality}"
-    ca_org = "${var.ca_org}"
-    ca_org_unit = "${var.ca_org_unit}"
-    ca_email = "${var.ca_email}"
-    eip_id = "${aws_eip.openvpn.id}"
-    request_queue_url = "${aws_sqs_queue.client-request-queue.id}"
-    revocation_queue_url = "${aws_sqs_queue.client-revocation-queue.id}"
-    queue_region = "${data.aws_region.current.name}"
-  }
+data "aws_vpc" "current" {
+  id = "${var.vpc_id}"
 }
+
+
 
 resource "aws_eip" "openvpn" {
   vpc = true
@@ -351,6 +344,11 @@ resource "aws_iam_role_policy" "backup" {
   name = "openvpn-backup"
   role = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.backup.json}"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -410,6 +408,11 @@ resource "aws_iam_role_policy" "certificate-requests" {
   name = "openvpn-client-requests"
   role = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.certificate-requests.json}"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -417,10 +420,20 @@ resource "aws_iam_role_policy" "certificate-requests" {
 # ----------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_group" "openvpn-users" {
   name = "OpenVPNUsers"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_iam_group" "openvpn-admins" {
   name = "OpenVPNAdmins"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 data "aws_iam_policy_document" "send-certificate-requests" {
@@ -477,6 +490,11 @@ resource "aws_iam_policy" "certificate-requests-openvpnusers" {
   name = "openvpn-users-certificate-requests"
   description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
   policy = "${data.aws_iam_policy_document.certificate-requests.json}"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_iam_group_policy_attachment" "certificate-requests" {
@@ -488,6 +506,11 @@ resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
   name = "openvpn-admin-certificate-revocations"
   description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
   policy = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
+
+  # See aws_launch_configuration.mongodb for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_iam_group_policy_attachment" "revocation-requests" {
