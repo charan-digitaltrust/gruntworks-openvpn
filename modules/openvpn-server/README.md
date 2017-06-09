@@ -16,34 +16,6 @@ This module makes it easy to deploy an OpenVPN server in an auto-scaling group (
 * See the [examples](/examples) folder for example usage.
 * See [vars.tf](./vars.tf) for all the variables you can set on this module.
 
-Here is an example of how you might deploy a single Jenkins server with this module:
-
-```hcl
-module "openvpn" {
-  source = "git::git@github.com:gruntwork-io/package-openvpn.git//modules/openvpn-server?ref=v0.0.40"
-
-   name = "openvpn"
-   instance_type = "c4.large"
-   ami = "ami-123456"
-   keypair_name = "openvpn-keypair"
-   backup_bucket_name = "openvpn-backup"
-   request_queue_name = "openvpn-requests"
-   revocation_queue_name = "openvpn-revokes"
-   kms_key_arn = "openvpn-kms-key"
-   vpc_id = "${var.vpc_id}"
-   subnet_id = "${var.subnet_id}"
-   allow_ssh_from_cidr = true
-   allow_ssh_from_cidr_list = ["0.0.0.0/0"]
-   
-   ca_state = "NJ"
-   ca_country = "US"
-   ca_org_unit = "OpenVPN"
-   ca_email = "support@gruntwork.io"
-   ca_locality = "Marlboro"
-   ca_org = "Gruntwork"
-}
-```
-
 ## How do I access the server?
 
 This module include several [Terraform outputs](https://www.terraform.io/intro/getting-started/outputs.html),
