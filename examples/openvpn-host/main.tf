@@ -41,6 +41,7 @@ data "template_file" "user_data" {
 
   vars {
     backup_bucket_name = "${module.openvpn.backup_bucket_name}"
+    kms_key_id="${aws_kms_key.backups.id}"
     key_size = "${module.openvpn.key_size}"
     ca_expiration_days = "${module.openvpn.openssl_ca_expiration_days}"
     cert_expiration_days = "${module.openvpn.openssl_certificate_expiration_days}"

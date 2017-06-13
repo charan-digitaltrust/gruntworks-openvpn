@@ -37,6 +37,7 @@ sudo init-openvpn  \
  --org-unit "${ca_org_unit}"  \
  --email "${ca_email}"  \
  --s3-bucket-name "${backup_bucket_name}"  \
+ --kms-key-id "${kms_key_id}" \
  --key-size "${key_size}" \
  --ca-expiration-days "${ca_expiration_days}" \
  --cert-expiration-days "${cert_expiration_days}" \

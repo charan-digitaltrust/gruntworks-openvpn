@@ -178,7 +178,7 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
 
 # Enable a baseline set of permissions required by OpenVPN
 resource "aws_iam_role_policy" "openvpn" {
-  name = "allow-default"
+  name = "${var.name}-allow-default"
   role = "${aws_iam_role.openvpn.id}"
 
   policy = "${data.aws_iam_policy_document.openvpn.json}"
@@ -399,11 +399,11 @@ resource "aws_iam_role_policy" "certificate-requests" {
 # ADD THE NECESSARY IAM GROUPS AND PERMISSIONS FOR OPENVPN USERS AND ADMINS
 # ----------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_group" "openvpn-users" {
-  name = "OpenVPNUsers"
+  name = "${var.name}-Users"
 }
 
 resource "aws_iam_group" "openvpn-admins" {
-  name = "OpenVPNAdmins"
+  name = "${var.name}-Admins"
 }
 
 data "aws_iam_policy_document" "send-certificate-requests" {
@@ -457,7 +457,7 @@ data "aws_iam_policy_document" "send-certificate-revocations" {
 }
 
 resource "aws_iam_policy" "certificate-requests-openvpnusers" {
-  name = "openvpn-users-certificate-requests"
+  name = "${var.name}-users-certificate-requests"
   description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
   policy = "${data.aws_iam_policy_document.certificate-requests.json}"
 }
@@ -468,7 +468,7 @@ resource "aws_iam_group_policy_attachment" "certificate-requests" {
 }
 
 resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
-  name = "openvpn-admin-certificate-revocations"
+  name = "${var.name}-admin-certificate-revocations"
   description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
   policy = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
 }

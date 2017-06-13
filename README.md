@@ -15,8 +15,8 @@ This repo contains modules for running a production-ready OpenVPN server and man
 The [openvpn-server](./modules/openvpn-server) module will deploy a single server into an Auto Scaling Group (ASG) for redundancy
 purposes. Should the server fail, a new server will be automatically provisioned by the ASG. Upon initial boot, the 
 [init-openvpn](./modules/init-openvpn) module will establish a new public key infrastructure (PKI), including
-a Certificate Authority (CA), server certificate and a certificate revocation list. These assets will then be backed up
-to an S3 bucket for protection should a server failure occur. 
+a Certificate Authority (CA), server certificate and a certificate revocation list. These assets will then be backed up  
+to an S3 bucket and encrypted for protection should a server failure occur. 
 
 In a failure scenario, when a replacement server is started by the ASG, the PKI will be automatically restored from the 
 S3 bucket ensuring the previously-issued client certificates will continue to function.
@@ -24,7 +24,7 @@ S3 bucket ensuring the previously-issued client certificates will continue to fu
 #### Client Certificate Requests
 Users who are members of the proper IAM group will use the [openvpn-admin](./modules/openvpn-admin) utility to request
 a new certificate. Behind the scenes, this certificate request will be sent to the server via an SQS queue, will be signed by
-the server and an OpenVPN client configuration file (.ovpn) with the certificates will be written to disk on the 
+the server and an OpenVPN client configuration file (.ovpn) with the certificates embedded will be written to disk on the 
 requestor's workstation. This `.ovpn` file can then be imported into any number of popular OpenVPN clients.
 
 #### Client Certificate Revocations

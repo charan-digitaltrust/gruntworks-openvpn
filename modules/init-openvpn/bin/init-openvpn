@@ -23,6 +23,7 @@ function print_usage {
     echo -e "  --org-unit\t\t\tThe name of the unit, department, or scope within your organization for which this CA certificate will be used. Required."
     echo -e "  --email\t\t\tThe e-mail address of the administrator."
     echo -e "  --s3-bucket-name\t\t\tThe name of the S3 bucket that will be created to backup PKI assets."
+    echo -e "  --kms-key-id\t\t\tThe id of the KMS key that will be used to encrypt S3 assets."
     echo -e "  --key-size\t\t\tThe size of the DH keys (in bits). Defaults to 4096."
     echo -e "  --ca-expiration-days\t\t\tThe number of days the CA root certificate will be valid for. Defaults to 3650 (10 years)"
     echo -e "  --cert-expiration-days\t\t\tThe number of days the server and user certificates will be valid for. Defaults to 3650 (10 years)."
@@ -36,9 +37,12 @@ function print_usage {
     echo "    --state \"Arizona\" \\"
     echo "    --country \"US\" \\"
     echo "    --org \"Gruntwork\" \\"
-    echo "    --org-unit \"OpenVPN\" "
-    echo "    --email \"support@gruntwork.io\" "
-    echo "    --s3-bucket-name \"gruntwork-openvpn\" "
+    echo "    --org-unit \"OpenVPN\" \\"
+    echo "    --email \"support@gruntwork.io\" \\"
+    echo "    --s3-bucket-name \"gruntwork-openvpn\" \\"
+    echo "    --kms-key-id \"01533cb9-b46b-4380-b63e-54edf025d5d1\" \\"
+    echo "    --vpn-subnet \"10.1.14.0 255.255.255.0\" \\"
+    echo "    --vpn-route \"10.200.0.0 255.255.0.0\" "
 }
 
 # Assert that a given binary is installed on this box
@@ -93,16 +97,16 @@ function prep_config_dir {
 # Restore the previously generated PKI assets from s3 so previously issued certificates continue to work
 function restore_pki_assets_from_s3 {
     echo "Restore PKI assets from S3..."
-    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.crt"
-    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.key"
-    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.pem"
-    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.csr"
-    aws s3 cp s3://$1/server/serial $OPENVPN_PATH
-    aws s3 cp s3://$1/server/serial.old $OPENVPN_PATH
-    aws s3 cp s3://$1/server/index.txt $OPENVPN_PATH
-    aws s3 cp s3://$1/server/index.txt.old $OPENVPN_PATH
-    aws s3 cp s3://$1/server/index.txt.attr $OPENVPN_PATH
-    aws s3 cp s3://$1/server/vars.local $CA_PATH
+    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.crt" --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.key" --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.pem" --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/ $OPENVPN_PATH --recursive --exclude "*" --include "*.csr" --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/serial $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/serial.old $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/index.txt $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/index.txt.old $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/index.txt.attr $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp s3://$1/server/vars.local $CA_PATH --sse "aws:kms" --sse-kms-key-id "$2"
 }
 
 function copy_config_templates {
@@ -265,8 +269,8 @@ function generate_pki {
 # Once all of the PKI assets have been generated, upload them to s3 for backup purposes
 function backup_pki_assets_to_s3 {
     echo "Backing up new PKI assets to S3..."
-    aws s3 cp /etc/openvpn s3://$1/server/ --recursive
-    aws s3 cp $CA_PATH/vars.local s3://$1/server/vars.local
+    aws s3 cp /etc/openvpn s3://$1/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp $CA_PATH/vars.local s3://$1/server/vars.local --sse "aws:kms" --sse-kms-key-id "$2"
 }
 
 function change_config_dir_permissions {
@@ -295,6 +299,7 @@ function init_openvpn {
     local access_key=""
     local access_secret=""
     local bucket_name=""
+    local kms_key_id=""
     local region=""
     local vpn_subnet=""
     local routes=( )
@@ -329,6 +334,10 @@ function init_openvpn {
                 ;;
             --s3-bucket-name)
                 bucket_name=$2
+                shift
+                ;;
+            --kms-key-id)
+                kms_key_id=$2
                 shift
                 ;;
             --key-size)
@@ -373,6 +382,7 @@ function init_openvpn {
     assert_not_empty "--org-unit" "$org_unit"
     assert_not_empty "--email" "$email"
     assert_not_empty "--s3-bucket-name" "$bucket_name"
+    assert_not_empty "--kms-key-id" "$kms_key_id"
     assert_not_empty " --key-size" "$key_size"
     assert_not_empty "--ca-expiration-days" "$ca_expiration_days"
     assert_not_empty "--cert-expiration-days" "$cert_expiration_days"
@@ -386,12 +396,12 @@ function init_openvpn {
 
     if $(is_pki_bootstrapped "$bucket_name"); then
         prep_config_dir
-        restore_pki_assets_from_s3 "$bucket_name"
+        restore_pki_assets_from_s3 "$bucket_name" "$kms_key_id"
     else
         generate_easy_rsa_variables_file "$country" "$state" "$locality" "$org" "$email" "$org_unit" "server" "$key_size" "$ca_expiration_days" "$cert_expiration_days"
         prep_config_dir
         generate_pki
-        backup_pki_assets_to_s3 "$bucket_name"
+        backup_pki_assets_to_s3 "$bucket_name" "$kms_key_id"
     fi
 
     local routesStr=""
