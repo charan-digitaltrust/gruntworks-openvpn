@@ -11,6 +11,7 @@ certificates and the OpenVPN server to process those requests.
 $ openvpn-admin request --aws-region us-east-1
 $ openvpn-admin revoke --aws-region-us-east-1 --username john.doe
 $ openvpn-admin process-requests --aws-region us-east-1
+$ openvpn-admin process-revokes --aws-region us-east-1
 ```
 #### Install openvpn-admin on your servers
 
