@@ -35,5 +35,5 @@ deployment:
       #- cd "$HOME/$CIRCLE_PROJECT_REPONAME-public" && git-add-commit-push --commit-all --branch-name master --message "Auto-generate docs for release $CIRCLE_TAG"
 
       # If a new release is tagged in GitHub, build the openvpn-admin binaries and upload them to GitHub.
-      - build-go-binaries --app-name openvpn-admin --src-path modules/openvpn-admin/src --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG" --os linux
+      - build-go-binaries --app-name openvpn-admin --src-path modules/openvpn-admin/src --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG"
       - upload-github-release-assets bin/*
