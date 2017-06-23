@@ -64,11 +64,11 @@ variable "ca_email" {
 }
 
 variable "vpn_subnet" {
-  description = "The subnet vpn clients will be assigned addresses from. Should not overlap with VPC addressing. For example, 10.99.99.0 255.255.255.0"
+  description = "The subnet IP and mask vpn clients will be assigned addresses from. For example, 172.168.1.0 255.255.255.0. This is a non-routed network that only exists between the VPN server and the client. Therefore, it should NOT overlap with VPC addressing, or the client won't be able to access any of the VPC IPs."
 }
 
 variable "vpn_routes" {
-  description = "A list of subnets to protect with the VPN. Should be specified with the format 10.1.0.0 255.255.0.0"
+  description = "Additional routes that will be pushed to the VPN clients and routed over the VPN. Each route should be specified with the format subnet mask. E.g.: 10.1.0.0 255.255.0.0."
   type = "list"
   default = []
 }
