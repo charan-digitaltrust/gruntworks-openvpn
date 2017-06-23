@@ -1,6 +1,9 @@
 package: .
 import:
 - package: github.com/gruntwork-io/terratest
+  repo: git@github.com:gruntwork-io/terratest
+  vcs: git
+  version: v0.5.1
 - package: github.com/aws/aws-sdk-go
 - package: github.com/google/uuid
 - package: github.com/stretchr/testify

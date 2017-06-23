@@ -42,21 +42,22 @@ data "template_file" "user_data" {
   vars {
     backup_bucket_name = "${module.openvpn.backup_bucket_name}"
     kms_key_id="${aws_kms_key.backups.id}"
-    key_size = "${module.openvpn.key_size}"
-    ca_expiration_days = "${module.openvpn.openssl_ca_expiration_days}"
-    cert_expiration_days = "${module.openvpn.openssl_certificate_expiration_days}"
-    ca_country = "${module.openvpn.ca_country}"
-    ca_state = "${module.openvpn.ca_state}"
-    ca_locality = "${module.openvpn.ca_locality}"
-    ca_org = "${module.openvpn.ca_org}"
-    ca_org_unit = "${module.openvpn.ca_org_unit}"
-    ca_email = "${module.openvpn.ca_email}"
+    #WARNING: This should be set to 4096 (default) for production, but this is much faster for test/dev
+    key_size = 2048
+    ca_expiration_days = 3650
+    cert_expiration_days = 3650
+    ca_country = "US"
+    ca_state = "NJ"
+    ca_locality = "Marlboro"
+    ca_org = "Gruntwork"
+    ca_org_unit = "OpenVPN"
+    ca_email = "support@gruntwork.io"
     eip_id = "${module.openvpn.elastic_ip}"
     request_queue_url = "${module.openvpn.client_request_queue}"
     revocation_queue_url = "${module.openvpn.client_revocation_queue}"
     queue_region = "${data.aws_region.current.name}"
-    vpn_subnet = "${cidrhost(data.aws_subnet.default.cidr_block,0)} ${cidrnetmask(data.aws_subnet.default.cidr_block)}"
-    routes = "${chomp(join(" ", formatlist("--vpn-route \"%s\" ", module.openvpn.vpn_routes)))}"
+    vpn_subnet = "192.168.99.0 255.255.255.0"
+    routes = "${chomp(join(" ", formatlist("--vpn-route \"%s\" ", list("${cidrhost(data.aws_vpc.default.cidr_block,0)} ${cidrnetmask(data.aws_vpc.default.cidr_block)}"))))}"
   }
 }
 
@@ -85,27 +86,9 @@ module "openvpn" {
   vpc_id = "${data.aws_vpc.default.id}"
   subnet_id = "${data.aws_subnet.default.id}"
 
-  #WARNING: This should be set to 4096 (default) for production, but this is much faster for test/dev
-  openssl_key_size = "2048"
-
   #WARNING: Only allow SSH from everywhere for test/dev, never in production
   allow_ssh_from_cidr = true
-  allow_ssh_from_cidr_list = [
-    "0.0.0.0/0"
-  ]
-
-  #OpenVPN/CA Specific variable
-  ca_state = "NJ"
-  ca_country = "US"
-  ca_org_unit = "OpenVPN"
-  ca_email = "support@gruntwork.io"
-  ca_locality = "Marlboro"
-  ca_org = "Gruntwork"
-  vpn_subnet = "192.168.99.0 255.255.255.0"
-  vpn_routes = [
-    #add the vpc's supernet
-    "${cidrhost(data.aws_vpc.default.cidr_block,0)} ${cidrnetmask(data.aws_vpc.default.cidr_block)}"
-  ]
+  allow_ssh_from_cidr_list = ["0.0.0.0/0"]
 
   #WARNING: Only set this to true for testing/dev, never in production
   backup_bucket_force_destroy = "true"
