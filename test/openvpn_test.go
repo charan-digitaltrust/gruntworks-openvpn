@@ -2,12 +2,12 @@ package test
 
 import (
 	"testing"
-	"github.com/gruntwork-io/terratest/packer"
-	"log"
-	"github.com/stretchr/testify/assert"
-	"github.com/gruntwork-io/terratest"
 	terralog "github.com/gruntwork-io/terratest/log"
-	"github.com/stretchr/testify/suite"
+	"log"
+	"github.com/gruntwork-io/terratest/resources"
+	"github.com/gruntwork-io/terratest"
+	"github.com/gruntwork-io/terratest/packer"
+	"github.com/stretchr/testify/assert"
 	"fmt"
 	"time"
 	"github.com/gruntwork-io/terratest/ssh"
@@ -16,164 +16,174 @@ import (
 	"strconv"
 )
 
-const TEST_NAME = "TestOpenVPN"
-
-type openVpnTestSuite struct {
-	suite.Suite
+type suite struct {
 	logger             *log.Logger
-	amiId              string
 	resourceCollection *terratest.RandomResourceCollection
 	terratestOptions   *terratest.TerratestOptions
-	output             string
 	ipAddress          string
 	host               ssh.Host
+	output             string
 }
 
-func getRandomizedString(prefix string) (string) {
-	return fmt.Sprintf("%s-%s", prefix, strconv.FormatInt(time.Now().Unix(), 10))
-}
+func TestOpenVpnSuite(t *testing.T) {
+	testSuite := suite{
+		ipAddress:"",
+	}
 
-func (suite *openVpnTestSuite) SetupSuite() {
-	suite.logger = terralog.NewLogger(TEST_NAME)
-	suite.resourceCollection = createBaseRandomResourceCollection(suite.T())
+	testSuite.logger = terralog.NewLogger("OpenVpnTestSuite")
+	testSuite.resourceCollection = resources.CreateBaseRandomResourceCollection(t, resources.REGIONS_WITHOUT_T2_NANO...)
 
 	//Build the AMI with packer
 	packerOptions := packer.PackerOptions{
 		Template: "../examples/packer/openvpn-server-ubuntu1604.json",
 		Vars: map[string]string{
-			"aws_region": suite.resourceCollection.AwsRegion,
-			"package_openvpn_branch": getCurrentBranchName(suite.T()),
-			"active_git_branch": getCurrentBranchName(suite.T()),
+			"aws_region": testSuite.resourceCollection.AwsRegion,
+			"package_openvpn_branch": getCurrentBranchName(t),
+			"active_git_branch": getCurrentBranchName(t),
 		},
 	}
 
-	var err error
-	suite.amiId, err = packer.BuildAmi(packerOptions, suite.logger)
-	if err != nil {
-		suite.Fail("Failed to build AMI due to error: %s", err.Error())
+	amiId, err := packer.BuildAmi(packerOptions, testSuite.logger)
+	if err != nil || len(amiId) == 0 {
+		t.Fatalf("Failed to build AMI due to error: %s", err.Error())
 	}
 
-	if suite.amiId == "" {
-		suite.Fail("Got a blank AMI Id for template %s", packerOptions.Template)
+	vpc, err := testSuite.resourceCollection.GetDefaultVpc()
+	if err != nil {
+		t.Fatalf("Failed to get default VPC: %s\n", err.Error())
 	}
 
-	vpc, err := suite.resourceCollection.GetDefaultVpc()
-	if err != nil {
-		suite.T().Fatalf("Failed to get default VPC: %s\n", err.Error())
-	}
-	if len(vpc.Subnets) == 0 {
-		suite.T().Fatalf("Default vpc %s contained no subnets", vpc.Id)
+	if len(vpc.Subnets)==0 {
+		t.Fatalf("Default vpc %s contained no subnets", vpc.Id)
 	}
 
 	//Setup terratest
-	suite.terratestOptions = createBaseTerratestOptions(suite.T(), TEST_NAME, "../examples/openvpn-host", suite.resourceCollection)
+	testSuite.terratestOptions = createBaseTerratestOptions(t, "OpenVpnTestSuite", "../examples/openvpn-host", testSuite.resourceCollection)
 
-	suite.terratestOptions.Vars["name"] = getRandomizedString("tst-openvpn-host")
-	suite.terratestOptions.Vars["backup_bucket_name"] = getRandomizedString("tst-openvpn")
-	suite.terratestOptions.Vars["request_queue_name"] = getRandomizedString("tst-openvpn-requests")
-	suite.terratestOptions.Vars["revocation_queue_name"] = getRandomizedString("tst-openvpn-revocations")
-	suite.terratestOptions.Vars["ami"] = suite.amiId
-	suite.terratestOptions.Vars["keypair_name"] = suite.resourceCollection.KeyPair.Name
+	testSuite.terratestOptions.Vars["name"] = getRandomizedString("tst-openvpn-host")
+	testSuite.terratestOptions.Vars["backup_bucket_name"] = getRandomizedString("tst-openvpn")
+	testSuite.terratestOptions.Vars["request_queue_name"] = getRandomizedString("tst-openvpn-requests")
+	testSuite.terratestOptions.Vars["revocation_queue_name"] = getRandomizedString("tst-openvpn-revocations")
+	testSuite.terratestOptions.Vars["ami"] = amiId
+	testSuite.terratestOptions.Vars["keypair_name"] = testSuite.resourceCollection.KeyPair.Name
 
-	suite.output, err = terratest.Apply(suite.terratestOptions)
-	assert.Nil(suite.T(), err, "Unexpected error when applying terraform templates: %v", err)
-
-	suite.ipAddress, err = terratest.Output(suite.terratestOptions, "openvpn_host_public_ip")
+	_, err = terratest.Apply(testSuite.terratestOptions)
 	if err != nil {
-		suite.logger.Fatal(fmt.Sprintf("An error occurred retreiving terraform output - %s", err.Error()))
+		t.Fatalf("Unexpected error when applying terraform templates: %v", err)
+	}
+
+	defer func() {
+		_, err = terratest.Destroy(testSuite.terratestOptions, testSuite.resourceCollection)
+		if err != nil {
+			t.Fatal("Terraform Destroy failed")
+		}
+	}()
+
+	testSuite.ipAddress, err = terratest.Output(testSuite.terratestOptions, "openvpn_host_public_ip")
+	if err != nil {
+		t.Fatalf("An error occurred retreiving terraform output - %s", err.Error())
 	}
 
 	// SSH into EC2 Instance
-	suite.host = ssh.Host{
-		Hostname: suite.ipAddress,
+	testSuite.host = ssh.Host{
+		Hostname: testSuite.ipAddress,
 		SshUserName: "ubuntu",
-		SshKeyPair: suite.resourceCollection.KeyPair,
+		SshKeyPair: testSuite.resourceCollection.KeyPair,
 	}
 
 	_, err = util.DoWithRetry(
-		fmt.Sprintf("SSH to public host %s", suite.ipAddress),
+		fmt.Sprintf("SSH to public host %s", testSuite.ipAddress),
 		10,
 		30 * time.Second,
-		suite.logger,
+		testSuite.logger,
 		func() (string, error) {
-			return "", ssh.CheckSshConnection(suite.host, suite.logger)
+			return "", ssh.CheckSshConnection(testSuite.host, testSuite.logger)
 		},
 	)
 
 	if err != nil {
-		suite.T().Fatalf("Failed to SSH to host at %s and execute command :%s\n", suite.ipAddress, err.Error())
+		t.Fatalf("Failed to SSH to host at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
 	}
 
 	_, err = util.DoWithRetry(
 		fmt.Sprintf("Waiting for OpenVPN initialization to complete"),
 		60,
 		30 * time.Second,
-		suite.logger,
+		testSuite.logger,
 		func() (string, error) {
-			return "", initComplete(suite)
+			return "", initComplete(t, &testSuite)
 		},
 	)
 
 	if err != nil {
-		suite.T().Fatalf("OpenVPN initilization failed to complete")
+		t.Fatal("OpenVPN initilization failed to complete")
 	}
 
-	suite.logger.Println("SetupSuite Complete")
-}
+	testSuite.logger.Println("SetupSuite Complete")
 
-func (suite *openVpnTestSuite) TearDownSuite() {
-	terratest.Destroy(suite.terratestOptions, suite.resourceCollection)
+	t.Run("fail2ban tests", func(t *testing.T) {
+		t.Run("running test", wrapTestCase(testOpenVpnIsRunning, &testSuite))
+		t.Run("running test", wrapTestCase(testOpenVpnAdminProcessCertsIsRunning, &testSuite))
+	})
 
-	session := createAwsSession(suite.T(), suite.resourceCollection.AwsRegion)
+	session := createAwsSession(t, testSuite.resourceCollection.AwsRegion)
 	ec2Client := createEc2Client(session)
 
-	removeAmi(suite.T(), ec2Client, suite.amiId, suite.logger)
-	suite.logger.Println("TearDownSuite Complete")
+	removeAmi(t, ec2Client, amiId, testSuite.logger)
+	testSuite.logger.Println("TearDownSuite Complete")
 }
 
-func initComplete(suite *openVpnTestSuite) (error) {
+func wrapTestCase(testCase func(t *testing.T, testSuite *suite), testSuite *suite) func(t *testing.T) {
+	return func(t *testing.T) {
+		testCase(t, testSuite)
+	}
+}
+
+func getRandomizedString(prefix string) (string) {
+	return fmt.Sprintf("%s-%s", prefix, strconv.FormatInt(time.Now().Unix(), 10))
+}
+
+func initComplete(t *testing.T, testSuite *suite) (error) {
 	command := "sudo ls /etc/openvpn/openvpn-init-complete"
-	output, err := ssh.CheckSshCommand(suite.host, command, suite.logger)
+	var err error
+	testSuite.output, err = ssh.CheckSshCommand(testSuite.host, command, testSuite.logger)
 	if err != nil {
 		return err
 	}
 
-	if strings.Contains(output, "no such file or directory") {
+	if strings.Contains(testSuite.output, "no such file or directory") {
 		return fmt.Errorf("initialization not yet complete")
 	}
 
 	return nil
 }
 
-func (suite *openVpnTestSuite) TestOpenVpnIsRunning() {
+func testOpenVpnIsRunning(t *testing.T, testSuite *suite) {
 	commandToTest := "sudo ps -ef|grep openvpn"
-	output, err := ssh.CheckSshCommand(suite.host, commandToTest, suite.logger)
+	var err error
+	testSuite.output, err = ssh.CheckSshCommand(testSuite.host, commandToTest, testSuite.logger)
 	if err != nil {
-		suite.T().Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", suite.ipAddress, err.Error())
+		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
 	}
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	suite.T().Logf("Result of running \"%s\"\n", commandToTest)
-	suite.T().Log(output)
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(testSuite.output)
 
-	assert.Contains(suite.T(), output, "/usr/sbin/openvpn")
+	assert.Contains(t, testSuite.output, "/usr/sbin/openvpn")
 }
 
-func (suite *openVpnTestSuite) TestOpenVpnAdminProcessCertsIsRunning() {
+func testOpenVpnAdminProcessCertsIsRunning(t *testing.T, testSuite *suite) {
 	commandToTest := "sudo ps -ef|grep openvpn"
-	output, err := ssh.CheckSshCommand(suite.host, commandToTest, suite.logger)
-	if err != nil {
-		suite.T().Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", suite.ipAddress, err.Error())
+	var err error
+	testSuite.output, err = ssh.CheckSshCommand(testSuite.host, commandToTest, testSuite.logger)
+	if err!=nil {
+		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
 	}
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	suite.T().Logf("Result of running \"%s\"\n", commandToTest)
-	suite.T().Log(output)
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(testSuite.output)
 
-	assert.Contains(suite.T(), output, "openvpn-admin process-requests")
-}
-
-func TestOpenVpnSuite(t *testing.T) {
-	tests := new(openVpnTestSuite)
-	suite.Run(t, tests)
+	assert.Contains(t, testSuite.output, "openvpn-admin process-requests")
 }

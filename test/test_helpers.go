@@ -11,18 +11,6 @@ import (
 	"github.com/gruntwork-io/terratest"
 )
 
-func createBaseRandomResourceCollection(t *testing.T) *terratest.RandomResourceCollection {
-	resourceCollectionOptions := terratest.NewRandomResourceCollectionOptions()
-	resourceCollectionOptions.ForbiddenRegions = []string{"sa-east-1"} // sa-east-1b does not have t2.micro
-
-	randomResourceCollection, err := terratest.CreateRandomResourceCollection(resourceCollectionOptions)
-	if err != nil {
-		t.Fatalf("Failed to create Random Resource Collection: %s", err)
-	}
-
-	return randomResourceCollection
-}
-
 func createBaseTerratestOptions(t *testing.T, testName string, templatePath string, resourceCollection *terratest.RandomResourceCollection) *terratest.TerratestOptions {
 	terratestOptions := terratest.NewTerratestOptions()
 
