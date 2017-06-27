@@ -16,7 +16,7 @@ RUN curl https://glide.sh/get | sh
 # overridden when you mount the source code from your host OS
 COPY glide.yaml $SRCPATH/glide.yaml
 COPY glide.lock $SRCPATH/glide.lock
-RUN glide install
+RUN glide install --force
 
 # Copy the rest of the source code
 COPY src/* $SRCPATH/src/

@@ -94,6 +94,10 @@ function prep_config_dir {
     ./clean-all
 }
 
+function restore_vars_local_from_s3 {
+    aws s3 cp s3://$1/server/vars.local $CA_PATH --sse "aws:kms" --sse-kms-key-id "$2"
+}
+
 # Restore the previously generated PKI assets from s3 so previously issued certificates continue to work
 function restore_pki_assets_from_s3 {
     echo "Restore PKI assets from S3..."
@@ -106,7 +110,6 @@ function restore_pki_assets_from_s3 {
     aws s3 cp s3://$1/server/index.txt $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
     aws s3 cp s3://$1/server/index.txt.old $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
     aws s3 cp s3://$1/server/index.txt.attr $OPENVPN_PATH --sse "aws:kms" --sse-kms-key-id "$2"
-    aws s3 cp s3://$1/server/vars.local $CA_PATH --sse "aws:kms" --sse-kms-key-id "$2"
 }
 
 function copy_config_templates {
@@ -395,6 +398,7 @@ function init_openvpn {
     assert_is_installed openssl
 
     if $(is_pki_bootstrapped "$bucket_name"); then
+        restore_vars_local_from_s3 "$bucket_name" "$kms_key_id"
         prep_config_dir
         restore_pki_assets_from_s3 "$bucket_name" "$kms_key_id"
     else

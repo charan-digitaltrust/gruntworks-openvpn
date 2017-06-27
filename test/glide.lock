@@ -1,5 +1,5 @@
-hash: f154b41fe5416a8235c0d27d59e0d6570755f87fbb65afe1afabab22261ed596
-updated: 2017-06-23T22:50:21.139449235-04:00
+hash: d5cdefbc81da447de581e7749c124ab2040c3e99d57051d6bca86d3a9b518b6e
+updated: 2017-06-27T17:14:39.83448744-04:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 00fb2125993965df739fa3398b03bef3eb2e198f
@@ -43,6 +43,10 @@ imports:
   subpackages:
   - qr
   - utils
+- name: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
 - name: github.com/go-errors/errors
   version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/go-ini/ini
@@ -50,16 +54,17 @@ imports:
 - name: github.com/google/uuid
   version: 064e2069ce9c359c118179501254f67d7d37ba24
 - name: github.com/gruntwork-io/gruntwork-cli
-  version: 42fe68b1d1fa4e4c524a0f06b8c61cc0db589e24
+  version: c5d9b8e75351b4204854a88037fc0e2ac4e05de3
   subpackages:
   - errors
   - logging
 - name: github.com/gruntwork-io/terratest
-  version: 7ae03e563c05c31f5e492e4cb16a5794430021d9
+  version: aa33feaf5778daa2bb166a7e7680135ad04d8647
   repo: git@github.com:gruntwork-io/terratest
   vcs: git
   subpackages:
   - aws
+  - git
   - http
   - log
   - packer
@@ -71,15 +76,19 @@ imports:
   - util
 - name: github.com/jmespath/go-jmespath
   version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/pquerna/otp
   version: 9e1935374bc73ffe011187dafed51a412b90fe43
   subpackages:
   - hotp
   - totp
-- name: github.com/Sirupsen/logrus
-  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
+- name: github.com/sirupsen/logrus
+  version: 3d4380f53a34dcdc95f0c1db702615992b38d9a4
 - name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  version: 2402e8e7a02fc811447d11f881aa9746cdc57983
   subpackages:
   - assert
 - name: github.com/urfave/cli
@@ -92,15 +101,7 @@ imports:
   - ed25519/internal/edwards25519
   - ssh
 - name: golang.org/x/sys
-  version: dbc2be9168a660ef302e04b6ff6406de6f967473
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
-testImports:
-- name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
-  subpackages:
-  - spew
-- name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
-  subpackages:
-  - difflib
+testImports: []

@@ -4,9 +4,9 @@ owners:
   homepage: http://www.gruntwork.io
 import:
 - package: github.com/urfave/cli
-- package: github.com/Sirupsen/logrus
+- package: github.com/sirupsen/logrus
 - package: github.com/gruntwork-io/gruntwork-cli
-  version: ^0.0.3
+  version: ^0.1.0
 - package: github.com/aws/aws-sdk-go
 - package: github.com/google/uuid
 - package: github.com/mattn/go-zglob

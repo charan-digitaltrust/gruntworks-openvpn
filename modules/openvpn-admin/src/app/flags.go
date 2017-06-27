@@ -5,7 +5,7 @@ import (
 	"github.com/gruntwork-io/gruntwork-cli/errors"
 	valid "github.com/asaskevich/govalidator"
 	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/openvpn"
 )
