@@ -25,6 +25,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	setLoggerLevel(cliContext)
 	logger := logging.GetLogger(LOGGER_NAME)
 
+	logger.Infof("Looking up AWS username")
 	awsRegion, err := getAwsRegion(cliContext)
 	if err != nil {
 		return err
@@ -37,6 +38,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using Username: %s", username)
 
+	logger.Infof("Looking up SQS queue")
 	requestUrl, err := getRequestUrl(cliContext)
 	if err != nil {
 		return err
@@ -55,6 +57,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	}
 	defer deleteResponseQueue(awsRegion, responseQueue)
 
+	logger.Infof("Submitting request for new certificate to %s", responseQueue)
 	//Put a request for a new certificate on the requestQueue
 	err = sendRequest(awsRegion, requestUrl, username, responseQueue)
 	if err != nil {
@@ -62,12 +65,14 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	}
 
 	// Wait for a reply from OpenVPN server on the responseQueue
+	logger.Info("Waiting for response from OpenVPN server")
 	receipt, response, err := waitForMessage(awsRegion, responseQueue, timeout)
 	if err != nil {
 		return err
 	}
 
 	// Process the response
+	logger.Info("Response received from OpenVPN server")
 	err = processNewCertificateResponse(awsRegion, responseQueue, receipt, response, username)
 	if err != nil {
 		return err

@@ -35,6 +35,7 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using Username: %s", username)
 
+	logger.Info("Looking up SQS queue")
 	revokeUrl, err := getRevokeUrl(cliContext)
 	if err != nil {
 		return err
@@ -47,6 +48,7 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 	}
 
 	//Create a new response queue
+	logger.Info("Creating temporary SQS response queue")
 	responseQueue, err := createResponseQueue(awsRegion)
 	if err != nil {
 		return err
@@ -54,18 +56,21 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 	defer deleteResponseQueue(awsRegion, responseQueue)
 
 	//Put a request for a new certificate revocation on the revokeQueue
+	logger.Infof("Requesting certificate revocation for %s on %s", username, revokeUrl)
 	err = sendRevoke(awsRegion, revokeUrl, username, responseQueue)
 	if err != nil {
 		return err
 	}
 
 	// Wait for a reply from OpenVPN server on the responseQueue
+	logger.Info("Waiting for response from OpenVPN server")
 	receipt, response, err := waitForMessage(awsRegion, responseQueue, timeout)
 	if err != nil {
 		return err
 	}
 
 	// Process the response
+	logger.Info("Response received from OpenVPN server")
 	err = processRevokeResponse(awsRegion, responseQueue, receipt, response, username)
 	if err != nil {
 		return err
