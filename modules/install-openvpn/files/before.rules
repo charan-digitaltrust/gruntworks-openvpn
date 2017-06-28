@@ -13,7 +13,7 @@
 *nat
 :POSTROUTING ACCEPT [0:0]
 # Allow traffic from OpenVPN client to ens3
--A POSTROUTING -s __VPN_SUBNET__ -o ens3 -j MASQUERADE
+-A POSTROUTING -s __VPN_SUBNET__ -j MASQUERADE
 COMMIT
 # END OPENVPN RULES
 
