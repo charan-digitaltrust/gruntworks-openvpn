@@ -102,11 +102,18 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 	testSuite.Logger.Println("SetupSuite Complete")
 
 	t.Run("openvpn tests", func(t *testing.T) {
-		t.Run("running test", terratest.WrapTestCase(testOpenVpnIsRunning, &testSuite))
-		t.Run("running test", terratest.WrapTestCase(testOpenVpnAdminProcessCertsIsRunning, &testSuite))
-		t.Run("running test", terratest.WrapTestCase(testOpenVpnRestoresFromS3Correctly, &testSuite))
+		t.Run("running test", wrapOpenVpnTestCase(testOpenVpnIsRunning, &testSuite))
+		t.Run("running test", wrapOpenVpnTestCase(testOpenVpnAdminProcessCertsIsRunning, &testSuite))
+		t.Run("running test", wrapOpenVpnTestCase(testOpenVpnRestoresFromS3Correctly, &testSuite))
 	})
 }
+
+func wrapOpenVpnTestCase(testCase func(t *testing.T, testSuite *openVpnSuite), testSuite *openVpnSuite) func(t *testing.T) {
+	return func(t *testing.T) {
+		testCase(t, testSuite)
+	}
+}
+
 
 func waitUntilSshAvailable(t *testing.T, testSuite *openVpnSuite) {
 	// SSH into EC2 Instance
@@ -220,7 +227,7 @@ func testOpenVpnRestoresFromS3Correctly(t *testing.T, testSuite *openVpnSuite) {
 	waitUntilOpenVpnInitComplete(t, testSuite)
 
 	t.Run("openvpn restore tests", func(t *testing.T) {
-		t.Run("running test", terratest.WrapTestCase(testOpenVpnIsRunning, testSuite))
-		t.Run("running test", terratest.WrapTestCase(testOpenVpnAdminProcessCertsIsRunning, testSuite))
+		t.Run("running test", wrapOpenVpnTestCase(testOpenVpnIsRunning, testSuite))
+		t.Run("running test", wrapOpenVpnTestCase(testOpenVpnAdminProcessCertsIsRunning, testSuite))
 	})
 }
