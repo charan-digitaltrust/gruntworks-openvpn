@@ -44,3 +44,7 @@ variable "name" {
 variable "ami" {
   description = "The ID of the AMI to run. Should be built with packer scripts in /examples/packer"
 }
+
+variable "backup_kms_key" {
+  description = "The KMS key to use for asset encryption/decryption"
+}

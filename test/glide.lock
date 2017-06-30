@@ -1,5 +1,5 @@
-hash: d5cdefbc81da447de581e7749c124ab2040c3e99d57051d6bca86d3a9b518b6e
-updated: 2017-06-27T17:14:39.83448744-04:00
+hash: 5c040217c18b87a9fea7cbd24677bf4b0821c19f5628b03bed65482210a92d1a
+updated: 2017-06-30T10:20:01.084794332-04:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 00fb2125993965df739fa3398b03bef3eb2e198f
@@ -59,7 +59,7 @@ imports:
   - errors
   - logging
 - name: github.com/gruntwork-io/terratest
-  version: aa33feaf5778daa2bb166a7e7680135ad04d8647
+  version: c8424bfa3ba21945f3bad6668cae2fa8abf3b0c4
   repo: git@github.com:gruntwork-io/terratest
   vcs: git
   subpackages:

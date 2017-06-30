@@ -13,11 +13,6 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
-resource "aws_kms_key" "backups" {
-  description = "OpenVPN Backup Key"
-}
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 # SETUP DATA STRUCTURES
 # ---------------------------------------------------------------------------------------------------------------------
@@ -41,7 +36,7 @@ data "template_file" "user_data" {
 
   vars {
     backup_bucket_name = "${module.openvpn.backup_bucket_name}"
-    kms_key_id="${aws_kms_key.backups.id}"
+    kms_key_id="${var.backup_kms_key}"
     #WARNING: This should be set to 4096 (default) for production, but this is much faster for test/dev
     key_size = 2048
     ca_expiration_days = 3650
@@ -82,7 +77,7 @@ module "openvpn" {
 
   request_queue_name = "${var.request_queue_name}"
   revocation_queue_name = "${var.revocation_queue_name}"
-  kms_key_arn = "${aws_kms_key.backups.arn}"
+  kms_key_arn = "${var.backup_kms_key}"
   vpc_id = "${data.aws_vpc.default.id}"
   subnet_id = "${data.aws_subnet.default.id}"
 

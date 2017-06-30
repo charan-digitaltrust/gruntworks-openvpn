@@ -3,7 +3,7 @@ import:
 - package: github.com/gruntwork-io/terratest
   repo: git@github.com:gruntwork-io/terratest
   vcs: git
-  version: ^0.6.1
+  version: ^0.6.4
 - package: github.com/aws/aws-sdk-go
 - package: github.com/google/uuid
 - package: github.com/go-errors/errors
