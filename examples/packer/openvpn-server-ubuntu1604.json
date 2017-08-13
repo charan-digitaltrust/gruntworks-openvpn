@@ -3,8 +3,7 @@
     "github_oauth_token": "{{env `GITHUB_OAUTH_TOKEN`}}",
     "aws_region": "us-east-1",
     "gruntwork_installer_version": "v0.0.16",
-    "gruntwork_script_modules_version": "v0.0.27",
-    "active_git_branch": ""
+    "active_git_branch": null
   },
   "builders": [
     {
@@ -56,9 +55,9 @@
       "type": "shell",
       "inline": [
         "DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y",
-        "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}' --tag '{{user `gruntwork_package_openvpn_version`}}'",
-        "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}' --tag '{{user `gruntwork_package_openvpn_version`}}'",
-        "gruntwork-install --module-name 'start-openvpn-admin' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}' --tag '{{user `gruntwork_package_openvpn_version`}}'",
+        "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'start-openvpn-admin' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "sudo /usr/local/bin/install-openvpn"
       ],
       "environment_vars": [
