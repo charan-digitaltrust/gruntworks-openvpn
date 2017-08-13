@@ -8,9 +8,9 @@ dependencies:
   override:
     # Install the gruntwork-module-circleci-helpers and use it to configure the build environment and run tests.
     - curl -Ls https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh | bash /dev/stdin --version v0.0.16
-    - gruntwork-install --module-name "gruntwork-module-circleci-helpers" --repo "https://github.com/gruntwork-io/module-ci" --tag "v0.3.18"
-    - gruntwork-install --binary-name "docs-generator" --repo "https://github.com/gruntwork-io/module-ci" --tag "v0.3.12"
-    - configure-environment-for-gruntwork-module --go-src-path test --go-src-path modules/openvpn-admin --go-version 1.8.3  --terragrunt-version "v0.12.8" --packer-version "1.0.2" --glide-version "0.12.3"
+    - gruntwork-install --module-name "gruntwork-module-circleci-helpers" --repo "https://github.com/gruntwork-io/module-ci" --tag "v0.3.21"
+    - gruntwork-install --binary-name "docs-generator" --repo "https://github.com/gruntwork-io/module-ci" --tag "v0.3.21"
+    - configure-environment-for-gruntwork-module --go-src-path test --go-src-path modules/openvpn-admin --go-version 1.8.3
   cache_directories:
     - ~/terraform
     - ~/packer
