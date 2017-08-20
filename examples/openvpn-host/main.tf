@@ -75,10 +75,7 @@ module "openvpn" {
   ami = "${var.ami}"
   keypair_name = "${var.keypair_name}"
   user_data = "${data.template_file.user_data.rendered}"
-
-  # Since s3 bucket names are globally unique, create a random suffix so multiple customers'
-  # examples can work with just terraform apply and no need to change default vaules
-  backup_bucket_name = "${var.backup_bucket_name}-${uuid()}"
+  backup_bucket_name = "${var.backup_bucket_name}"
 
   request_queue_name = "${var.request_queue_name}"
   revocation_queue_name = "${var.revocation_queue_name}"

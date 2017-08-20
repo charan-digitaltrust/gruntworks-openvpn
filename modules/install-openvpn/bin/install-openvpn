@@ -20,7 +20,8 @@ function assert_uid_is_root_or_sudo {
 
 # Import the public GPG key used to sign the OpenVPN packages.
 function import_gpg_key {
-    wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg | sudo apt-key add -
+  local readonly gpg_key_url="$1"
+  wget -O - "$gpg_key_url" | sudo apt-key add -
 }
 
 # Create a sources.list fragment (as root) so that apt can find the new OpenVPN packages.
@@ -66,7 +67,7 @@ function install_openvpn {
     assert_uid_is_root_or_sudo
 
     local readonly ubuntu_distro_name="xenial" # xenial = ubuntu16
-    local readonly apt_repo_url="http://swupdate.openvpn.net/apt"
+    local readonly apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
     local readonly gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
 
     import_gpg_key "$gpg_key_url"
