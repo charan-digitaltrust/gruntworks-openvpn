@@ -411,7 +411,7 @@ function init_openvpn {
     local routesStr=""
     for i in "${routes[@]}"
     do
-        routesStr="$routesStr\npush \"route $i\""
+        routesStr=$(printf "$routesStr\npush \"route $i\"")
     done
 
     copy_config_templates
