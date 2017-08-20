@@ -157,7 +157,7 @@ $routes
 
 status /var/log/openvpn-status.log
 log-append  /var/log/openvpn.log
-verb 9	# TODO: 4 for production
+verb 4
 daemon
 mute 20
 
@@ -411,7 +411,7 @@ function init_openvpn {
     local routesStr=""
     for i in "${routes[@]}"
     do
-        routesStr="$routesStr"$'\n'"push route \"$i\""
+        routesStr="$routesStr\npush \"route $i\""
     done
 
     copy_config_templates
