@@ -429,6 +429,30 @@ data "aws_iam_policy_document" "send-certificate-requests" {
       "*"
     ]
   }
+
+  statement {
+    sid = "getRequestQueueUrl"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/client/request-queue-url"
+    ]
+  }
+
+  statement {
+    sid = "identifyIamUser"
+    effect = "Allow"
+    actions = [
+      "iam:GetUser"
+    ]
+    resources = [
+      # Because AWS IAM Policy Variables (i.e. ${aws:username}) use the same interpolation syntax as Terraform, we have
+      # to escape the $ from Terraform with "$$".
+      "arn:aws:iam::${var.aws_account_id}:user/$${aws:username}"
+    ]
+  }
 }
 
 data "aws_iam_policy_document" "send-certificate-revocations" {
@@ -459,7 +483,7 @@ data "aws_iam_policy_document" "send-certificate-revocations" {
 resource "aws_iam_policy" "certificate-requests-openvpnusers" {
   name = "${var.name}-users-certificate-requests"
   description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
-  policy = "${data.aws_iam_policy_document.certificate-requests.json}"
+  policy = "${data.aws_iam_policy_document.send-certificate-requests.json}"
 }
 
 resource "aws_iam_group_policy_attachment" "certificate-requests" {

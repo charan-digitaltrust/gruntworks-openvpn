@@ -3,6 +3,10 @@
 # These variables are expected to be passed in by the operator when calling this terraform module.
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "aws_account_id" {
+  description = "The AWS account ID where the OpenVPN Server will be created. Note that all IAM Users who receive OpenVPN access must also reside in this AWS account."
+}
+
 variable "name" {
   description = "The name of the server. This will be used to namespace all resources created by this module."
 }
