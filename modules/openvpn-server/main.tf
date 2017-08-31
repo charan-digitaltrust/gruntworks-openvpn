@@ -411,11 +411,24 @@ data "aws_iam_policy_document" "send-certificate-requests" {
     sid = "sqsSendMessages"
     effect = "Allow"
     actions = [
-      "sqs:SendMessage",
-      "sqs:CreateQueue"
+      "sqs:SendMessage"
     ]
     resources = [
       "${aws_sqs_queue.client-request-queue.arn}"
+    ]
+  }
+
+  statement {
+    sid = "sqsCreateRandomQueue"
+    effect = "Allow"
+    actions = [
+      "sqs:CreateQueue",
+      "sqs:DeleteQueue",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage"
+    ]
+    resources = [
+      "arn:aws:sqs:us-west-2:${var.aws_account_id}:openvpn-response*"
     ]
   }
 
