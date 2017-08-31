@@ -16,6 +16,10 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "aws_account_id" {
+  description = "The AWS account ID where the OpenVPN Server will be created. Note that all IAM Users who receive OpenVPN access must also reside in this AWS account."
+}
+
 variable "keypair_name" {
   description = "The AWS EC2 Keypair name for root access to the OpenVPN host."
   default = ""
