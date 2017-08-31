@@ -411,7 +411,8 @@ data "aws_iam_policy_document" "send-certificate-requests" {
     sid = "sqsSendMessages"
     effect = "Allow"
     actions = [
-      "sqs:SendMessage"
+      "sqs:SendMessage",
+      "sqs:CreateQueue"
     ]
     resources = [
       "${aws_sqs_queue.client-request-queue.arn}"
