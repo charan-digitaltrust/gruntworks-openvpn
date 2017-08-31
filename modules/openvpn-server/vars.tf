@@ -7,6 +7,10 @@ variable "aws_account_id" {
   description = "The AWS account ID where the OpenVPN Server will be created. Note that all IAM Users who receive OpenVPN access must also reside in this AWS account."
 }
 
+variable "aws_region" {
+  description = "The AWS region in which the resources will be created."
+}
+
 variable "name" {
   description = "The name of the server. This will be used to namespace all resources created by this module."
 }

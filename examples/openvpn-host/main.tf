@@ -71,6 +71,7 @@ module "openvpn" {
   source = "../../modules/openvpn-server"
 
   aws_account_id = "${var.aws_account_id}"
+  aws_region = "${var.aws_region}"
 
   name = "${var.name}"
   instance_type = "c4.large"

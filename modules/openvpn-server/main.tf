@@ -428,7 +428,7 @@ data "aws_iam_policy_document" "send-certificate-requests" {
       "sqs:DeleteMessage"
     ]
     resources = [
-      "arn:aws:sqs:us-west-2:${var.aws_account_id}:openvpn-response*"
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:openvpn-response*"
     ]
   }
 
