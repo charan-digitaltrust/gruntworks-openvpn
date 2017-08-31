@@ -70,6 +70,8 @@ module "openvpn" {
   # source = "git::git@github.com:gruntwork-io/module-openvpn.git//modules/openvpn-server?ref=v1.0.0"
   source = "../../modules/openvpn-server"
 
+  aws_account_id = "${var.aws_account_id}"
+
   name = "${var.name}"
   instance_type = "c4.large"
   ami = "${var.ami}"

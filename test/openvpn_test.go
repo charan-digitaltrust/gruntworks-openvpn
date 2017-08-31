@@ -41,6 +41,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 		Template: "../examples/packer/openvpn-server-ubuntu1604.json",
 		Vars: map[string]string{
 			"aws_region": testSuite.resourceCollection.AwsRegion,
+			"aws_account_id": testSuite.resourceCollection.AccountId,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch": git.GetCurrentBranchName(t),
 		},
