@@ -155,8 +155,6 @@ user  nobody
 group nogroup
 $routes
 
-status /var/log/openvpn-status.log
-log-append  /var/log/openvpn.log
 verb 4
 daemon
 mute 20
