@@ -1,7 +1,6 @@
 package aws_helpers
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"strings"
 	"github.com/gruntwork-io/gruntwork-cli/logging"
@@ -9,12 +8,12 @@ import (
 )
 
 func CreateS3Client(awsRegion string) (*s3.S3, error) {
-	awsConfig, err := CreateAwsConfig(awsRegion)
+	sess, err := CreateAwsSession(awsRegion, NO_IAM_ROLE)
 	if err != nil {
 		return nil, err
 	}
 
-	return s3.New(session.New(), awsConfig), nil
+	return s3.New(sess), nil
 }
 
 func FindS3BucketWithTag(awsRegion string, key string, value string) (string, error) {

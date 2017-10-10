@@ -94,6 +94,14 @@ func getRequestUrl(cliContext *cli.Context) (string, error) {
 	return url, nil
 }
 
+func getRoleArn(cliContext *cli.Context) (string, error) {
+	roleArn := cliContext.String(OPTION_ROLE_ARN)
+	if roleArn == "" {
+		return "", errors.WithStackTrace(MissingRoleArn)
+	}
+	return roleArn, nil
+}
+
 func getRevokeUrl(cliContext *cli.Context) (string, error) {
 	var url string
 	var err error

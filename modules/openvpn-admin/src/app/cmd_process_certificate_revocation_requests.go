@@ -31,9 +31,14 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 		return err
 	}
 
+	roleArn, err := getRoleArn(cliContext)
+	if err != nil {
+		return err
+	}
+
 	for {
 		// Wait for a request to come in from a client on the revokeQueue
-		receipt, revokeRequest, err := waitForMessage(awsRegion, revokeUrl, timeout)
+		receipt, revokeRequest, err := waitForMessage(awsRegion, roleArn, revokeUrl, timeout)
 		if err != nil {
 			if sleepOnFailedToReceiveMessages(err) {
 				continue
@@ -48,12 +53,12 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 			logger.WithError(err)
 		}
 
-		err = sendRevokeReply(awsRegion, responseQueue, err)
+		err = sendRevokeReply(awsRegion, roleArn, responseQueue, err)
 		if err != nil {
 			return err
 		}
 
-		err = aws_helpers.DeleteMessageFromQueue(awsRegion, revokeUrl, receipt)
+		err = aws_helpers.DeleteMessageFromQueue(awsRegion, roleArn, revokeUrl, receipt)
 		if err != nil {
 			return err
 		}
@@ -87,7 +92,7 @@ func processRevokeRequest(awsRegion string, receipt string, message string) (str
 
 }
 
-func sendRevokeReply(awsRegion string, responseQueue string, error error) error {
+func sendRevokeReply(awsRegion string, roleArn string, responseQueue string, error error) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 
 	responseMessage := &CertificateRevokeResponse{}
@@ -104,7 +109,7 @@ func sendRevokeReply(awsRegion string, responseQueue string, error error) error 
 
 	logger.Debugf("Sending revocation reply %s on %s", string(responseJson), responseQueue)
 
-	err = aws_helpers.SendMessageToQueue(awsRegion, responseQueue, string(responseJson))
+	err = aws_helpers.SendMessageToQueue(awsRegion, roleArn, responseQueue, string(responseJson))
 	if err != nil {
 		return err
 	}

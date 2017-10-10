@@ -13,6 +13,7 @@ const OPTION_AWS_REGION = "aws-region"
 const OPTION_DEBUG = "debug"
 const OPTION_REQUEST_URL = "request-url"
 const OPTION_REVOKE_URL = "revoke-url"
+const OPTION_ROLE_ARN = "role-arn"
 
 func CreateApp(version string) *cli.App {
 	app := cli.NewApp()
@@ -51,6 +52,11 @@ func CreateApp(version string) *cli.App {
 		Usage: "The SQS url of the certificate revocation queue. Optional.",
 	}
 
+	roleArnFlag := cli.StringFlag{
+		Name: OPTION_ROLE_ARN,
+		Usage: "The ARN of an IAM Role to assume to be able to access the request / revocation SQS queues. Required.",
+	}
+
 	debugFlag := cli.BoolFlag{
 		Name: OPTION_DEBUG,
 		Usage: "Whether debug logging should be enabled",
@@ -74,13 +80,13 @@ func CreateApp(version string) *cli.App {
 			Name: "process-requests",
 			Usage: "Listen for certificate requests and revocations and process those requests",
 			Action: errors.WithPanicHandling(processNewCertificateRequests),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
+			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag, roleArnFlag},
 		},
 		{
 			Name: "process-revokes",
 			Usage: "Listen for certificate revocations and process those requests",
 			Action: errors.WithPanicHandling(processCertificateRevocationRequests),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
+			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag, roleArnFlag},
 		},
 	}
 
@@ -99,3 +105,4 @@ var MissingUsername = fmt.Errorf("--%s cannot be empty", OPTION_USERNAME)
 var MissingAwsRegion = fmt.Errorf("--%s cannot be empty", OPTION_AWS_REGION)
 var MissingRequestUrl = fmt.Errorf("--%s cannot be empty", OPTION_REQUEST_URL)
 var MissingRevokeUrl = fmt.Errorf("--%s cannot be empty", OPTION_REVOKE_URL)
+var MissingRoleArn = fmt.Errorf("--%s cannot be empty", OPTION_ROLE_ARN)

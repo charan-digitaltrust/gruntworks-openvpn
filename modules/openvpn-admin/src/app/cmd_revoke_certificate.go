@@ -49,11 +49,11 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 
 	//Create a new response queue
 	logger.Info("Creating temporary SQS response queue")
-	responseQueue, err := createResponseQueue(awsRegion)
+	responseQueue, err := createResponseQueue(awsRegion, aws_helpers.NO_IAM_ROLE)
 	if err != nil {
 		return err
 	}
-	defer deleteResponseQueue(awsRegion, responseQueue)
+	defer deleteResponseQueue(awsRegion, responseQueue, aws_helpers.NO_IAM_ROLE)
 
 	//Put a request for a new certificate revocation on the revokeQueue
 	logger.Infof("Requesting certificate revocation for %s on %s", username, revokeUrl)
@@ -64,7 +64,7 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 
 	// Wait for a reply from OpenVPN server on the responseQueue
 	logger.Info("Waiting for response from OpenVPN server")
-	receipt, response, err := waitForMessage(awsRegion, responseQueue, timeout)
+	receipt, response, err := waitForMessage(awsRegion, aws_helpers.NO_IAM_ROLE, responseQueue, timeout)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func sendRevoke(awsRegion string, revokeQueue string, username string, responseQ
 	}
 	requestJson, _ := json.Marshal(req)
 
-	err := aws_helpers.SendMessageToQueue(awsRegion, revokeQueue, string(requestJson))
+	err := aws_helpers.SendMessageToQueue(awsRegion, aws_helpers.NO_IAM_ROLE, revokeQueue, string(requestJson))
 	if err != nil {
 		return err
 	}
@@ -99,11 +99,11 @@ func processRevokeResponse(awsRegion string, responseQueue string, receipt strin
 	json.Unmarshal([]byte(message), &response)
 
 	if (!response.Success) {
-		aws_helpers.DeleteMessageFromQueue(awsRegion, responseQueue, receipt)
+		aws_helpers.DeleteMessageFromQueue(awsRegion, aws_helpers.NO_IAM_ROLE, responseQueue, receipt)
 		return errors.WithStackTrace(fmt.Errorf(response.ErrorMessage))
 	}
 
-	aws_helpers.DeleteMessageFromQueue(awsRegion, responseQueue, receipt)
+	aws_helpers.DeleteMessageFromQueue(awsRegion, aws_helpers.NO_IAM_ROLE, responseQueue, receipt)
 	return nil
 }
 
