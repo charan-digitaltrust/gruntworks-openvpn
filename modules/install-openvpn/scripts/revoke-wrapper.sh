@@ -7,7 +7,7 @@
 source ./vars.local
 result=$(./revoke-full $1 2>&1 >/dev/null)
 
-if [[ ! $result =~ " Data Base Updated " ]]; then
+if [[ "$result" != *"Data Base Updated"* ]]; then
     echo $result
     exit 1
 fi
