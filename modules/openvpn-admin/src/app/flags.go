@@ -7,8 +7,11 @@ import (
 	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
-	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/openvpn"
+	"fmt"
 )
+
+const REQUEST_QUEUE_NAME_PREFIX = "openvpn-requests-"
+const REVOCATION_QUEUE_NAME_PREFIX = "openvpn-revocations-"
 
 func setLoggerLevel(cliContext *cli.Context) () {
 	debug := cliContext.Bool(OPTION_DEBUG)
@@ -75,7 +78,7 @@ func getRequestUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	if url == "" {
 		logger.Debug("Locating Request URL in " + awsRegion)
 		// if url flag is empty, try to get it automatically based on naming conventions
-		url, err = openvpn.GetRequestQueueUrl(awsRegion, roleArn)
+		url, err = getQueueUrl(awsRegion, roleArn, REQUEST_QUEUE_NAME_PREFIX, OPTION_REQUEST_URL)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}
@@ -118,7 +121,7 @@ func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
 		logger.Debugf("Locating Revoke URL in %s", awsRegion)
 
 		// if url flag is empty, try to get it automatically based on naming conventions
-		url, err = openvpn.GetRevokeQueueUrl(awsRegion, roleArn)
+		url, err = getQueueUrl(awsRegion, roleArn, REVOCATION_QUEUE_NAME_PREFIX, OPTION_REVOKE_URL)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}
@@ -135,4 +138,34 @@ func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	}
 
 	return url, nil
+}
+
+func getQueueUrl(awsRegion string, roleArn string, queueNamePrefix string, argName string) (string, error) {
+	queueUrls, err := aws_helpers.FindQueuesWithNamePrefix(awsRegion, roleArn, queueNamePrefix)
+	if err != nil {
+		return "", err
+	}
+	if len(queueUrls) == 0 {
+		return "", errors.WithStackTrace(NoQueuesFoundWithPrefix(queueNamePrefix))
+	}
+	if len(queueUrls) > 1 {
+		return "", errors.WithStackTrace(MultipleQueuesFoundWithPrefix{Prefix: queueNamePrefix, QueueUrls: queueUrls, ArgName: argName})
+	}
+	return queueUrls[0], nil
+}
+
+// Custom errors
+
+type NoQueuesFoundWithPrefix string
+func (err NoQueuesFoundWithPrefix) Error() string {
+	return fmt.Sprintf("Could not find any SQS queues with the name prefix '%s'.", string(err))
+}
+
+type MultipleQueuesFoundWithPrefix struct {
+	Prefix    string
+	QueueUrls []string
+	ArgName   string
+}
+func (err MultipleQueuesFoundWithPrefix) Error() string {
+	return fmt.Sprintf("Expected to find exactly one queue with prefix '%s' but found %d: %v. Please specify which queue URL to use using the %s argument.", err.Prefix, len(err.QueueUrls), err.QueueUrls, err.ArgName)
 }
