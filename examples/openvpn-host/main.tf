@@ -105,6 +105,8 @@ module "openvpn_user_mgmt" {
   aws_account_id = "${var.aws_account_id}"
   aws_region = "${var.aws_region}"
 
+  server_iam_role_name = "${var.name}"
+
   user_group_name = "${var.name}"
   admin_group_name = "${var.name}"
 

@@ -19,6 +19,7 @@ resource "aws_sqs_queue" "client_revocation_queue" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "openvpn_server" {
+  name               = "openvpn-server-${var.server_iam_role_name}"
   assume_role_policy = "${length(var.external_account_arns_with_openvpn_servers) > 0 ? data.aws_iam_policy_document.openvpn_server_multiple_accounts.json : data.aws_iam_policy_document.openvpn_server_this_account_only.json}"
 }
 
