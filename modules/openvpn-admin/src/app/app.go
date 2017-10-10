@@ -33,7 +33,7 @@ func CreateApp(version string) *cli.App {
 
 	usernameFlag := cli.StringFlag{
 		Name: OPTION_USERNAME,
-		Usage: "The username that the certificate is being requested for. Defaults to current IAM username",
+		Usage: "The username that the certificate is being requested for. Defaults to current IAM username when requesting a cert; required when revoking a cert.",
 	}
 
 	timeoutFlag := cli.IntFlag{
