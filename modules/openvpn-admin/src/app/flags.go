@@ -59,7 +59,7 @@ func getTimeout(cliContext *cli.Context) (int, error) {
 	return timeout, nil
 }
 
-func getRequestUrl(cliContext *cli.Context) (string, error) {
+func getRequestUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	var url string
 	var err error
 
@@ -74,8 +74,8 @@ func getRequestUrl(cliContext *cli.Context) (string, error) {
 
 	if url == "" {
 		logger.Debug("Locating Request URL in " + awsRegion)
-		// if url flag is empty, try to get from S3 bucket
-		url, err = openvpn.GetRequestQueueUrl(awsRegion)
+		// if url flag is empty, try to get it automatically based on naming conventions
+		url, err = openvpn.GetRequestQueueUrl(awsRegion, roleArn)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}
@@ -102,7 +102,7 @@ func getRoleArn(cliContext *cli.Context) (string, error) {
 	return roleArn, nil
 }
 
-func getRevokeUrl(cliContext *cli.Context) (string, error) {
+func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	var url string
 	var err error
 
@@ -117,8 +117,8 @@ func getRevokeUrl(cliContext *cli.Context) (string, error) {
 	if url == "" {
 		logger.Debugf("Locating Revoke URL in %s", awsRegion)
 
-		// if url flag is empty, try to get from S3 bucket
-		url, err = openvpn.GetRevokeQueueUrl(awsRegion)
+		// if url flag is empty, try to get it automatically based on naming conventions
+		url, err = openvpn.GetRevokeQueueUrl(awsRegion, roleArn)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}

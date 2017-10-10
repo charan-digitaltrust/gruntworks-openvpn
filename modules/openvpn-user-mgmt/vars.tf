@@ -12,19 +12,19 @@ variable "aws_region" {
 }
 
 variable "user_group_name" {
-  description = "The name to use for the IAM group for OpenVPN users. Note that the group name will be automatically prefixed with 'openvpn'. Users in this group will be able to request OpenVPN certificates."
+  description = "The name to use for the IAM group for OpenVPN users. Note that the group name will be automatically prefixed with 'openvpn-users-'. Users in this group will be able to request OpenVPN certificates."
 }
 
 variable "admin_group_name" {
-  description = "The name to use for the IAM group for OpenVPN admins. Note that the group name will be automatically prefixed with 'openvpn'. Users in this group will be able to revoke OpenVPN certificates."
+  description = "The name to use for the IAM group for OpenVPN admins. Note that the group name will be automatically prefixed with 'openvpn-admins-'. Users in this group will be able to revoke OpenVPN certificates."
 }
 
 variable "request_queue_name" {
-  description = "The name of the sqs queue that will be used to receive new certificate requests. Note that the queue name will be automatically prefixed with 'openvpn'."
+  description = "The name of the sqs queue that will be used to receive new certificate requests. Note that the queue name will be automatically prefixed with 'openvpn-requests-'."
 }
 
 variable "revocation_queue_name" {
-  description = "The name of the sqs queue that will be used to receive certification revocation requests. Note that the queue name will be automatically prefixed with 'openvpn'."
+  description = "The name of the sqs queue that will be used to receive certification revocation requests. Note that the queue name will be automatically prefixed with 'openvpn-revocations-'."
 }
 
 variable "external_account_arns_with_openvpn_servers" {

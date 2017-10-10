@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
 )
 
 const LOGGER_NAME = "aws_helper"
@@ -156,4 +157,18 @@ func WaitForQueueMessage(awsRegion string, roleArn string, queueUrl string, time
 	}
 
 	return "", "", fmt.Errorf("Failed to receive messages on %s within %s seconds", queueUrl, strconv.Itoa(timeout))
+}
+
+func FindQueuesWithNamePrefix(awsRegion string, roleArn string, namePrefix string) ([]string, error) {
+	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := sqsClient.ListQueues(&sqs.ListQueuesInput{QueueNamePrefix: aws.String(namePrefix)})
+	if err != nil {
+		return nil, errors.WithStackTrace(err)
+	}
+
+	return aws.StringValueSlice(output.QueueUrls), nil
 }

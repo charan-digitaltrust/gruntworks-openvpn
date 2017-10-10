@@ -4,11 +4,11 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_sqs_queue" "client_request_queue" {
-  name = "openvpn-${var.request_queue_name}"
+  name = "openvpn-requests-${var.request_queue_name}"
 }
 
 resource "aws_sqs_queue" "client_revocation_queue" {
-  name = "openvpn-${var.revocation_queue_name}"
+  name = "openvpn-revocations-${var.revocation_queue_name}"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ data "aws_iam_policy_document" "openvpn_server_use_request_revoke_queues" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_group" "openvpn_users" {
-  name = "openvpn-${var.user_group_name}"
+  name = "openvpn-users-${var.user_group_name}"
 }
 
 resource "aws_iam_group_policy" "send_certificate_requests" {
@@ -155,7 +155,7 @@ data "aws_iam_policy_document" "send_certificate_requests" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_group" "openvpn_admins" {
-  name = "openvpn-${var.admin_group_name}"
+  name = "openvpn-admins-${var.admin_group_name}"
 }
 
 resource "aws_iam_group_policy" "send_certificate_revocations" {

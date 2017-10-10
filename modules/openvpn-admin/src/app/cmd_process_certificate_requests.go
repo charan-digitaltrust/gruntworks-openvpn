@@ -20,18 +20,18 @@ func processNewCertificateRequests(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using AWS Region: %s", awsRegion)
 
-	requestUrl, err := getRequestUrl(cliContext)
+	roleArn, err := getRoleArn(cliContext)
+	if err != nil {
+		return err
+	}
+
+	requestUrl, err := getRequestUrl(cliContext, roleArn)
 	if err != nil {
 		return err
 	}
 	logger.Debugf("Using Request URL: %s", requestUrl)
 
 	timeout, err := getTimeout(cliContext)
-	if err != nil {
-		return err
-	}
-
-	roleArn, err := getRoleArn(cliContext)
 	if err != nil {
 		return err
 	}

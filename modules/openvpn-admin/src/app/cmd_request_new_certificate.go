@@ -39,7 +39,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	logger.Debugf("Using Username: %s", username)
 
 	logger.Infof("Looking up SQS queue")
-	requestUrl, err := getRequestUrl(cliContext)
+	requestUrl, err := getRequestUrl(cliContext, aws_helpers.NO_IAM_ROLE)
 	if err != nil {
 		return err
 	}

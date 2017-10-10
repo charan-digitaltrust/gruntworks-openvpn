@@ -20,18 +20,18 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using AWS Region: %s", awsRegion)
 
-	revokeUrl, err := getRevokeUrl(cliContext)
+	roleArn, err := getRoleArn(cliContext)
+	if err != nil {
+		return err
+	}
+
+	revokeUrl, err := getRevokeUrl(cliContext, roleArn)
 	if err != nil {
 		return err
 	}
 	logger.Debugf("Using Revoke URL: %s", revokeUrl)
 
 	timeout, err := getTimeout(cliContext)
-	if err != nil {
-		return err
-	}
-
-	roleArn, err := getRoleArn(cliContext)
 	if err != nil {
 		return err
 	}

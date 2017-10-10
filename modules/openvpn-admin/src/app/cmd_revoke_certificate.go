@@ -36,7 +36,7 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 	logger.Debugf("Using Username: %s", username)
 
 	logger.Info("Looking up SQS queue")
-	revokeUrl, err := getRevokeUrl(cliContext)
+	revokeUrl, err := getRevokeUrl(cliContext, aws_helpers.NO_IAM_ROLE)
 	if err != nil {
 		return err
 	}

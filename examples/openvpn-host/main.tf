@@ -105,9 +105,9 @@ module "openvpn_user_mgmt" {
   aws_account_id = "${var.aws_account_id}"
   aws_region = "${var.aws_region}"
 
-  user_group_name = "users"
-  admin_group_name = "admins"
+  user_group_name = "${var.name}"
+  admin_group_name = "${var.name}"
 
-  request_queue_name = "cert-requests"
-  revocation_queue_name = "cert-revokes"
+  request_queue_name = "${var.name}"
+  revocation_queue_name = "${var.name}"
 }
