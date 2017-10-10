@@ -59,7 +59,7 @@ data "aws_iam_policy_document" "openvpn_server_multiple_accounts" {
 resource "aws_iam_role_policy" "openvpn_server_use_request_revoke_queues" {
   name   = "use-request-revoke-queues"
   role   = "${aws_iam_role.openvpn_server.id}"
-  policy = "${data.aws_iam_policy_document.openvpn_server_use_request_revoke_queues}"
+  policy = "${data.aws_iam_policy_document.openvpn_server_use_request_revoke_queues.json}"
 }
 
 data "aws_iam_policy_document" "openvpn_server_use_request_revoke_queues" {
