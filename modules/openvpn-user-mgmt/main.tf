@@ -20,42 +20,22 @@ resource "aws_sqs_queue" "client_revocation_queue" {
 
 resource "aws_iam_role" "openvpn_server" {
   name               = "openvpn-server-${var.server_iam_role_name}"
-  assume_role_policy = "${length(var.external_account_arns_with_openvpn_servers) > 0 ? data.aws_iam_policy_document.openvpn_server_multiple_accounts.json : data.aws_iam_policy_document.openvpn_server_this_account_only.json}"
+  assume_role_policy = "${data.aws_iam_policy_document.openvpn_server.json}"
 }
 
-data "aws_iam_policy_document" "openvpn_server_this_account_only" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "openvpn_server_multiple_accounts" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-
+data "aws_iam_policy_document" "openvpn_server" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.external_account_arns_with_openvpn_servers}"]
+      identifiers = ["${concat(list("arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"), var.external_account_arns_with_openvpn_servers)}"]
     }
   }
 }
+
+data "aws_caller_identity" "current" {}
 
 resource "aws_iam_role_policy" "openvpn_server_use_request_revoke_queues" {
   name   = "use-request-revoke-queues"
@@ -87,7 +67,8 @@ data "aws_iam_policy_document" "openvpn_server_use_request_revoke_queues" {
     effect = "Allow"
     actions = [
       "sqs:SendMessage",
-      "sqs:SendMessageBatch"
+      "sqs:SendMessageBatch",
+      "sqs:ListQueues"
     ]
     resources = [
       "*"

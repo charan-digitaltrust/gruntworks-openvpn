@@ -37,7 +37,7 @@ variable "revocation_queue_name" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 variable "external_account_arns_with_openvpn_servers" {
-  description = "A list of AWS account ARNs that are running OpenVPN servers and should be given access to the SQS queues in this account. This allows you to define your IAM users in this account and have them use their one set of credentials to request/revoke certificates for OpenVPN servers running in other accounts."
+  description = "A list of ARNs external AWS accounts that are running OpenVPN servers and should be given access to the SQS queues in this account. This allows you to define your IAM users in this account and have them use their one set of credentials to request/revoke certificates for OpenVPN servers running in other accounts."
   type        = "list"
   default     = []
 }
