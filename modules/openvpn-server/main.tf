@@ -289,11 +289,11 @@ resource "aws_iam_role_policy" "backup" {
 # This queue is used to receive requests for new certificates
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_sqs_queue" "client-request-queue" {
-  name = "${var.request_queue_name}"
+  name = "openvpn-requests-${var.request_queue_name}"
 }
 
 resource "aws_sqs_queue" "client-revocation-queue" {
-  name = "${var.revocation_queue_name}"
+  name = "openvpn-revocations-${var.revocation_queue_name}"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -20,11 +20,11 @@ variable "backup_bucket_name" {
 }
 
 variable "request_queue_name" {
-  description = "The name of the sqs queue that will be used to receive new certificate requests"
+  description = "The name of the sqs queue that will be used to receive new certificate requests. Note that the queue name will be automatically prefixed with 'openvpn-requests-'."
 }
 
 variable "revocation_queue_name" {
-  description = "The name of the sqs queue that will be used to receive certification revocation requests"
+  description = "The name of the sqs queue that will be used to receive certification revocation requests. Note that the queue name will be automatically prefixed with 'openvpn-revocations-'."
 }
 
 variable "kms_key_arn" {
