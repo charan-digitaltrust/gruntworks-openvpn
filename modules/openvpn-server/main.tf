@@ -500,11 +500,13 @@ data "aws_iam_policy_document" "allow_external_accounts" {
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_requests_for_external_accounts" {
+  count = "${signum(length(var.external_account_arns))}"
   role = "${aws_iam_role.allow_certificate_requests_for_external_accounts.id}"
   policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_external_accounts" {
+  count = "${signum(length(var.external_account_arns))}"
   role = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.id}"
   policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
 }
