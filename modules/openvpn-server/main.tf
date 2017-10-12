@@ -284,24 +284,227 @@ resource "aws_iam_role_policy" "backup" {
   policy = "${data.aws_iam_policy_document.backup.json}"
 }
 
-# ----------------------------------------------------------------------------------------------------------------------
-# ADD IAM PERMISSIONS TO GIVE THE OPENVPN SERVER ACCESS TO THE REQUEST AND REVOCATION SQS QUEUES
-# Here, we give the OpenVPN server permission to assume an IAM role that has access to the SQS queues used for
-# certificate requests and revocations. We use an IAM role for this purpose because those SQS queues may be defined in
-# a separate AWS account.
-# ----------------------------------------------------------------------------------------------------------------------
-
-resource "aws_iam_role_policy" "assume_iam_role_for_queue_access" {
-  name   = "assume-iam-role-for-queue-access"
-  role   = "${aws_iam_role.openvpn.id}"
-  policy = "${data.aws_iam_policy_document.assume_iam_role_for_queue_access.json}"
+# ---------------------------------------------------------------------------------------------------------------------
+# CREATE THE SQS QUEUES
+# This queue is used to receive requests for new certificates
+# ---------------------------------------------------------------------------------------------------------------------
+resource "aws_sqs_queue" "client-request-queue" {
+  name = "${var.request_queue_name}"
 }
 
-data "aws_iam_policy_document" "assume_iam_role_for_queue_access" {
+resource "aws_sqs_queue" "client-revocation-queue" {
+  name = "${var.revocation_queue_name}"
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ADD THE NECESSARY IAM POLICIES TO THE EC2 INSTANCE TO ALLOW RECEIVING SQS MESSAGES
+# Our cluster EC2 Instance need the ability to recevive messages from the sqs queue to process new client certificate requests
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Define the IAM Policy Document to be used by the IAM Policy
+data "aws_iam_policy_document" "certificate-requests" {
+
+  # Important for allowing the OpenVPN instance to read and write objects from S3
   statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    resources = ["${var.assume_iam_role_arn_for_queue_access}"]
+    sid = "sqsReadDeleteMessages"
+    effect = "Allow"
+    actions = [
+      "sqs:ChangeMessageVisibility",
+      "sqs:ChangeMessageVisibilityBatch",
+      "sqs:DeleteMessage",
+      "sqs:DeleteMessageBatch",
+      "sqs:PurgeQueue",
+      "sqs:ReceiveMessage",
+      "sqs:ReceiveMessageBatch"
+    ]
+    resources = [
+      "${aws_sqs_queue.client-request-queue.arn}",
+      "${aws_sqs_queue.client-revocation-queue.arn}"
+    ]
+  }
+
+  statement {
+    sid = "sqsPublishMessages"
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage",
+      "sqs:SendMessageBatch"
+    ]
+    resources = [
+      "*"
+    ]
   }
 }
 
+# Attach the IAM Policy to our IAM Role
+resource "aws_iam_role_policy" "certificate-requests" {
+  name = "openvpn-client-requests"
+  role = "${aws_iam_role.openvpn.id}"
+  policy = "${data.aws_iam_policy_document.certificate-requests.json}"
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# CREATE IAM POLICIES THAT ALLOW USERS TO REQUESTS CERTS AND ADMINS TO REVOKE CERTS
+# ----------------------------------------------------------------------------------------------------------------------
+
+data "aws_iam_policy_document" "send-certificate-requests" {
+  statement {
+    sid = "sqsSendMessages"
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      "${aws_sqs_queue.client-request-queue.arn}"
+    ]
+  }
+
+  statement {
+    sid = "sqsCreateRandomQueue"
+    effect = "Allow"
+    actions = [
+      "sqs:CreateQueue",
+      "sqs:DeleteQueue",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage"
+    ]
+    resources = [
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:openvpn-response*"
+    ]
+  }
+
+  statement {
+    sid = "findOpenVpnBucket"
+    effect = "Allow"
+    actions = [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketTagging"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    sid = "getRequestQueueUrl"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/client/request-queue-url"
+    ]
+  }
+
+  statement {
+    sid = "identifyIamUser"
+    effect = "Allow"
+    actions = [
+      "iam:GetUser"
+    ]
+    resources = [
+      # Because AWS IAM Policy Variables (i.e. ${aws:username}) use the same interpolation syntax as Terraform, we have
+      # to escape the $ from Terraform with "$$".
+      "arn:aws:iam::${var.aws_account_id}:user/$${aws:username}"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "certificate-requests-openvpnusers" {
+  name = "${var.name}-users-certificate-requests"
+  description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
+  policy = "${data.aws_iam_policy_document.send-certificate-requests.json}"
+}
+
+data "aws_iam_policy_document" "send-certificate-revocations" {
+  statement {
+    sid = "sqsSendMessages"
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [
+      "${aws_sqs_queue.client-revocation-queue.arn}"
+    ]
+  }
+
+  statement {
+    sid = "findOpenVpnBucket"
+    effect = "Allow"
+    actions = [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketTagging"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
+  name = "${var.name}-admin-certificate-revocations"
+  description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
+  policy = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ADD IAM GROUPS THAT GIVE USERS ACCESS TO THE SQS QUEUES
+# You can add users to these IAM groups to allow them to request or revoke certs.
+# ----------------------------------------------------------------------------------------------------------------------
+
+resource "aws_iam_group" "openvpn-users" {
+  name = "${var.name}-Users"
+}
+
+resource "aws_iam_group" "openvpn-admins" {
+  name = "${var.name}-Admins"
+}
+
+resource "aws_iam_group_policy_attachment" "certificate-requests" {
+  policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
+  group = "${aws_iam_group.openvpn-users.name}"
+}
+
+resource "aws_iam_group_policy_attachment" "revocation-requests" {
+  policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
+  group = "${aws_iam_group.openvpn-admins.name}"
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ADD IAM ROLES THAT GIVE USERS ACCESS TO THE SQS QUEUES
+# Users in other AWS accounts can assume these IAM roles to request or revoke certs. Note that these IAM roles are
+# only created if the
+# ----------------------------------------------------------------------------------------------------------------------
+
+resource "aws_iam_role" "allow_certificate_requests_for_external_accounts" {
+  count = "${signum(length(var.external_account_arns))}"
+  name = "${var.name}-allow-certificate-requests-for-external-accounts"
+  assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
+}
+
+resource "aws_iam_role" "allow_certificate_revocations_for_external_accounts" {
+  count = "${signum(length(var.external_account_arns))}"
+  name = "${var.name}-allow-certificate-revocations-for-external-accounts"
+  assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
+}
+
+data "aws_iam_policy_document" "allow_external_accounts" {
+  statement {
+    effect = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "AWS"
+      identifiers = ["${var.external_account_arns}"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "allow_certificate_requests_for_external_accounts" {
+  role = "${aws_iam_role.allow_certificate_requests_for_external_accounts.id}"
+  policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_external_accounts" {
+  role = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.id}"
+  policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
+}

@@ -23,7 +23,6 @@ function print_usage {
   echo "Required Arguments:"
   echo
   echo -e "  --region\t\t\tThe AWS region where the requests SQS queue is deployed."
-  echo -e "  --role-arn\t\t\tThe IAM role to assume to be able to access the requests SQS queue."
   echo
   echo "Optional Arguments:"
   echo
@@ -105,7 +104,6 @@ function generate_supervisor_config {
   local readonly supervisor_config_path="$1"
   local readonly use_syslog="$2"
   local readonly region="$3"
-  local readonly role_arn="$4"
 
   local stdout_logfile_dest
 
@@ -121,7 +119,7 @@ function generate_supervisor_config {
 
   cat > "$supervisor_config_path" <<EOF
 [program:$BIN_NAME-requests]
-command=$BIN_FULL_PATH process-requests --aws-region "$region" --role-arn "$role_arn"
+command=$BIN_FULL_PATH process-requests --aws-region "$region"
 environment=AWS_DEFAULT_REGION="$region"
 stdout_logfile=$stdout_logfile_dest
 redirect_stderr=true
@@ -148,7 +146,6 @@ function install_supervisord {
 function run_process_requests {
   local is_syslog="$DEFAULT_IS_SYSLOG"
   local region
-  local role_arn
 
   while [[ $# > 0 ]]; do
     local key="$1"
@@ -156,10 +153,6 @@ function run_process_requests {
     case "$key" in
     --region)
       region="$2"
-      shift
-      ;;
-    --role-arn)
-      role_arn="$2"
       shift
       ;;
     --syslog)
@@ -183,15 +176,13 @@ function run_process_requests {
   assert_uid_is_root_or_sudo
   assert_is_ec2_instance
   assert_not_empty "--region" "$region"
-  assert_not_empty "--role-arn" "$role_arn"
 
   install_supervisord
 
   generate_supervisor_config \
     "$SUPERVISOR_CONFIG_PATH" \
     "$is_syslog" \
-    "$region" \
-    "$role_arn"
+    "$region"
 
   start_process_cert_requests
 }

@@ -48,7 +48,7 @@ echo 'Restarting OpenVPN...'
 sudo /etc/init.d/openvpn restart
 
 echo 'Starting Certificate Request/Revoke Daemons...'
-sudo run-process-requests --region "${queue_region}" --role-arn "${assume_iam_role_arn_for_queue_access}"
-sudo run-process-revokes --region "${queue_region}" --role-arn "${assume_iam_role_arn_for_queue_access}"
+sudo run-process-requests --region "${queue_region}"
+sudo run-process-revokes --region "${queue_region}"
 
 sudo touch /etc/openvpn/openvpn-init-complete

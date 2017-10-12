@@ -39,7 +39,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	logger.Debugf("Using Username: %s", username)
 
 	logger.Infof("Looking up SQS queue")
-	requestUrl, err := getRequestUrl(cliContext, aws_helpers.NO_IAM_ROLE)
+	requestUrl, err := getRequestUrl(cliContext)
 	if err != nil {
 		return err
 	}
@@ -51,11 +51,11 @@ func requestNewCertificate(cliContext *cli.Context) error {
 	}
 
 	//Create a new response queue
-	responseQueue, err := createResponseQueue(awsRegion, aws_helpers.NO_IAM_ROLE)
+	responseQueue, err := createResponseQueue(awsRegion)
 	if err != nil {
 		return err
 	}
-	defer deleteResponseQueue(awsRegion, responseQueue, aws_helpers.NO_IAM_ROLE)
+	defer deleteResponseQueue(awsRegion, responseQueue)
 
 	logger.Infof("Submitting request for new certificate to %s", responseQueue)
 	//Put a request for a new certificate on the requestQueue
@@ -66,7 +66,7 @@ func requestNewCertificate(cliContext *cli.Context) error {
 
 	// Wait for a reply from OpenVPN server on the responseQueue
 	logger.Info("Waiting for response from OpenVPN server")
-	receipt, response, err := waitForMessage(awsRegion, aws_helpers.NO_IAM_ROLE, responseQueue, timeout)
+	receipt, response, err := waitForMessage(awsRegion, responseQueue, timeout)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func sendRequest(awsRegion string, requestUrl string, username string, responseQ
 	}
 	requestJson, _ := json.Marshal(req)
 
-	err := aws_helpers.SendMessageToQueue(awsRegion, aws_helpers.NO_IAM_ROLE, requestUrl, string(requestJson))
+	err := aws_helpers.SendMessageToQueue(awsRegion, requestUrl, string(requestJson))
 	if err != nil {
 		return err
 	}
@@ -101,14 +101,14 @@ func processNewCertificateResponse(awsRegion string, resonseQueue string, receip
 	json.Unmarshal([]byte(message), &response)
 
 	if (!response.Success) {
-		aws_helpers.DeleteMessageFromQueue(awsRegion, aws_helpers.NO_IAM_ROLE, resonseQueue, receipt)
+		aws_helpers.DeleteMessageFromQueue(awsRegion, resonseQueue, receipt)
 		return errors.WithStackTrace(fmt.Errorf(response.ErrorMessage))
 	} else {
 		err := createOvpnFile(username, response.Body)
 		if err != nil {
 			return err
 		}
-		aws_helpers.DeleteMessageFromQueue(awsRegion, aws_helpers.NO_IAM_ROLE, resonseQueue, receipt)
+		aws_helpers.DeleteMessageFromQueue(awsRegion, resonseQueue, receipt)
 	}
 
 	return nil

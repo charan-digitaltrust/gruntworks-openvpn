@@ -20,12 +20,7 @@ func processNewCertificateRequests(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using AWS Region: %s", awsRegion)
 
-	roleArn, err := getRoleArn(cliContext)
-	if err != nil {
-		return err
-	}
-
-	requestUrl, err := getRequestUrl(cliContext, roleArn)
+	requestUrl, err := getRequestUrl(cliContext)
 	if err != nil {
 		return err
 	}
@@ -38,7 +33,7 @@ func processNewCertificateRequests(cliContext *cli.Context) error {
 
 	for {
 		// Wait for a request to come in from a client on the requestQueue
-		receipt, request, err := waitForRequestMessage(awsRegion, roleArn, requestUrl, timeout)
+		receipt, request, err := waitForRequestMessage(awsRegion, requestUrl, timeout)
 		if err != nil {
 			if sleepOnFailedToReceiveMessages(err) {
 				continue
@@ -54,12 +49,12 @@ func processNewCertificateRequests(cliContext *cli.Context) error {
 			logger.WithError(err)
 		}
 
-		err = sendCertificateReply(awsRegion, roleArn, responseQueue, certificate, err)
+		err = sendCertificateReply(awsRegion, responseQueue, certificate, err)
 		if err != nil {
 			return err
 		}
 
-		err = aws_helpers.DeleteMessageFromQueue(awsRegion, roleArn, requestUrl, receipt)
+		err = aws_helpers.DeleteMessageFromQueue(awsRegion, requestUrl, receipt)
 		if err != nil {
 			return err
 		}
@@ -70,8 +65,8 @@ func processNewCertificateRequests(cliContext *cli.Context) error {
 	return nil
 }
 
-func waitForRequestMessage(awsRegion string, roleArn string, responseQueue string, timeout int) (receipt string, message string, error error) {
-	receipt, message, err := aws_helpers.WaitForQueueMessage(awsRegion, roleArn, responseQueue, timeout)
+func waitForRequestMessage(awsRegion string, responseQueue string, timeout int) (receipt string, message string, error error) {
+	receipt, message, err := aws_helpers.WaitForQueueMessage(awsRegion, responseQueue, timeout)
 	if err != nil {
 		return "", "", err
 	}
@@ -103,7 +98,7 @@ func processNewCertificateRequestMessage(awsRegion string, receipt string, messa
 
 }
 
-func sendCertificateReply(awsRegion string, roleArn string, responseQueue string, certificate string, error error) error {
+func sendCertificateReply(awsRegion string, responseQueue string, certificate string, error error) error {
 
 	responseMessage := &CertificateResponse{}
 	responseMessage.Success = (error == nil)
@@ -119,7 +114,7 @@ func sendCertificateReply(awsRegion string, roleArn string, responseQueue string
 		return err
 	}
 
-	err = aws_helpers.SendMessageToQueue(awsRegion, roleArn, responseQueue, string(requestJson))
+	err = aws_helpers.SendMessageToQueue(awsRegion, responseQueue, string(requestJson))
 	if err != nil {
 		return err
 	}

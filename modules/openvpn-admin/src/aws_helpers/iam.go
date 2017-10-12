@@ -22,6 +22,8 @@ type StatementEntry struct {
 // A convenience variable that gives you a readable way to specify you don't need an IAM role for the current operation.
 const NO_IAM_ROLE = ""
 
+// Create an AWS Session object in the given region and check that credentials are present. If roleArn is not empty,
+// assume the specified IAM role.
 func CreateAwsSession(awsRegion string, roleArn string) (*session.Session, error) {
 	sess, err := session.NewSession()
 	if err != nil {
