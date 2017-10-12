@@ -328,7 +328,8 @@ data "aws_iam_policy_document" "certificate-requests" {
     effect = "Allow"
     actions = [
       "sqs:SendMessage",
-      "sqs:SendMessageBatch"
+      "sqs:SendMessageBatch",
+      "sqs:ListQueues"
     ]
     resources = [
       "*"
@@ -374,26 +375,10 @@ data "aws_iam_policy_document" "send-certificate-requests" {
   }
 
   statement {
-    sid = "findOpenVpnBucket"
+    sid = "findQueue"
     effect = "Allow"
-    actions = [
-      "s3:ListAllMyBuckets",
-      "s3:GetBucketTagging"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-
-  statement {
-    sid = "getRequestQueueUrl"
-    effect = "Allow"
-    actions = [
-      "s3:GetObject"
-    ]
-    resources = [
-      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/client/request-queue-url"
-    ]
+    actions = ["sqs:ListQueues"]
+    resources = ["*"]
   }
 
   statement {
@@ -429,15 +414,10 @@ data "aws_iam_policy_document" "send-certificate-revocations" {
   }
 
   statement {
-    sid = "findOpenVpnBucket"
+    sid = "findQueue"
     effect = "Allow"
-    actions = [
-      "s3:ListAllMyBuckets",
-      "s3:GetBucketTagging"
-    ]
-    resources = [
-      "*"
-    ]
+    actions = ["sqs:ListQueues"]
+    resources = ["*"]
   }
 }
 
