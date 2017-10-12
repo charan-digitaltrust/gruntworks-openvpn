@@ -13,11 +13,11 @@ import (
 
 const LOGGER_NAME = "aws_helper"
 
-func CreateRandomQueue(awsRegion string, roleArn string, prefix string) (string, error) {
+func CreateRandomQueue(awsRegion string, prefix string) (string, error) {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Creating randomly named SQS queue with prefix %s", prefix)
 
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return "", err
 	}
@@ -40,11 +40,11 @@ func CreateRandomQueue(awsRegion string, roleArn string, prefix string) (string,
 	return *queue.QueueUrl, nil;
 }
 
-func DeleteQueue(awsRegion string, roleArn string, queueUrl string) (error) {
+func DeleteQueue(awsRegion string, queueUrl string) (error) {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Deleting SQS Queue %s", queueUrl)
 
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return err
 	}
@@ -59,11 +59,11 @@ func DeleteQueue(awsRegion string, roleArn string, queueUrl string) (error) {
 	return nil
 }
 
-func DeleteMessageFromQueue(awsRegion string, roleArn string, queueUrl string, receipt string) (error) {
+func DeleteMessageFromQueue(awsRegion string, queueUrl string, receipt string) (error) {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Deleting message from queue %s (%s)", queueUrl, receipt)
 
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return err
 	}
@@ -79,10 +79,10 @@ func DeleteMessageFromQueue(awsRegion string, roleArn string, queueUrl string, r
 	return nil
 }
 
-func SendMessageToQueue(awsRegion string, roleArn string, queueUrl string, message string) (error) {
+func SendMessageToQueue(awsRegion string, queueUrl string, message string) (error) {
 	logger := logging.GetLogger(LOGGER_NAME)
 
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return err
 	}
@@ -105,8 +105,8 @@ func SendMessageToQueue(awsRegion string, roleArn string, queueUrl string, messa
 	return nil
 }
 
-func CreateSqsClient(awsRegion string, roleArn string) (*sqs.SQS, error) {
-	sess, err := CreateAwsSession(awsRegion, roleArn)
+func CreateSqsClient(awsRegion string) (*sqs.SQS, error) {
+	sess, err := CreateAwsSession(awsRegion, NO_IAM_ROLE)
 	if err != nil {
 		return nil, err
 	}
@@ -116,10 +116,10 @@ func CreateSqsClient(awsRegion string, roleArn string) (*sqs.SQS, error) {
 
 // Waits to receive a message from on the queueUrl. Since the API only allows us to wait a max 20 seconds for a new
 // message to arrive, we must loop TIMEOUT/20 number of times to be able to wait for a total of TIMEOUT seconds
-func WaitForQueueMessage(awsRegion string, roleArn string, queueUrl string, timeout int) (string, string, error) {
+func WaitForQueueMessage(awsRegion string, queueUrl string, timeout int) (string, string, error) {
 	logger := logging.GetLogger(LOGGER_NAME)
 
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return "", "", err
 	}
@@ -159,8 +159,8 @@ func WaitForQueueMessage(awsRegion string, roleArn string, queueUrl string, time
 	return "", "", fmt.Errorf("Failed to receive messages on %s within %s seconds", queueUrl, strconv.Itoa(timeout))
 }
 
-func FindQueuesWithNamePrefix(awsRegion string, roleArn string, namePrefix string) ([]string, error) {
-	sqsClient, err := CreateSqsClient(awsRegion, roleArn)
+func FindQueuesWithNamePrefix(awsRegion string, namePrefix string) ([]string, error) {
+	sqsClient, err := CreateSqsClient(awsRegion)
 	if err != nil {
 		return nil, err
 	}

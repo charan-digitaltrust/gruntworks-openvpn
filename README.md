@@ -32,6 +32,17 @@ Users who are members of the proper IAM group will be allowed to use the same [o
 utility to revoke an existing user's certificate. Behind the scenes, the revocation requests will be sent to the server
 via an SQS queue, the certificate will be revoked and a confirmation will be sent to back to the requestor's workstation.
 
+#### Usage with multiple AWS accounts
+If your IAM users are defined in one AWS account (e.g., security account) and the OpenVPN server is deployed in another
+account (e.g., the dev or prod account), then in order for users to be able to request or revoke OpenVPN certificates, 
+they will need access to the SQS queues in the account with the OpenVPN server. When deploying the [openvpn-server 
+module](/modules/openvpn-server), you can specify the ARNs of the AWS account where IAM users are defined using the
+`external_account_arns` parameter, and the module will create two IAM roles—one for users and one for admins—that can be
+assumed by users in those accounts to get access to the SQS queues. See the [how to switch between accounts
+documentation](https://github.com/gruntwork-io/module-security/tree/master/modules/cross-account-iam-roles#how-to-switch-between-accounts)
+for instructions on assuming IAM roles in other AWS accounts.  
+  
+
 ## What is a module?
 
 At [Gruntwork](http://www.gruntwork.io), we've taken the thousands of hours we spent building infrastructure on AWS and

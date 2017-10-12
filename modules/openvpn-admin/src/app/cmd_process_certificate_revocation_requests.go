@@ -20,12 +20,7 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 	}
 	logger.Debugf("Using AWS Region: %s", awsRegion)
 
-	roleArn, err := getRoleArn(cliContext)
-	if err != nil {
-		return err
-	}
-
-	revokeUrl, err := getRevokeUrl(cliContext, roleArn)
+	revokeUrl, err := getRevokeUrl(cliContext)
 	if err != nil {
 		return err
 	}
@@ -38,7 +33,7 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 
 	for {
 		// Wait for a request to come in from a client on the revokeQueue
-		receipt, revokeRequest, err := waitForMessage(awsRegion, roleArn, revokeUrl, timeout)
+		receipt, revokeRequest, err := waitForMessage(awsRegion, revokeUrl, timeout)
 		if err != nil {
 			if sleepOnFailedToReceiveMessages(err) {
 				continue
@@ -53,12 +48,12 @@ func processCertificateRevocationRequests(cliContext *cli.Context) error {
 			logger.WithError(err)
 		}
 
-		err = sendRevokeReply(awsRegion, roleArn, responseQueue, err)
+		err = sendRevokeReply(awsRegion, responseQueue, err)
 		if err != nil {
 			return err
 		}
 
-		err = aws_helpers.DeleteMessageFromQueue(awsRegion, roleArn, revokeUrl, receipt)
+		err = aws_helpers.DeleteMessageFromQueue(awsRegion, revokeUrl, receipt)
 		if err != nil {
 			return err
 		}
@@ -92,7 +87,7 @@ func processRevokeRequest(awsRegion string, receipt string, message string) (str
 
 }
 
-func sendRevokeReply(awsRegion string, roleArn string, responseQueue string, error error) error {
+func sendRevokeReply(awsRegion string, responseQueue string, error error) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 
 	responseMessage := &CertificateRevokeResponse{}
@@ -109,7 +104,7 @@ func sendRevokeReply(awsRegion string, roleArn string, responseQueue string, err
 
 	logger.Debugf("Sending revocation reply %s on %s", string(responseJson), responseQueue)
 
-	err = aws_helpers.SendMessageToQueue(awsRegion, roleArn, responseQueue, string(responseJson))
+	err = aws_helpers.SendMessageToQueue(awsRegion, responseQueue, string(responseJson))
 	if err != nil {
 		return err
 	}

@@ -19,6 +19,14 @@ variable "backup_bucket_name" {
   description = "The name of the s3 bucket that will be used to backup PKI secrets"
 }
 
+variable "request_queue_name" {
+  description = "The name of the sqs queue that will be used to receive new certificate requests. Note that the queue name will be automatically prefixed with 'openvpn-requests-'."
+}
+
+variable "revocation_queue_name" {
+  description = "The name of the sqs queue that will be used to receive certification revocation requests. Note that the queue name will be automatically prefixed with 'openvpn-revocations-'."
+}
+
 variable "kms_key_arn" {
   description = "The Amazon Resource Name (ARN) of the KMS Key that will be used to encrypt/decrypt backup files."
 }
@@ -46,11 +54,6 @@ variable "instance_type" {
 variable "user_data" {
   description = "The User Data script to run on this instance when it is booting."
 }
-
-variable "assume_iam_role_arn_for_queue_access" {
-  description = "The ARN of an IAM role to assume to be able to access the request and revocation SQS queues. This IAM role should be created by the openvpn-user-mgmt module. Note that if your IAM users and the request / revocation SQS queues are defined in a separate AWS account, this will be the ARN of an IAM role in that account."
-}
-
 
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
@@ -86,4 +89,10 @@ variable "backup_bucket_force_destroy" {
 variable "tenancy" {
   description = "The tenancy of this server. Must be one of: default, dedicated, or host."
   default = "default"
+}
+
+variable "external_account_arns" {
+  description = "The ARNs of external AWS accounts where your IAM users are defined. If not empty, this module will create IAM roles that users in those accounts will be able to assume to get access to the request/revocation SQS queues."
+  type = "list"
+  default = []
 }

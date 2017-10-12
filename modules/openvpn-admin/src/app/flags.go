@@ -62,7 +62,7 @@ func getTimeout(cliContext *cli.Context) (int, error) {
 	return timeout, nil
 }
 
-func getRequestUrl(cliContext *cli.Context, roleArn string) (string, error) {
+func getRequestUrl(cliContext *cli.Context) (string, error) {
 	var url string
 	var err error
 
@@ -78,7 +78,7 @@ func getRequestUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	if url == "" {
 		logger.Debug("Locating Request URL in " + awsRegion)
 		// if url flag is empty, try to get it automatically based on naming conventions
-		url, err = getQueueUrl(awsRegion, roleArn, REQUEST_QUEUE_NAME_PREFIX, OPTION_REQUEST_URL)
+		url, err = getQueueUrl(awsRegion, REQUEST_QUEUE_NAME_PREFIX, OPTION_REQUEST_URL)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}
@@ -97,15 +97,7 @@ func getRequestUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	return url, nil
 }
 
-func getRoleArn(cliContext *cli.Context) (string, error) {
-	roleArn := cliContext.String(OPTION_ROLE_ARN)
-	if roleArn == "" {
-		return "", errors.WithStackTrace(MissingRoleArn)
-	}
-	return roleArn, nil
-}
-
-func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
+func getRevokeUrl(cliContext *cli.Context) (string, error) {
 	var url string
 	var err error
 
@@ -121,7 +113,7 @@ func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
 		logger.Debugf("Locating Revoke URL in %s", awsRegion)
 
 		// if url flag is empty, try to get it automatically based on naming conventions
-		url, err = getQueueUrl(awsRegion, roleArn, REVOCATION_QUEUE_NAME_PREFIX, OPTION_REVOKE_URL)
+		url, err = getQueueUrl(awsRegion, REVOCATION_QUEUE_NAME_PREFIX, OPTION_REVOKE_URL)
 		if err != nil {
 			return "", errors.WithStackTrace(err)
 		}
@@ -140,8 +132,8 @@ func getRevokeUrl(cliContext *cli.Context, roleArn string) (string, error) {
 	return url, nil
 }
 
-func getQueueUrl(awsRegion string, roleArn string, queueNamePrefix string, argName string) (string, error) {
-	queueUrls, err := aws_helpers.FindQueuesWithNamePrefix(awsRegion, roleArn, queueNamePrefix)
+func getQueueUrl(awsRegion string, queueNamePrefix string, argName string) (string, error) {
+	queueUrls, err := aws_helpers.FindQueuesWithNamePrefix(awsRegion, queueNamePrefix)
 	if err != nil {
 		return "", err
 	}

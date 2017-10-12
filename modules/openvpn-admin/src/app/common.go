@@ -12,24 +12,24 @@ import (
 	"io/ioutil"
 )
 
-func createResponseQueue(awsRegion string, roleArn string) (string, error) {
-	queueUrl, err := aws_helpers.CreateRandomQueue(awsRegion, roleArn, "openvpn-response")
+func createResponseQueue(awsRegion string) (string, error) {
+	queueUrl, err := aws_helpers.CreateRandomQueue(awsRegion, "openvpn-response")
 	if err != nil {
 		return "", err
 	}
 	return queueUrl, nil
 }
 
-func deleteResponseQueue(awsRegion string, roleArn string, responseQueue string) (error) {
-	err := aws_helpers.DeleteQueue(awsRegion, roleArn, responseQueue)
+func deleteResponseQueue(awsRegion string, responseQueue string) (error) {
+	err := aws_helpers.DeleteQueue(awsRegion, responseQueue)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func waitForMessage(awsRegion string, roleArn string, queue string, timeout int) (string, string, error) {
-	receipt, message, err := aws_helpers.WaitForQueueMessage(awsRegion, roleArn, queue, timeout)
+func waitForMessage(awsRegion string, queue string, timeout int) (string, string, error) {
+	receipt, message, err := aws_helpers.WaitForQueueMessage(awsRegion, queue, timeout)
 	if err != nil {
 		return "", "", err
 	}
