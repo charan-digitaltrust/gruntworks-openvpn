@@ -14,7 +14,7 @@ See the [example](/examples/openvpn-host) for an example of how to use this modu
 
 ```bash
 #!/bin/bash
-sudo gruntwork-install --module-name install-openvpn --tag v0.0.1 --repo https://github.com/gruntwork-io/package-openvpn
+sudo gruntwork-install --module-name install-openvpn --tag v0.4.0 --repo https://github.com/gruntwork-io/package-openvpn
 sudo /usr/local/bin/install-openvpn
 ```
 
