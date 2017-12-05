@@ -7,6 +7,7 @@ readonly OPENVPN_PATH="/etc/openvpn"
 readonly DEFAULT_KEY_SIZE=4096
 readonly DEFAULT_CA_EXPIRATION_DAYS=3650
 readonly DEFAULT_CERT_EXPIRATION_DAYS=3650
+readonly DEFAULT_CRL_EXPIRATION_DAYS=3650
 
 function print_usage {
     echo
@@ -27,6 +28,7 @@ function print_usage {
     echo -e "  --key-size\t\t\tThe size of the DH keys (in bits). Defaults to 4096."
     echo -e "  --ca-expiration-days\t\t\tThe number of days the CA root certificate will be valid for. Defaults to 3650 (10 years)"
     echo -e "  --cert-expiration-days\t\t\tThe number of days the server and user certificates will be valid for. Defaults to 3650 (10 years)."
+    echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
     echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
     echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
     echo
@@ -248,6 +250,18 @@ function generate_easy_rsa_variables_file {
     sed "s~__KEY_COUNTRY__~$1~g; s~__KEY_PROVINCE__~$2~g; s~__KEY_CITY__~$3~g; s~__KEY_ORG__~$4~g; s~__KEY_EMAIL__~$5~g; s~__KEY_OU__~$6~g; s~__KEY_NAME__~$7~g; s~__KEY_SIZE__~$8~g; s~__CA_EXPIRE__~$9~g; s~__KEY_EXPIRE__~${10}~g;" /gruntwork/install-openvpn/vars.local >"$CA_PATH/vars.local"
 }
 
+function update_default_crl_days {
+    echo "Updating default_crl_days in $CA_PATH/openssl-1.0.0.cnf"
+    sed -i 's/^default_crl_days=.*/default_crl_days= $1/' $CA_PATH/openssl-1.0.0.cnf
+}
+
+#generate and revoke a dummy certificate to init certificate revocation list (crl)
+function generate_and_revoke_dummy_certificate {
+    cd $CA_PATH
+    ./build-key --batch dummy
+    ./revoke-full dummy || true
+}
+
 function generate_pki {
     echo "Generating new PKI assets [this will take a long time]..."
     #Build the CA
@@ -262,9 +276,7 @@ function generate_pki {
     #generate an HMAC signature to strengthen the server's TLS integrity verification capabilities
     openvpn --genkey --secret $OPENVPN_PATH/ta.key
 
-    #generate and revoke a dummy certificate to init certificate revocation list (crl)
-    ./build-key --batch dummy
-    ./revoke-full dummy || true
+    generate_and_revoke_dummy_certificate
 }
 
 # Once all of the PKI assets have been generated, upload them to s3 for backup purposes
@@ -290,6 +302,7 @@ function init_openvpn {
     local key_size="$DEFAULT_KEY_SIZE"
     local ca_expiration_days="$DEFAULT_CA_EXPIRATION_DAYS"
     local cert_expiration_days="$DEFAULT_CERT_EXPIRATION_DAYS"
+    local crl_expiration_days="$DEFAULT_CRL_EXPIRATION_DAYS"
 
     local locality=""
     local state=""
@@ -353,6 +366,10 @@ function init_openvpn {
                 cert_expiration_days=$2
                 shift
                 ;;
+            --crl-expiration-days)
+                crl_expiration_days=$2
+                shift
+                ;;
             --vpn-subnet)
                 vpn_subnet=$2
                 shift
@@ -387,6 +404,7 @@ function init_openvpn {
     assert_not_empty " --key-size" "$key_size"
     assert_not_empty "--ca-expiration-days" "$ca_expiration_days"
     assert_not_empty "--cert-expiration-days" "$cert_expiration_days"
+    assert_not_empty "--crl-expiration-days" "$crl_expiration_days"
     assert_not_empty "--vpn-route" "$routes"
     assert_not_empty "--vpn-subnet" "$vpn_subnet"
 
@@ -405,6 +423,8 @@ function init_openvpn {
         generate_pki
         backup_pki_assets_to_s3 "$bucket_name" "$kms_key_id"
     fi
+
+    update_default_crl_days "$crl_expiration_days"
 
     local routesStr=""
     for i in "${routes[@]}"
