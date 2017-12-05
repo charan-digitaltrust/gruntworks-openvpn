@@ -17,7 +17,6 @@ resource "aws_kms_key" "backups" {
   description = "OpenVPN Backup Key"
 }
 
-
 # ---------------------------------------------------------------------------------------------------------------------
 # SETUP DATA STRUCTURES
 # ---------------------------------------------------------------------------------------------------------------------
@@ -32,7 +31,7 @@ data "aws_region" "current" {
 data "aws_availability_zones" "available" {}
 
 data "aws_subnet" "default" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id            = "${data.aws_vpc.default.id}"
   availability_zone = "${data.aws_availability_zones.available.names[0]}"
 }
 
@@ -41,23 +40,24 @@ data "template_file" "user_data" {
 
   vars {
     backup_bucket_name = "${module.openvpn.backup_bucket_name}"
-    kms_key_id="${aws_kms_key.backups.id}"
+    kms_key_id         = "${aws_kms_key.backups.id}"
+
     #WARNING: This should be set to 4096 (default) for production, but this is much faster for test/dev
-    key_size = 2048
-    ca_expiration_days = 3650
+    key_size             = 2048
+    ca_expiration_days   = 3650
     cert_expiration_days = 3650
-    ca_country = "US"
-    ca_state = "NJ"
-    ca_locality = "Marlboro"
-    ca_org = "Gruntwork"
-    ca_org_unit = "OpenVPN"
-    ca_email = "support@gruntwork.io"
-    eip_id = "${module.openvpn.elastic_ip}"
-    request_queue_url = "${module.openvpn.client_request_queue}"
+    ca_country           = "US"
+    ca_state             = "NJ"
+    ca_locality          = "Marlboro"
+    ca_org               = "Gruntwork"
+    ca_org_unit          = "OpenVPN"
+    ca_email             = "support@gruntwork.io"
+    eip_id               = "${module.openvpn.elastic_ip}"
+    request_queue_url    = "${module.openvpn.client_request_queue}"
     revocation_queue_url = "${module.openvpn.client_revocation_queue}"
-    queue_region = "${data.aws_region.current.name}"
-    vpn_subnet = "192.168.99.0 255.255.255.0"
-    routes = "${chomp(join(" ", formatlist("--vpn-route \"%s\" ", list("${cidrhost(data.aws_vpc.default.cidr_block,0)} ${cidrnetmask(data.aws_vpc.default.cidr_block)}"))))}"
+    queue_region         = "${data.aws_region.current.name}"
+    vpn_subnet           = "192.168.99.0 255.255.255.0"
+    routes               = "${chomp(join(" ", formatlist("--vpn-route \"%s\" ", list("${cidrhost(data.aws_vpc.default.cidr_block,0)} ${cidrnetmask(data.aws_vpc.default.cidr_block)}"))))}"
   }
 }
 
@@ -71,23 +71,23 @@ module "openvpn" {
   source = "../../modules/openvpn-server"
 
   aws_account_id = "${var.aws_account_id}"
-  aws_region = "${var.aws_region}"
+  aws_region     = "${var.aws_region}"
 
-  name = "${var.name}"
-  instance_type = "c4.large"
-  ami = "${var.ami}"
-  keypair_name = "${var.keypair_name}"
-  user_data = "${data.template_file.user_data.rendered}"
+  name               = "${var.name}"
+  instance_type      = "c4.large"
+  ami                = "${var.ami}"
+  keypair_name       = "${var.keypair_name}"
+  user_data          = "${data.template_file.user_data.rendered}"
   backup_bucket_name = "${var.backup_bucket_name}"
 
-  request_queue_name = "${var.request_queue_name}"
+  request_queue_name    = "${var.request_queue_name}"
   revocation_queue_name = "${var.revocation_queue_name}"
-  kms_key_arn = "${aws_kms_key.backups.arn}"
-  vpc_id = "${data.aws_vpc.default.id}"
-  subnet_id = "${data.aws_subnet.default.id}"
+  kms_key_arn           = "${aws_kms_key.backups.arn}"
+  vpc_id                = "${data.aws_vpc.default.id}"
+  subnet_id             = "${data.aws_subnet.default.id}"
 
   #WARNING: Only allow SSH from everywhere for test/dev, never in production
-  allow_ssh_from_cidr = true
+  allow_ssh_from_cidr      = true
   allow_ssh_from_cidr_list = ["0.0.0.0/0"]
 
   #WARNING: Only set this to true for testing/dev, never in production
