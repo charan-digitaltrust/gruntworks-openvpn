@@ -33,6 +33,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
+      - run: examples/packer/build-binary.sh
       - run: run-go-tests --circle-ci-2
 
   build:
