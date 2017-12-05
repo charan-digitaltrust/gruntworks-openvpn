@@ -33,7 +33,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
-      - run: CGO_ENABLED=0 build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin --app-name openvpn-admin/src --dest-path examples/bin --ld-flags "-X main.VERSION=$CIRCLE_TAG -extldflags '-static'"
+      - run: CGO_ENABLED=0 build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path examples/bin --ld-flags "-X main.VERSION=$CIRCLE_TAG -extldflags '-static'"
       - run: run-go-tests --circle-ci-2
 
   build:
@@ -42,7 +42,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
-      - run: CGO_ENABLED=0 build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin --app-name openvpn-admin/src --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG -extldflags '-static'"
+      - run: CGO_ENABLED=0 build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG -extldflags '-static'"
       - persist_to_workspace:
           root: .
           paths: bin
