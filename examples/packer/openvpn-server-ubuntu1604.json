@@ -2,7 +2,7 @@
   "variables": {
     "github_oauth_token": "{{env `GITHUB_OAUTH_TOKEN`}}",
     "aws_region": "us-east-1",
-    "gruntwork_installer_version": "v0.0.16",
+    "gruntwork_installer_version": "v0.0.20",
     "active_git_branch": null
   },
   "builders": [
