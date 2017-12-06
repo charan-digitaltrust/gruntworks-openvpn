@@ -4,20 +4,20 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_autoscaling_group" "openvpn" {
-  name = "${var.name}"
+  name                 = "${var.name}"
   launch_configuration = "${aws_launch_configuration.openvpn.name}"
 
   desired_capacity = 1
-  min_size = 1
-  max_size = 1
+  min_size         = 1
+  max_size         = 1
 
   vpc_zone_identifier = ["${var.subnet_id}"]
 
   health_check_type = "EC2"
 
   tag {
-    key = "Name"
-    value = "${var.name}"
+    key                 = "Name"
+    value               = "${var.name}"
     propagate_at_launch = true
   }
 }
@@ -34,12 +34,12 @@ resource "aws_launch_configuration" "openvpn" {
   # without destroying and re-creating the Auto Scaling Group.
   name_prefix = "${var.name}-"
 
-  image_id = "${var.ami}"
-  instance_type = "${var.instance_type}"
-  key_name = "${var.keypair_name}"
-  user_data = "${var.user_data}"
-  security_groups = ["${aws_security_group.openvpn.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.openvpn.name}"
+  image_id                    = "${var.ami}"
+  instance_type               = "${var.instance_type}"
+  key_name                    = "${var.keypair_name}"
+  user_data                   = "${var.user_data}"
+  security_groups             = ["${aws_security_group.openvpn.id}"]
+  iam_instance_profile        = "${aws_iam_instance_profile.openvpn.name}"
   associate_public_ip_address = true
 
   # Important note: whenever using a launch configuration with an auto scaling group, you must set
@@ -56,9 +56,9 @@ resource "aws_launch_configuration" "openvpn" {
 
 # Create the Security Group for the OpenVPN server
 resource "aws_security_group" "openvpn" {
-  name = "${var.name}"
+  name        = "${var.name}"
   description = "For OpenVPN instances EC2 Instances."
-  vpc_id = "${var.vpc_id}"
+  vpc_id      = "${var.vpc_id}"
 
   # See aws_launch_configuration.openvpn for why this directive exists.
   lifecycle {
@@ -68,10 +68,10 @@ resource "aws_security_group" "openvpn" {
 
 # Allow all outbound traffic from the OpenVPN Server
 resource "aws_security_group_rule" "allow_outbound_all" {
-  type = "egress"
-  from_port = 0
-  to_port = 0
-  protocol = "-1"
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = "${aws_security_group.openvpn.id}"
@@ -81,10 +81,10 @@ resource "aws_security_group_rule" "allow_outbound_all" {
 resource "aws_security_group_rule" "allow_inbound_ssh_security_groups" {
   count = "${var.allow_ssh_from_security_group}"
 
-  type = "ingress"
-  from_port = 22
-  to_port = 22
-  protocol = "tcp"
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
   source_security_group_id = "${var.allow_ssh_from_security_group_id}"
 
   security_group_id = "${aws_security_group.openvpn.id}"
@@ -94,10 +94,10 @@ resource "aws_security_group_rule" "allow_inbound_ssh_security_groups" {
 resource "aws_security_group_rule" "allow_inbound_ssh_cidr_blocks" {
   count = "${var.allow_ssh_from_cidr}"
 
-  type = "ingress"
-  from_port = 22
-  to_port = 22
-  protocol = "tcp"
+  type        = "ingress"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
   cidr_blocks = ["${var.allow_ssh_from_cidr_list}"]
 
   security_group_id = "${aws_security_group.openvpn.id}"
@@ -105,10 +105,10 @@ resource "aws_security_group_rule" "allow_inbound_ssh_cidr_blocks" {
 
 # Allow access to the OpenVPN service from Everywhere
 resource "aws_security_group_rule" "allow_inbound_openvpn" {
-  type = "ingress"
-  from_port = "1194"
-  to_port = "1194"
-  protocol = "udp"
+  type        = "ingress"
+  from_port   = "1194"
+  to_port     = "1194"
+  protocol    = "udp"
   cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = "${aws_security_group.openvpn.id}"
@@ -136,8 +136,8 @@ resource "aws_iam_instance_profile" "openvpn" {
 
 # Create the IAM Role where we'll attach permissions
 resource "aws_iam_role" "openvpn" {
-  name = "${var.name}"
-  path = "/"
+  name               = "${var.name}"
+  path               = "/"
   assume_role_policy = "${data.aws_iam_policy_document.instance_assume_role_policy.json}"
 
   # Workaround for a bug where Terraform sometimes doesn't wait long enough for the IAM role to propagate.
@@ -154,6 +154,7 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
 
     principals {
       type = "Service"
+
       identifiers = [
         "ec2.amazonaws.com",
       ]
@@ -167,28 +168,37 @@ resource "aws_iam_role_policy" "openvpn" {
   role = "${aws_iam_role.openvpn.id}"
 
   policy = "${data.aws_iam_policy_document.openvpn.json}"
+
+  # See aws_launch_configuration.openvpn for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Define a baseline set of permissions required by OpenVPN
 data "aws_iam_policy_document" "openvpn" {
   statement {
-    sid = "ReadOnlyEC2"
+    sid    = "ReadOnlyEC2"
     effect = "Allow"
+
     actions = [
       "ec2:Describe*",
       "ec2:CreateTags",
       "ec2:DeleteTags",
       "ec2:TerminateInstances",
     ]
+
     resources = ["*"]
   }
 
   statement {
-    sid = "AssociateAddress"
+    sid    = "AssociateAddress"
     effect = "Allow"
+
     actions = [
       "ec2:AssociateAddress",
     ]
+
     resources = ["*"]
   }
 }
@@ -214,6 +224,7 @@ resource "aws_s3_bucket" "openvpn" {
   versioning {
     enabled = true
   }
+
   tags {
     OpenVPNRole = "BackupBucket"
   }
@@ -221,7 +232,7 @@ resource "aws_s3_bucket" "openvpn" {
 
 resource "aws_s3_bucket_object" "server-prefix" {
   bucket = "${aws_s3_bucket.openvpn.bucket}"
-  key = "server/"
+  key    = "server/"
   source = "/dev/null"
 }
 
@@ -232,55 +243,60 @@ resource "aws_s3_bucket_object" "server-prefix" {
 
 # Define the IAM Policy Document to be used by the IAM Policy
 data "aws_iam_policy_document" "backup" {
-
   # Important for allowing the OpenVPN instance to read and write objects from S3
   statement {
-    sid = "s3ReadWrite"
+    sid    = "s3ReadWrite"
     effect = "Allow"
+
     actions = [
       "s3:Get*",
       "s3:List*",
-      "s3:Put*"
+      "s3:Put*",
     ]
+
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.openvpn.id}",
-      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/*"
+      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/*",
     ]
   }
 
   statement {
-    sid = "s3ListBuckets"
+    sid    = "s3ListBuckets"
     effect = "Allow"
+
     actions = [
       "s3:ListAllMyBuckets",
-      "s3:GetBucketTagging"
+      "s3:GetBucketTagging",
     ]
+
     resources = [
-      "*"
+      "*",
     ]
   }
 
   # Encrypt and decrypt objects from S3
   statement {
-    sid = "kmsEncryptDecrypt"
+    sid    = "kmsEncryptDecrypt"
     effect = "Allow"
+
     actions = [
       "kms:Encrypt",
       "kms:Decrypt",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      "kms:DescribeKey"
+      "kms:DescribeKey",
     ]
+
     resources = [
-      "${var.kms_key_arn}"
+      "${var.kms_key_arn}",
     ]
   }
 }
 
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "backup" {
-  name = "openvpn-backup"
-  role = "${aws_iam_role.openvpn.id}"
+  name   = "openvpn-backup"
+  role   = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.backup.json}"
 }
 
@@ -303,11 +319,11 @@ resource "aws_sqs_queue" "client-revocation-queue" {
 
 # Define the IAM Policy Document to be used by the IAM Policy
 data "aws_iam_policy_document" "certificate-requests" {
-
   # Important for allowing the OpenVPN instance to read and write objects from S3
   statement {
-    sid = "sqsReadDeleteMessages"
+    sid    = "sqsReadDeleteMessages"
     effect = "Allow"
+
     actions = [
       "sqs:ChangeMessageVisibility",
       "sqs:ChangeMessageVisibilityBatch",
@@ -315,32 +331,35 @@ data "aws_iam_policy_document" "certificate-requests" {
       "sqs:DeleteMessageBatch",
       "sqs:PurgeQueue",
       "sqs:ReceiveMessage",
-      "sqs:ReceiveMessageBatch"
+      "sqs:ReceiveMessageBatch",
     ]
+
     resources = [
       "${aws_sqs_queue.client-request-queue.arn}",
-      "${aws_sqs_queue.client-revocation-queue.arn}"
+      "${aws_sqs_queue.client-revocation-queue.arn}",
     ]
   }
 
   statement {
-    sid = "sqsPublishMessages"
+    sid    = "sqsPublishMessages"
     effect = "Allow"
+
     actions = [
       "sqs:SendMessage",
       "sqs:SendMessageBatch",
-      "sqs:ListQueues"
+      "sqs:ListQueues",
     ]
+
     resources = [
-      "*"
+      "*",
     ]
   }
 }
 
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "certificate-requests" {
-  name = "openvpn-client-requests"
-  role = "${aws_iam_role.openvpn.id}"
+  name   = "openvpn-client-requests"
+  role   = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.certificate-requests.json}"
 }
 
@@ -350,81 +369,89 @@ resource "aws_iam_role_policy" "certificate-requests" {
 
 data "aws_iam_policy_document" "send-certificate-requests" {
   statement {
-    sid = "sqsSendMessages"
+    sid    = "sqsSendMessages"
     effect = "Allow"
+
     actions = [
-      "sqs:SendMessage"
+      "sqs:SendMessage",
     ]
+
     resources = [
-      "${aws_sqs_queue.client-request-queue.arn}"
+      "${aws_sqs_queue.client-request-queue.arn}",
     ]
   }
 
   statement {
-    sid = "sqsCreateRandomQueue"
+    sid    = "sqsCreateRandomQueue"
     effect = "Allow"
+
     actions = [
       "sqs:CreateQueue",
       "sqs:DeleteQueue",
       "sqs:ReceiveMessage",
-      "sqs:DeleteMessage"
+      "sqs:DeleteMessage",
     ]
+
     resources = [
-      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:openvpn-response*"
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:openvpn-response*",
     ]
   }
 
   statement {
-    sid = "findQueue"
-    effect = "Allow"
-    actions = ["sqs:ListQueues"]
+    sid       = "findQueue"
+    effect    = "Allow"
+    actions   = ["sqs:ListQueues"]
     resources = ["*"]
   }
 
   statement {
-    sid = "identifyIamUser"
+    sid    = "identifyIamUser"
     effect = "Allow"
+
     actions = [
-      "iam:GetUser"
+      "iam:GetUser",
     ]
+
     resources = [
       # Because AWS IAM Policy Variables (i.e. ${aws:username}) use the same interpolation syntax as Terraform, we have
       # to escape the $ from Terraform with "$$".
-      "arn:aws:iam::${var.aws_account_id}:user/$${aws:username}"
+      "arn:aws:iam::${var.aws_account_id}:user/$${aws:username}",
     ]
   }
 }
 
 resource "aws_iam_policy" "certificate-requests-openvpnusers" {
-  name = "${var.name}-users-certificate-requests"
+  name        = "${var.name}-users-certificate-requests"
   description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
-  policy = "${data.aws_iam_policy_document.send-certificate-requests.json}"
+  policy      = "${data.aws_iam_policy_document.send-certificate-requests.json}"
 }
 
 data "aws_iam_policy_document" "send-certificate-revocations" {
   statement {
-    sid = "sqsSendMessages"
+    sid    = "sqsSendMessages"
     effect = "Allow"
+
     actions = [
-      "sqs:SendMessage"
+      "sqs:SendMessage",
     ]
+
     resources = [
-      "${aws_sqs_queue.client-revocation-queue.arn}"
+      "${aws_sqs_queue.client-revocation-queue.arn}",
     ]
   }
 
   statement {
-    sid = "findQueue"
-    effect = "Allow"
-    actions = ["sqs:ListQueues"]
+    sid       = "findQueue"
+    effect    = "Allow"
+    actions   = ["sqs:ListQueues"]
     resources = ["*"]
   }
 }
 
 resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
-  name = "${var.name}-admin-certificate-revocations"
+  name        = "${var.name}-admin-certificate-revocations"
   description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
-  policy = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
+  policy      = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -442,12 +469,12 @@ resource "aws_iam_group" "openvpn-admins" {
 
 resource "aws_iam_group_policy_attachment" "certificate-requests" {
   policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
-  group = "${aws_iam_group.openvpn-users.name}"
+  group      = "${aws_iam_group.openvpn-users.name}"
 }
 
 resource "aws_iam_group_policy_attachment" "revocation-requests" {
   policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
-  group = "${aws_iam_group.openvpn-admins.name}"
+  group      = "${aws_iam_group.openvpn-admins.name}"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -457,36 +484,37 @@ resource "aws_iam_group_policy_attachment" "revocation-requests" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "allow_certificate_requests_for_external_accounts" {
-  count = "${signum(length(var.external_account_arns))}"
-  name = "${var.name}-allow-certificate-requests-for-external-accounts"
+  count              = "${signum(length(var.external_account_arns))}"
+  name               = "${var.name}-allow-certificate-requests-for-external-accounts"
   assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
 }
 
 resource "aws_iam_role" "allow_certificate_revocations_for_external_accounts" {
-  count = "${signum(length(var.external_account_arns))}"
-  name = "${var.name}-allow-certificate-revocations-for-external-accounts"
+  count              = "${signum(length(var.external_account_arns))}"
+  name               = "${var.name}-allow-certificate-revocations-for-external-accounts"
   assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
 }
 
 data "aws_iam_policy_document" "allow_external_accounts" {
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = ["sts:AssumeRole"]
+
     principals {
-      type = "AWS"
+      type        = "AWS"
       identifiers = ["${var.external_account_arns}"]
     }
   }
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_requests_for_external_accounts" {
-  count = "${signum(length(var.external_account_arns))}"
-  role = "${aws_iam_role.allow_certificate_requests_for_external_accounts.id}"
+  count      = "${signum(length(var.external_account_arns))}"
+  role       = "${aws_iam_role.allow_certificate_requests_for_external_accounts.id}"
   policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_external_accounts" {
-  count = "${signum(length(var.external_account_arns))}"
-  role = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.id}"
+  count      = "${signum(length(var.external_account_arns))}"
+  role       = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.id}"
   policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
 }

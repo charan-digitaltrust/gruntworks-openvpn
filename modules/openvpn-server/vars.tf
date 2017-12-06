@@ -62,37 +62,37 @@ variable "user_data" {
 
 variable "allow_ssh_from_cidr" {
   description = "A boolean that specifies if this server will allow SSH connections from the list of CIDR blocks specified in var.allow_ssh_from_cidr_list."
-  default = false
+  default     = false
 }
 
 variable "allow_ssh_from_cidr_list" {
   description = "A list of IP address ranges in CIDR format from which SSH access will be permitted. Attempts to access the bastion host from all other IP addresses will be blocked. This is only used if var.allow_ssh_from_cidr is true."
-  type = "list"
-  default = []
+  type        = "list"
+  default     = []
 }
 
 variable "allow_ssh_from_security_group" {
   description = "A boolean that specifies if this server will allow SSH connections from the security group specified in var.allow_ssh_from_security_group_id."
-  default = false
+  default     = false
 }
 
 variable "allow_ssh_from_security_group_id" {
   description = "The ID of a security group from which SSH connections will be allowed. Only used if var.allow_ssh_from_security_group is true."
-  default = ""
+  default     = ""
 }
 
 variable "backup_bucket_force_destroy" {
   description = "When a terraform destroy is run, should the backup s3 bucket be destroyed even if it contains files. Should only be set to true for testing/development"
-  default = false
+  default     = false
 }
 
 variable "tenancy" {
   description = "The tenancy of this server. Must be one of: default, dedicated, or host."
-  default = "default"
+  default     = "default"
 }
 
 variable "external_account_arns" {
   description = "The ARNs of external AWS accounts where your IAM users are defined. If not empty, this module will create IAM roles that users in those accounts will be able to assume to get access to the request/revocation SQS queues."
-  type = "list"
-  default = []
+  type        = "list"
+  default     = []
 }
