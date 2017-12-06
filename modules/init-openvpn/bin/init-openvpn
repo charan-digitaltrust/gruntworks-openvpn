@@ -251,8 +251,10 @@ function generate_easy_rsa_variables_file {
 }
 
 function update_default_crl_days {
+    local crl_expiration_days="$1"
+
     echo "Updating default_crl_days in $CA_PATH/openssl-1.0.0.cnf"
-    sed -i 's/^default_crl_days=.*/default_crl_days= $1/' $CA_PATH/openssl-1.0.0.cnf
+    sed -i 's/^default_crl_days=.*/default_crl_days= $crl_expiration_days/' $CA_PATH/openssl-1.0.0.cnf
 }
 
 #generate and revoke a dummy certificate to init certificate revocation list (crl)
@@ -279,17 +281,24 @@ function generate_pki {
     generate_and_revoke_dummy_certificate
 }
 
-# Once all of the PKI assets have been generated, upload them to s3 for backup purposes
-function backup_pki_assets_to_s3 {
-    echo "Backing up new PKI assets to S3..."
-    aws s3 cp /etc/openvpn s3://$1/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$2"
-    aws s3 cp $CA_PATH/vars.local s3://$1/server/vars.local --sse "aws:kms" --sse-kms-key-id "$2"
-}
-
 function change_config_dir_permissions {
     echo "Setting $OPENVPN_PATH owenership and permissions..."
     chown -R nobody:nogroup $OPENVPN_PATH
     chmod -R 770 $OPENVPN_PATH
+}
+
+function add_cron_job {
+    local bucket_name="$1"
+    local kms_key_id="$2"
+
+    cat << EOF > /etc/cron.hourly/backup-openvpn-pki
+#!/bin/bash
+##
+## This is for backing up the OpenVPN Server PKI.
+##
+backup-openvpn-pki "$bucket_name" "$kms_key_id"
+
+EOF
 }
 
 function start_openvpn {
@@ -412,6 +421,7 @@ function init_openvpn {
     assert_uid_is_root_or_sudo
     assert_is_installed aws
     assert_is_installed openssl
+    assert_is_installed backup-openvpn-pki
 
     if $(is_pki_bootstrapped "$bucket_name"); then
         restore_vars_local_from_s3 "$bucket_name" "$kms_key_id"
@@ -421,7 +431,7 @@ function init_openvpn {
         generate_easy_rsa_variables_file "$country" "$state" "$locality" "$org" "$email" "$org_unit" "server" "$key_size" "$ca_expiration_days" "$cert_expiration_days"
         prep_config_dir
         generate_pki
-        backup_pki_assets_to_s3 "$bucket_name" "$kms_key_id"
+        backup-openvpn-pki "$bucket_name" "$kms_key_id"
     fi
 
     update_default_crl_days "$crl_expiration_days"
@@ -435,8 +445,9 @@ function init_openvpn {
     copy_config_templates
     generate_server_conf "$vpn_subnet" "$routesStr" "$key_size"
     change_config_dir_permissions
-    configure_tcpip "$vpn_subnet"
+    configure_tcpip "$bucket_name" "$kms_key_id"
     start_openvpn
+    add_cron_job ""
 
     echo "Success!"
 }

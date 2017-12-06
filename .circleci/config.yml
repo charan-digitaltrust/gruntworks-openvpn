@@ -76,7 +76,6 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-
       - deploy:
           requires:
             - build
@@ -85,7 +84,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-
 
   nightly:
     triggers:

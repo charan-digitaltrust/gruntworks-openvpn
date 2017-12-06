@@ -105,6 +105,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 		t.Run("running test", wrapTestCase(testOpenVpnIsRunning, &testSuite))
 		t.Run("running test", wrapTestCase(testOpenVpnAdminProcessCertsIsRunning, &testSuite))
 		t.Run("running test", wrapTestCase(testOpenVpnRestoresFromS3Correctly, &testSuite))
+		t.Run("running test", wrapTestCase(testCronJobExists, &testSuite))
 	})
 }
 
@@ -233,4 +234,19 @@ func testOpenVpnRestoresFromS3Correctly(t *testing.T, testSuite *suite) {
 		t.Run("running test", wrapTestCase(testOpenVpnIsRunning, testSuite))
 		t.Run("running test", wrapTestCase(testOpenVpnAdminProcessCertsIsRunning, testSuite))
 	})
+}
+
+func testCronJobExists(t *testing.T, testSuite *suite) {
+	commandToTest := "sudo cat /etc/cron.hourly/backup-openvpn-pki"
+	var err error
+	testSuite.output, err = ssh.CheckSshCommand(testSuite.host, commandToTest, testSuite.logger)
+	if err != nil {
+		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
+	}
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(testSuite.output)
+
+	assert.Contains(t, testSuite.output, "backup-openvpn-pki")
 }
