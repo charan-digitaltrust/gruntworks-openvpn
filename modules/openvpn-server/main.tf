@@ -168,6 +168,11 @@ resource "aws_iam_role_policy" "openvpn" {
   role = "${aws_iam_role.openvpn.id}"
 
   policy = "${data.aws_iam_policy_document.openvpn.json}"
+
+  # See aws_launch_configuration.openvpn for why this directive exists.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Define a baseline set of permissions required by OpenVPN
