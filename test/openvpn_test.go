@@ -106,6 +106,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 		t.Run("running test", wrapTestCase(testOpenVpnAdminProcessCertsIsRunning, &testSuite))
 		t.Run("running test", wrapTestCase(testOpenVpnRestoresFromS3Correctly, &testSuite))
 		t.Run("running test", wrapTestCase(testCronJobExists, &testSuite))
+		t.Run("running test", wrapTestCase(testCrlExpirationDateUpdated, &testSuite))
 	})
 }
 
@@ -249,4 +250,19 @@ func testCronJobExists(t *testing.T, testSuite *suite) {
 	t.Log(testSuite.output)
 
 	assert.Contains(t, testSuite.output, "backup-openvpn-pki")
+}
+
+func testCrlExpirationDateUpdated(t *testing.T, testSuite *suite) {
+	commandToTest := "sudo cat /etc/openvpn-ca/openssl-1.0.0.cnf | grep 'default_crl_days= 30'"
+	var err error
+	testSuite.output, err = ssh.CheckSshCommand(testSuite.host, commandToTest, testSuite.logger)
+	if err != nil {
+		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
+	}
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(testSuite.output)
+
+	assert.Contains(t, testSuite.output, "default_crl_days= 30")
 }
