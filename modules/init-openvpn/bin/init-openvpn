@@ -447,7 +447,7 @@ function init_openvpn {
     change_config_dir_permissions
     configure_tcpip "$bucket_name" "$kms_key_id"
     start_openvpn
-    add_cron_job ""
+    add_cron_job "$bucket_name" "$kms_key_id"
 
     echo "Success!"
 }
