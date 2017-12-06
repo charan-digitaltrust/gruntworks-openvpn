@@ -431,7 +431,7 @@ function init_openvpn {
         generate_easy_rsa_variables_file "$country" "$state" "$locality" "$org" "$email" "$org_unit" "server" "$key_size" "$ca_expiration_days" "$cert_expiration_days"
         prep_config_dir
         generate_pki
-        backup-openvpn-pki "$bucket_name" "$kms_key_id"
+        backup-openvpn-pki --s3-bucket-name "$bucket_name" --kms-key-id "$kms_key_id"
     fi
 
     update_default_crl_days "$crl_expiration_days"
