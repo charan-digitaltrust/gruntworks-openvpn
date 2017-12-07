@@ -44,11 +44,11 @@ sudo init-openvpn  \
  --vpn-subnet "${vpn_subnet}" \
  ${routes}
 
+echo 'Starting Certificate Request/Revoke Daemons...'
+sudo run-process-requests --region "${queue_region}" --request-url "${request_queue_url}"
+sudo run-process-revokes --region "${queue_region}" --revoke-url "${revocation_queue_url}"
+
 echo 'Restarting OpenVPN...'
 sudo /etc/init.d/openvpn restart
-
-echo 'Starting Certificate Request/Revoke Daemons...'
-sudo run-process-requests --region "${queue_region}"
-sudo run-process-revokes --region "${queue_region}"
 
 sudo touch /etc/openvpn/openvpn-init-complete
