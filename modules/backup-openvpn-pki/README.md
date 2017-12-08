@@ -1,8 +1,16 @@
 # Backup PKI Assets Module
 
-This module is used to backup the OpenVPN Public Key Infrastructure (PKI) to S3 on a server that has been installed using the [install-openvpn](../install-openvpn) module.
+This module is used to backup the OpenVPN Public Key Infrastructure (PKI) to S3 on a server that has been installed using 
+the [install-openvpn](../install-openvpn) module. 
+
+The PKI is the set of certificates used to verify the server and users' identities for VPN authentication purposes. This
+normally lives on the OpenVPN server in the `/etc/openvpn-ca` and `/etc/openvpn` directories. If we didn't back these files
+up, we would have to reissue client certificates if the OpenVPN server ever needed to be rebuilt. 
 
 ## How do you use this module?
+
+This module is used by the `init-openvpn` module to backup the PKI on initial installation. The `init-openvpn` module
+will also install a `cron` job to automatically backup the PKI on an hourly basis.
 
 #### Example
 
