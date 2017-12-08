@@ -41,7 +41,7 @@ There are several sub-commands and switches that control the behavior of this ut
 |--debug             |Enable verbose logging to the console|Optional|
 |--aws-region        |The region OpenVPN is installed in |request, revoke, process-requests, process-revokes||
 |--username          |The name of the user you are making a certificate request or revocation request for.|revoke (required). request (optional)|IAM username (request command)|
-|--request-url       |The url for the sqs queue used for making OpenVPN configuration (certificate) requests|Optional|finds url automatically|
+|--request-url       |The url for the SQS queue used for making OpenVPN configuration (certificate) requests|Optional|finds url automatically|
 |--revoke-url        |The url for the SQS queue used for making revocation requests|Optional|find url automatically|
 
 ##### Permissions

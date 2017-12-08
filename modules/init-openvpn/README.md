@@ -33,6 +33,7 @@ You can configure several options to control the behavior of OpenVPN.
 |--key-size|The key size (in bits) for server and client certificates|Optional|4096
 |--ca-expiration-days|The number of days the CA root certificate will be valid for|Optional|3650 (10 years)
 |--cert-expiration-days|The number of days a server or user certificate issued by the CA will be valid for|Optional|3650 (10 years)
+|--crl-expiration-days|The number of days the CA Certificate Revocation List (CRL) will be valid for|Optional|3650 (10 years)
 
 
 #### Configure the OpenVPN Package on your EC2 Instances
@@ -60,6 +61,7 @@ sudo init-openvpn  \
  --key-size "4096" \
  --ca-expiration-days "3650" \
  --cert-expiration-days "3650" \
+ --crl-expiration-days "3650" \
  --vpn-subnet "10.1.14.0 255.255.255.0" \
  --vpn-route "10.100.0.0 255.255.0.0" \ 
  --vpn-route "10.101.0.0 255.255.0.0" \

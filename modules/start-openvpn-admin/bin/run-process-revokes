@@ -26,6 +26,7 @@ function print_usage {
   echo
   echo "Optional Arguments:"
   echo
+  echo -e "  --revoke-url\t\t\tThe URL of the revoke queue."
   echo -e "  --syslog\t\t\tIf specified, all log output will be sent to syslog instead of written to a file in /var/log."
   echo
   echo "Example:"
@@ -104,6 +105,7 @@ function generate_supervisor_config {
   local readonly supervisor_config_path="$1"
   local readonly use_syslog="$2"
   local readonly region="$3"
+  local readonly revoke_url="$4"
 
   local stdout_logfile_dest
 
@@ -117,9 +119,14 @@ function generate_supervisor_config {
     stdout_logfile_dest="/var/log/$BIN_NAME-revokes.log"
   fi
 
+  params="--aws-region ""$region"""
+  if [ -n "$revoke_url" ]; then
+    params="--aws-region ""$region"" --revoke-url=""$revoke_url"""
+  fi
+
   cat > "$supervisor_config_path" <<EOF
 [program:$BIN_NAME-revokes]
-command=$BIN_FULL_PATH process-revokes --aws-region "$region"
+command=$BIN_FULL_PATH process-revokes $params
 environment=AWS_DEFAULT_REGION="$region"
 stdout_logfile=$stdout_logfile_dest
 redirect_stderr=true
@@ -146,6 +153,7 @@ function install_supervisord {
 function run_process_requests {
   local is_syslog="$DEFAULT_IS_SYSLOG"
   local region
+  local revoke_url
 
   while [[ $# > 0 ]]; do
     local key="$1"
@@ -153,6 +161,10 @@ function run_process_requests {
     case "$key" in
     --region)
       region="$2"
+      shift
+      ;;
+    --revoke-url)
+      revoke_url="$2"
       shift
       ;;
     --syslog)
@@ -182,7 +194,8 @@ function run_process_requests {
   generate_supervisor_config \
     "$SUPERVISOR_CONFIG_PATH" \
     "$is_syslog" \
-    "$region"
+    "$region" \
+    "$revoke_url"
 
   start_process_cert_revocations
 }

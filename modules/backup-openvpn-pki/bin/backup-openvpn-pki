@@ -1,0 +1,122 @@
+#!/bin/bash
+
+set -e
+
+readonly CA_PATH="/etc/openvpn-ca"
+readonly OPENVPN_PATH="/etc/openvpn"
+
+function print_usage {
+    echo
+    echo "Usage: backup-pki [OPTIONS]"
+    echo
+    echo "Backup PKI to S3."
+    echo
+    echo "Options:"
+    echo
+    echo -e "  --s3-bucket-name\t\t\tThe name of the S3 bucket that will be created to backup PKI assets."
+    echo -e "  --kms-key-id\t\t\tThe id of the KMS key that will be used to encrypt S3 assets."
+    echo
+    echo "Example:"
+    echo
+    echo "  backup-pki \\"
+    echo "    --s3-bucket-name \"gruntwork-openvpn\" \\"
+    echo "    --kms-key-id \"01533cb9-b46b-4380-b63e-54edf025d5d1\" "
+}
+
+# Assert that a given binary is installed on this box
+function assert_is_installed {
+    local readonly name="$1"
+
+    if [[ ! $(command -v ${name}) ]]; then
+        echo "ERROR: The binary '$name' is required by this script but is not installed or in the system's PATH."
+        exit 1
+    fi
+}
+
+# Assert that a command-line arg is not empty
+function assert_not_empty {
+    local readonly arg_name="$1"
+    local readonly arg_value="$2"
+
+    if [[ -z "$arg_value" ]]; then
+        echo "ERROR: The value for '$arg_name' cannot be empty"
+        print_usage
+        exit 1
+    fi
+}
+
+# Assert that the given string is of the given length
+function assert_string_length {
+    local readonly string_name="$1"
+    local readonly string_value="$2"
+    local readonly string_length_desired="$3"
+
+    string_length_actual="${#string_value}"
+    if [[ $string_length_actual != $string_length_desired ]]; then
+        echo "ERROR: The string value for \"$string_name\" must be of length $string_length_desired, but \"$string_value\" is of length $string_length_actual."
+        exit 1
+    fi
+}
+
+# Assert that the script is running as root
+function assert_uid_is_root_or_sudo {
+    if [[ $EUID != 0 ]]; then
+        echo "ERROR: This script should be run using sudo or as the root user"
+        exit 1
+    fi
+}
+
+
+# Once all of the PKI assets have been generated, upload them to s3 for backup purposes
+function backup_pki_assets_to_s3 {
+    echo "Backing up new PKI assets to S3..."
+    aws s3 cp $OPENVPN_PATH s3://$1/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp $CA_PATH/vars.local s3://$1/server/vars.local --sse "aws:kms" --sse-kms-key-id "$2"
+}
+
+
+function backup_pki {
+    local access_key=""
+    local access_secret=""
+    local bucket_name=""
+    local kms_key_id=""
+
+    while [[ $# -gt 0 ]]; do
+        local key="$1"
+
+        case "$key" in
+            --s3-bucket-name)
+                bucket_name=$2
+                shift
+                ;;
+            --kms-key-id)
+                kms_key_id=$2
+                shift
+                ;;
+            --help)
+                print_usage
+                exit
+                ;;
+            *)
+                echo "ERROR: Unrecognized argument: $key"
+                print_usage
+                exit 1
+                ;;
+        esac
+
+        shift
+    done
+
+    assert_not_empty "--s3-bucket-name" "$bucket_name"
+    assert_not_empty "--kms-key-id" "$kms_key_id"
+
+    #Pre-Reqs
+    assert_uid_is_root_or_sudo
+    assert_is_installed aws
+
+    backup_pki_assets_to_s3 "$bucket_name" "$kms_key_id"
+
+    echo "Success!"
+}
+
+backup_pki "$@"
