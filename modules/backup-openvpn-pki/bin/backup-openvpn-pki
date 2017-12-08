@@ -7,7 +7,7 @@ readonly OPENVPN_PATH="/etc/openvpn"
 
 function print_usage {
     echo
-    echo "Usage: backup-pki [OPTIONS]"
+    echo "Usage: backup-openvpn-pki [OPTIONS]"
     echo
     echo "Backup PKI to S3."
     echo
@@ -45,19 +45,6 @@ function assert_not_empty {
     fi
 }
 
-# Assert that the given string is of the given length
-function assert_string_length {
-    local readonly string_name="$1"
-    local readonly string_value="$2"
-    local readonly string_length_desired="$3"
-
-    string_length_actual="${#string_value}"
-    if [[ $string_length_actual != $string_length_desired ]]; then
-        echo "ERROR: The string value for \"$string_name\" must be of length $string_length_desired, but \"$string_value\" is of length $string_length_actual."
-        exit 1
-    fi
-}
-
 # Assert that the script is running as root
 function assert_uid_is_root_or_sudo {
     if [[ $EUID != 0 ]]; then
@@ -69,15 +56,16 @@ function assert_uid_is_root_or_sudo {
 
 # Once all of the PKI assets have been generated, upload them to s3 for backup purposes
 function backup_pki_assets_to_s3 {
+    local readonly bucket_name="$1"
+    local readonly kms_key_id=$2
+
     echo "Backing up new PKI assets to S3..."
-    aws s3 cp $OPENVPN_PATH s3://$1/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$2"
-    aws s3 cp $CA_PATH/vars.local s3://$1/server/vars.local --sse "aws:kms" --sse-kms-key-id "$2"
+    aws s3 cp $OPENVPN_PATH s3://$bucket_name/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$kms_key_id"
+    aws s3 cp $CA_PATH/vars.local s3://$bucket_name/server/vars.local --sse "aws:kms" --sse-kms-key-id "$kms_key_id"
 }
 
 
 function backup_pki {
-    local access_key=""
-    local access_secret=""
     local bucket_name=""
     local kms_key_id=""
 
