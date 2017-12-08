@@ -119,9 +119,9 @@ function generate_supervisor_config {
     stdout_logfile_dest="/var/log/$BIN_NAME-revokes.log"
   fi
 
-  params="--aws-region ""$region"""
-  if [ -n "$revoke_url" ]; then
-    params="--aws-region ""$region"" --revoke-url=""$revoke_url"""
+  params="--aws-region \"$region\""
+  if [[ -n "$revoke_url" ]]; then
+    params="--aws-region \"$region\" --revoke-url=\"$revoke_url\""
   fi
 
   cat > "$supervisor_config_path" <<EOF
