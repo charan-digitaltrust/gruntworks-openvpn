@@ -42,6 +42,12 @@ resource "aws_launch_configuration" "openvpn" {
   iam_instance_profile        = "${aws_iam_instance_profile.openvpn.name}"
   associate_public_ip_address = true
 
+  root_block_device {
+    volume_type = "${var.root_volume_type}"
+    volume_size = "${var.root_volume_size}"
+    delete_on_termination = "${var.root_volume_delete_on_termination}"
+  }
+
   # Important note: whenever using a launch configuration with an auto scaling group, you must set
   # create_before_destroy = true. However, as soon as you set create_before_destroy = true in one resource, you must
   # also set it in every resource that it depends on, or you'll get an error about cyclic dependencies (especially when
