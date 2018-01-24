@@ -96,3 +96,18 @@ variable "external_account_arns" {
   type        = "list"
   default     = []
 }
+
+variable "root_volume_type" {
+  description = "The root volume type. Must be one of: standard, gp2, io1."
+  default = "standard"
+}
+
+variable "root_volume_size" {
+  description = "The size of the root volume, in gigabytes."
+  default = 8
+}
+
+variable "root_volume_delete_on_termination" {
+  description = "If set to true, the root volume will be deleted when the Instance is terminated."
+  default = true
+}
