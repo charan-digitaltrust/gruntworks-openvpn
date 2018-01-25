@@ -45,6 +45,7 @@ resource "aws_launch_configuration" "openvpn" {
   root_block_device {
     volume_type = "${var.root_volume_type}"
     volume_size = "${var.root_volume_size}"
+    iops = "${var.root_volume_iops}"
     delete_on_termination = "${var.root_volume_delete_on_termination}"
   }
 
