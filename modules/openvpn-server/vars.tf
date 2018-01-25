@@ -109,7 +109,7 @@ variable "root_volume_size" {
 
 variable "root_volume_iops" {
   description = "The amount of provisioned IOPS. This is only valid for volume_type of io1, and must be specified if using that type."
-  default = ""
+  default = 400
 }
 
 variable "root_volume_delete_on_termination" {
