@@ -146,12 +146,6 @@ resource "aws_iam_role" "openvpn" {
   name               = "${var.name}"
   path               = "/"
   assume_role_policy = "${data.aws_iam_policy_document.instance_assume_role_policy.json}"
-
-  # Workaround for a bug where Terraform sometimes doesn't wait long enough for the IAM role to propagate.
-  # https://github.com/hashicorp/terraform/issues/2660
-  provisioner "local-exec" {
-    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 30"
-  }
 }
 
 # Use a standard assume-role policy to enable this IAM Role for use with an EC2 Instance
