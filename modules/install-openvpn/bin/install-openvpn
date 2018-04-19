@@ -52,7 +52,6 @@ function copy_wrapper_scripts {
 function install_aws_cli {
     echo "Install AWS CLI..."
     apt-get -y install python-pip jq
-    pip install --upgrade pip
     pip install awscli
 }
 
