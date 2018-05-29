@@ -31,6 +31,7 @@ function print_usage() {
 	echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
+	echo -e "  --search-domains\t\t\tPush DNS search domains to clients. Optional. For example, my.domain.internal another-example.internal"
 	echo
 	echo "Example:"
 	echo
@@ -123,6 +124,7 @@ function generate_server_conf() {
 	local vpnSubnet="$1"
 	local routes="$2"
 	local keySize="$3"
+	local searchDomains="$4"
 	local dnsServer
 	dnsServer=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
 
@@ -150,6 +152,7 @@ ifconfig-pool-persist ipp.txt
 # can be pushed to clients, such as DNS
 # or WINS server addresses.
 push "dhcp-option DNS $dnsServer"
+$searchDomains
 
 keepalive 10 120
 cipher AES-256-CBC
@@ -335,6 +338,7 @@ function init_openvpn() {
 	local kms_key_id=""
 	local region=""
 	local vpn_subnet=""
+	local search_domains=()
 	local routes=()
 
 	while [[ $# -gt 0 ]]; do
@@ -393,6 +397,10 @@ function init_openvpn() {
 			vpn_subnet=$2
 			shift
 			;;
+		--search-domains)
+			search_domains=$2
+			shift
+			;;
 		--vpn-route)
 			routes=("${routes[@]}" "$2")
 			shift
@@ -446,13 +454,18 @@ function init_openvpn() {
 
 	update_default_crl_days "$crl_expiration_days"
 
+	local searchDomainsStr=""
+	for j in $search_domains; do
+		searchDomainsStr=$(printf "$searchDomainsStr\npush \"dhcp-option DOMAIN $j\"")
+	done
+
 	local routesStr=""
 	for i in "${routes[@]}"; do
 		routesStr=$(printf "$routesStr\npush \"route $i\"")
 	done
 
 	copy_config_templates
-	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size"
+	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr"
 	change_config_dir_permissions
 	configure_tcpip "$vpn_subnet"
 	start_openvpn
