@@ -19,7 +19,7 @@ $ openvpn-admin process-revokes --aws-region us-east-1
 Installer](https://github.com/gruntwork-io/gruntwork-installer):
 
 ```
-gruntwork-install --binary-name openvpn-admin --repo https://github.com/gruntwork-io/package-openvpn --tag v0.4.0
+gruntwork-install --binary-name openvpn-admin --repo https://github.com/gruntwork-io/package-openvpn --tag v0.5.4
 ```
 
 Alternatively, you can download the binary from the [Releases
