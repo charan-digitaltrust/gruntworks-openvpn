@@ -144,12 +144,6 @@ function start_process_cert_revocations {
   supervisorctl update
 }
 
-function install_supervisord {
-  apt-get install -y supervisor
-  systemctl enable supervisor
-  systemctl start supervisor
-}
-
 function run_process_requests {
   local is_syslog="$DEFAULT_IS_SYSLOG"
   local region
@@ -188,8 +182,6 @@ function run_process_requests {
   assert_uid_is_root_or_sudo
   assert_is_ec2_instance
   assert_not_empty "--region" "$region"
-
-  install_supervisord
 
   generate_supervisor_config \
     "$SUPERVISOR_CONFIG_PATH" \
