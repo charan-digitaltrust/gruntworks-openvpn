@@ -313,6 +313,8 @@ EOF
 
 function start_openvpn() {
 	echo "Starting OpenVPN..."
+	systemctl enable supervisor
+	systemctl restart supervisor
 	systemctl enable openvpn@server
 	systemctl restart openvpn@server
 }

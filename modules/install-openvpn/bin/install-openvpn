@@ -36,7 +36,7 @@ function create_apt_sources_list_fragment {
 function install_openvpn_package {
     echo "Installing OpenVPN package..."
     apt-get update
-    apt-get -y install openssl easy-rsa openvpn
+    apt-get -y install openssl easy-rsa openvpn supervisor
     echo "Making CA directory in $CA_PATH..."
     make-cadir $CA_PATH
 }
