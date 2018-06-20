@@ -398,7 +398,7 @@ function init_openvpn() {
 			shift
 			;;
 		--search-domain)
-			search_domains=("${search_domains[@]}" "$2")
+			search_domains+=("$2")
 			shift
 			;;
 		--vpn-route)
