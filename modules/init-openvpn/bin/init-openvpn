@@ -31,7 +31,7 @@ function print_usage() {
 	echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
-	echo -e "  --search-domain\t\t\tPush DNS search domain to clients. Optional. For example, my.domain.internal another-example.internal"
+	echo -e "  --search-domain\t\t\tPush a DNS search domain to clients (e.g., my.domain.internal). Optional. May be specified multiple times."
 	echo
 	echo "Example:"
 	echo
