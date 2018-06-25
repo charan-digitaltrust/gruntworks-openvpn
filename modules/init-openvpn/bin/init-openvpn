@@ -303,15 +303,17 @@ function change_config_dir_permissions() {
 function add_backup_pki_cron_job() {
 	local bucket_name="$1"
 	local kms_key_id="$2"
+        local cron_file=/etc/cron.hourly/backup-openvpn-pki
 
-	cat <<EOF >/etc/cron.hourly/backup-openvpn-pki
+	cat <<EOF > "$cron_file"
 #!/bin/bash
 ##
 ## This is for backing up the OpenVPN Server PKI.
 ##
-backup-openvpn-pki "$bucket_name" "$kms_key_id"
+PATH="$PATH" backup-openvpn-pki --s3-bucket-name "$bucket_name" --kms-key-id "$kms_key_id"
 
 EOF
+	chmod +x "$cron_file"
 }
 
 function start_openvpn() {
