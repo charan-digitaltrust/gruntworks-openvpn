@@ -47,3 +47,10 @@ There are several sub-commands and switches that control the behavior of this ut
 ##### Permissions
 - Users requesting a new OpenVPN request must be a member of the `OpenVPNUsers` IAM group. 
 - Users requesting a certificate revocation must a member of the `OpenVPNAdmins` IAM group.
+
+## New Certificate Request Workflow
+![openvpn-request-flow-diagram](./openvpn-request-flow-diagram.svg)
+
+## Revoke Certificate Workflow
+![openvpn-revoke-flow-diagram](./openvpn-revoke-flow-diagram.svg)
+
