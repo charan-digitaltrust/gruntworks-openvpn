@@ -3,6 +3,7 @@
     "github_oauth_token": "{{env `GITHUB_OAUTH_TOKEN`}}",
     "aws_region": "us-east-1",
     "gruntwork_installer_version": "v0.0.20",
+    "bash_commons_version": "v0.0.6",
     "active_git_branch": null
   },
   "builders": [
@@ -56,6 +57,7 @@
       "type": "shell",
       "inline": [
         "DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y",
+        "gruntwork-install --module-name 'bash-commons' --repo 'https://github.com/gruntwork-io/bash-commons' --tag '{{user `bash_commons_version`}}'",
         "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "gruntwork-install --module-name 'backup-openvpn-pki' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
