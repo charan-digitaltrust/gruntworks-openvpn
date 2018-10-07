@@ -4,6 +4,17 @@ set -e
 
 readonly CA_PATH="/etc/openvpn-ca"
 readonly OPENVPN_PATH="/etc/openvpn"
+readonly BASH_COMMONS_DIR="/opt/gruntwork/bash-commons"
+
+if [[ ! -d "$BASH_COMMONS_DIR" ]]; then
+  echo "ERROR: this script requires that bash-commons is installed in $BASH_COMMONS_DIR. See https://github.com/gruntwork-io/bash-commons for more info."
+  exit 1
+fi
+
+source "$BASH_COMMONS_DIR/log.sh"
+source "$BASH_COMMONS_DIR/assert.sh"
+source "$BASH_COMMONS_DIR/os.sh"
+source "$BASH_COMMONS_DIR/file.sh"
 
 function print_usage {
     echo
@@ -23,43 +34,12 @@ function print_usage {
     echo "    --kms-key-id \"01533cb9-b46b-4380-b63e-54edf025d5d1\" "
 }
 
-# Assert that a given binary is installed on this box
-function assert_is_installed {
-    local readonly name="$1"
-
-    if [[ ! $(command -v ${name}) ]]; then
-        echo "ERROR: The binary '$name' is required by this script but is not installed or in the system's PATH."
-        exit 1
-    fi
-}
-
-# Assert that a command-line arg is not empty
-function assert_not_empty {
-    local readonly arg_name="$1"
-    local readonly arg_value="$2"
-
-    if [[ -z "$arg_value" ]]; then
-        echo "ERROR: The value for '$arg_name' cannot be empty"
-        print_usage
-        exit 1
-    fi
-}
-
-# Assert that the script is running as root
-function assert_uid_is_root_or_sudo {
-    if [[ $EUID != 0 ]]; then
-        echo "ERROR: This script should be run using sudo or as the root user"
-        exit 1
-    fi
-}
-
-
 # Once all of the PKI assets have been generated, upload them to s3 for backup purposes
 function backup_pki_assets_to_s3 {
     local readonly bucket_name="$1"
     local readonly kms_key_id=$2
 
-    echo "Backing up new PKI assets to S3..."
+    log_info "Backing up new PKI assets to S3..."
     aws s3 cp $OPENVPN_PATH s3://$bucket_name/server/ --recursive --sse "aws:kms" --sse-kms-key-id "$kms_key_id"
     aws s3 cp $CA_PATH/vars.local s3://$bucket_name/server/vars.local --sse "aws:kms" --sse-kms-key-id "$kms_key_id"
 }
@@ -86,7 +66,7 @@ function backup_pki {
                 exit
                 ;;
             *)
-                echo "ERROR: Unrecognized argument: $key"
+                log_error "Unrecognized argument: $key"
                 print_usage
                 exit 1
                 ;;
@@ -104,7 +84,7 @@ function backup_pki {
 
     backup_pki_assets_to_s3 "$bucket_name" "$kms_key_id"
 
-    echo "Success!"
+    log_info "Success!"
 }
 
 backup_pki "$@"
