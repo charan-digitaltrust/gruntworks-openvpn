@@ -32,7 +32,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 		ipAddress:"",
 	}
 
-	testSuite.region = aws.GetRandomRegion(t, []string{"ca-central-1"}, nil)
+	testSuite.region = aws.GetRandomRegion(t, nil, nil)
 	testSuite.accountId = aws.GetAccountId(t)
 
 	//Build the AMI with packer
@@ -86,7 +86,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 	waitUntilSshAvailable(t, &testSuite)
 	waitUntilOpenVpnInitComplete(t, &testSuite)
 
-	t.Log("SetupSuite Complete, Running Tests")
+	logger.Log(t,"SetupSuite Complete, Running Tests")
 
 	t.Run("openvpn tests", func(t *testing.T) {
 		t.Run("running testOpenVpnIsRunning", wrapTestCase(testOpenVpnIsRunning, &testSuite))
