@@ -21,7 +21,8 @@
           "block-device-mapping.volume-type": "gp2",
           "root-device-type": "ebs"
         },
-        "most_recent": true
+        "most_recent": true,
+        "owners": ["099720109477"]
       },
       "ssh_username": "ubuntu"
     }
