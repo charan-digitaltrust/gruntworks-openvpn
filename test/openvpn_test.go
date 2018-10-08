@@ -17,32 +17,32 @@ import (
 )
 
 type suite struct {
-	terraformOptions   *terraform.Options
-	keyPair            *aws.Ec2Keypair
-	accountId          string
-	region             string
-	ipAddress          string
-	host               ssh.Host
-	output             string
-	instanceId         string
+	terraformOptions *terraform.Options
+	keyPair          *aws.Ec2Keypair
+	accountId        string
+	region           string
+	ipAddress        string
+	host             ssh.Host
+	output           string
+	instanceId       string
 }
 
 func TestOpenVpnInitializationSuite(t *testing.T) {
 	testSuite := suite{
-		ipAddress:"",
+		ipAddress: "",
 	}
 
-	testSuite.region = aws.GetRandomRegion(t, nil, nil)
+	testSuite.region = aws.GetRandomRegion(t, nil, []string{"ap-northeast-1"})
 	testSuite.accountId = aws.GetAccountId(t)
 
 	//Build the AMI with packer
 	packerOptions := &packer.Options{
 		Template: "../examples/packer/openvpn-server-ubuntu1604.json",
 		Vars: map[string]string{
-			"aws_region": testSuite.region,
-			"aws_account_id": testSuite.accountId,
+			"aws_region":             testSuite.region,
+			"aws_account_id":         testSuite.accountId,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
-			"active_git_branch": git.GetCurrentBranchName(t),
+			"active_git_branch":      git.GetCurrentBranchName(t),
 		},
 	}
 
@@ -60,17 +60,16 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 	testSuite.terraformOptions = &terraform.Options{
 		TerraformDir: "../examples/openvpn-host",
 		Vars: map[string]interface{}{
-			"name": getRandomizedString("tst-openvpn-host"),
-			"backup_bucket_name": getRandomizedString("tst-openvpn"),
-			"request_queue_name": getRandomizedString("tst-openvpn-requests"),
+			"name":                  getRandomizedString("tst-openvpn-host"),
+			"backup_bucket_name":    getRandomizedString("tst-openvpn"),
+			"request_queue_name":    getRandomizedString("tst-openvpn-requests"),
 			"revocation_queue_name": getRandomizedString("tst-openvpn-revocations"),
-			"ami": amiId,
-			"keypair_name": testSuite.keyPair.Name,
-			"aws_account_id": testSuite.accountId,
-			"aws_region": testSuite.region,
+			"ami":                   amiId,
+			"keypair_name":          testSuite.keyPair.Name,
+			"aws_account_id":        testSuite.accountId,
+			"aws_region":            testSuite.region,
 		},
 	}
-
 
 	terraform.InitAndApply(t, testSuite.terraformOptions)
 
@@ -86,7 +85,7 @@ func TestOpenVpnInitializationSuite(t *testing.T) {
 	waitUntilSshAvailable(t, &testSuite)
 	waitUntilOpenVpnInitComplete(t, &testSuite)
 
-	logger.Log(t,"SetupSuite Complete, Running Tests")
+	logger.Log(t, "SetupSuite Complete, Running Tests")
 
 	t.Run("openvpn tests", func(t *testing.T) {
 		t.Run("running testOpenVpnIsRunning", wrapTestCase(testOpenVpnIsRunning, &testSuite))
@@ -103,23 +102,23 @@ func wrapTestCase(testCase func(t *testing.T, testSuite *suite), testSuite *suit
 	}
 }
 
-func getRandomizedString(prefix string) (string) {
+func getRandomizedString(prefix string) string {
 	return fmt.Sprintf("%s-%s", prefix, strconv.FormatInt(time.Now().Unix(), 10))
 }
 
 func waitUntilSshAvailable(t *testing.T, testSuite *suite) {
 	// SSH into EC2 Instance
 	testSuite.host = ssh.Host{
-		Hostname: testSuite.ipAddress,
+		Hostname:    testSuite.ipAddress,
 		SshUserName: "ubuntu",
-		SshKeyPair: testSuite.keyPair.KeyPair,
+		SshKeyPair:  testSuite.keyPair.KeyPair,
 	}
 
 	retry.DoWithRetry(
 		t,
 		fmt.Sprintf("SSH to public host %s", testSuite.ipAddress),
 		20,
-		30 * time.Second,
+		30*time.Second,
 		func() (string, error) {
 			return "", ssh.CheckSshConnectionE(t, testSuite.host)
 		},
@@ -132,14 +131,14 @@ func waitUntilOpenVpnInitComplete(t *testing.T, testSuite *suite) {
 		t,
 		fmt.Sprintf("Waiting for OpenVPN initialization to complete"),
 		75,
-		30 * time.Second,
+		30*time.Second,
 		func() (string, error) {
 			return "", initComplete(t, testSuite)
 		},
 	)
 }
 
-func initComplete(t *testing.T, testSuite *suite) (error) {
+func initComplete(t *testing.T, testSuite *suite) error {
 	command := "sudo ls /etc/openvpn/openvpn-init-complete"
 	output, err := ssh.CheckSshCommandE(t, testSuite.host, command)
 
