@@ -22,14 +22,14 @@ source "$BASH_COMMONS_DIR/file.sh"
 
 # Import the public GPG key used to sign the OpenVPN packages.
 function import_gpg_key {
-  local readonly gpg_key_url="$1"
+  local -r gpg_key_url="$1"
   wget -O - "$gpg_key_url" | sudo apt-key add -
 }
 
 # Create a sources.list fragment (as root) so that apt can find the new OpenVPN packages.
 function create_apt_sources_list_fragment {
-    local readonly apt_repo_url="$1"
-    local readonly ubuntu_distro_name="$2"
+    local -r apt_repo_url="$1"
+    local -r ubuntu_distro_name="$2"
 
     file_append_text "deb $apt_repo_url $ubuntu_distro_name main" "/etc/apt/sources.list.d/swupdate.openvpn.net.list"
 }
@@ -65,9 +65,9 @@ function upgrade_openssl {
 
 # Our main function
 function install_openvpn {
-    local readonly ubuntu_distro_name="xenial" # xenial = ubuntu16
-    local readonly apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
-    local readonly gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
+    local -r ubuntu_distro_name="xenial" # xenial = ubuntu16
+    local -r apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
+    local -r gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
 
     assert_uid_is_root_or_sudo
 

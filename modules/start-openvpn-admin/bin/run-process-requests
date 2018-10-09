@@ -48,10 +48,10 @@ function assert_is_ec2_instance {
 }
 
 function generate_supervisor_config {
-  local readonly supervisor_config_path="$1"
-  local readonly use_syslog="$2"
-  local readonly region="$3"
-  local readonly requeust_url="$4"
+  local -r supervisor_config_path="$1"
+  local -r use_syslog="$2"
+  local -r region="$3"
+  local -r requeust_url="$4"
 
   local stdout_logfile_dest
 

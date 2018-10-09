@@ -61,9 +61,9 @@ function print_usage() {
 
 # Assert that the given string is of the given length
 function assert_string_length() {
-	local readonly string_name="$1"
-	local readonly string_value="$2"
-	local readonly string_length_desired="$3"
+	local -r string_name="$1"
+	local -r string_value="$2"
+	local -r string_length_desired="$3"
 
 	string_length_actual="${#string_value}"
 	if [[ $string_length_actual != $string_length_desired ]]; then
@@ -206,9 +206,12 @@ function extractSubnet() {
 }
 
 function configure_tcpip() {
-	local -r subnet=$(extractSubnet "$1")
-	local -r mask=$(extractMask "$1")
-	local -r cidr=$(mask2CIDR $mask)
+	local subnet
+	local mask
+	local cidr
+  subnet=$(extractSubnet "$1")
+	mask=$(extractMask "$1")
+	cidr=$(mask2CIDR $mask)
 	local -r subnet_cidr="$subnet/$cidr"
 
 	log_info "Configure TCP/IP settings..."
@@ -238,17 +241,17 @@ function is_pki_bootstrapped() {
 }
 
 function generate_easy_rsa_variables_file() {
-	local readonly country="$1"
-	local readonly state="$2"
-	local readonly locality="$3"
-	local readonly org="$4"
-	local readonly email="$5"
-	local readonly org_unit="$6"
-	local readonly key_name="$7"
-	local readonly key_size="$8"
-	local readonly ca_expiration_days="$9"
-	local readonly cert_expiration_days="${10}"
-	local readonly vars_file="$CA_PATH/vars.local"
+	local -r country="$1"
+	local -r state="$2"
+	local -r locality="$3"
+	local -r org="$4"
+	local -r email="$5"
+	local -r org_unit="$6"
+	local -r key_name="$7"
+	local -r key_size="$8"
+	local -r ca_expiration_days="$9"
+	local -r cert_expiration_days="${10}"
+	local -r vars_file="$CA_PATH/vars.local"
 
 	log_info "Generating EASY_RSA variables file..."
 	[[ -d "$CA_PATH" ]] || make-cadir $CA_PATH
@@ -268,7 +271,7 @@ function generate_easy_rsa_variables_file() {
 }
 
 function update_default_crl_days() {
-	local readonly crl_expiration_days="$1"
+	local -r crl_expiration_days="$1"
 
 	log_info "Updating default_crl_days to $crl_expiration_days in $CA_PATH/openssl-1.0.0.cnf"
 	file_replace_text "default_crl_days=.*" "default_crl_days= $crl_expiration_days" "$CA_PATH/openssl-1.0.0.cnf"
@@ -306,9 +309,9 @@ function change_config_dir_permissions() {
 }
 
 function add_backup_pki_cron_job() {
-	local readonly bucket_name="$1"
-	local readonly kms_key_id="$2"
-	local readonly cron_file="/etc/cron.hourly/backup-openvpn-pki"
+	local -r bucket_name="$1"
+	local -r kms_key_id="$2"
+	local -r cron_file="/etc/cron.hourly/backup-openvpn-pki"
 
 	cat <<EOF > "$cron_file"
 #!/bin/bash
