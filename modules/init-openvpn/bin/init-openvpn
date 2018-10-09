@@ -206,10 +206,10 @@ function extractSubnet() {
 }
 
 function configure_tcpip() {
-	local readonly subnet=$(extractSubnet "$1")
-	local readonly mask=$(extractMask "$1")
-	local readonly cidr=$(mask2CIDR $mask)
-	local readonly subnet_cidr="$subnet/$cidr"
+	local -r subnet=$(extractSubnet "$1")
+	local -r mask=$(extractMask "$1")
+	local -r cidr=$(mask2CIDR $mask)
+	local -r subnet_cidr="$subnet/$cidr"
 
 	log_info "Configure TCP/IP settings..."
 
