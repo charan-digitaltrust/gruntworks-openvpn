@@ -9,40 +9,42 @@ set -e
 
 readonly CA_PATH="/etc/openvpn-ca"
 readonly OPENVPN_PATH="/etc/openvpn"
+readonly BASH_COMMONS_DIR="/opt/gruntwork/bash-commons"
 
-# Verify we're running as root or sudo
-function assert_uid_is_root_or_sudo {
-    if [[ $EUID != 0 ]]; then
-        echo "ERROR: This script should be run using sudo or as the root user"
-        exit 1
-    fi
-}
+if [[ ! -d "$BASH_COMMONS_DIR" ]]; then
+  echo "ERROR: this script requires that bash-commons is installed in $BASH_COMMONS_DIR. See https://github.com/gruntwork-io/bash-commons for more info."
+  exit 1
+fi
+
+source "$BASH_COMMONS_DIR/log.sh"
+source "$BASH_COMMONS_DIR/assert.sh"
+source "$BASH_COMMONS_DIR/file.sh"
 
 # Import the public GPG key used to sign the OpenVPN packages.
 function import_gpg_key {
-  local readonly gpg_key_url="$1"
+  local -r gpg_key_url="$1"
   wget -O - "$gpg_key_url" | sudo apt-key add -
 }
 
 # Create a sources.list fragment (as root) so that apt can find the new OpenVPN packages.
 function create_apt_sources_list_fragment {
-    local readonly apt_repo_url="$1"
-    local readonly ubuntu_distro_name="$2"
+    local -r apt_repo_url="$1"
+    local -r ubuntu_distro_name="$2"
 
-    echo "deb $apt_repo_url $ubuntu_distro_name main" >/etc/apt/sources.list.d/swupdate.openvpn.net.list
+    file_append_text "deb $apt_repo_url $ubuntu_distro_name main" "/etc/apt/sources.list.d/swupdate.openvpn.net.list"
 }
 
 # Use apt to install the latest OpenVPN
 function install_openvpn_package {
-    echo "Installing OpenVPN package..."
+    log_info "Installing OpenVPN package..."
     apt-get update
     apt-get -y install openssl easy-rsa openvpn supervisor
-    echo "Making CA directory in $CA_PATH..."
+    log_info "Making CA directory in $CA_PATH..."
     make-cadir $CA_PATH
 }
 
 function copy_wrapper_scripts {
-    echo "Installing Wrapper Scripts..."
+    log_info "Installing Wrapper Scripts..."
     cp /gruntwork/install-openvpn/generate-wrapper.sh $CA_PATH
     cp /gruntwork/install-openvpn/revoke-wrapper.sh $CA_PATH
     chmod +x $CA_PATH/generate-wrapper.sh
@@ -50,24 +52,24 @@ function copy_wrapper_scripts {
 }
 
 function install_aws_cli {
-    echo "Install AWS CLI..."
+    log_info "Install AWS CLI..."
     apt-get -y install python-pip jq
     pip install awscli
 }
 
 # Upgrade OpenSSL to the latest version
 function upgrade_openssl {
-    echo "Upgrading OpenSSL..."
+    log_info "Upgrading OpenSSL..."
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y openssl
 }
 
 # Our main function
 function install_openvpn {
-    assert_uid_is_root_or_sudo
+    local -r ubuntu_distro_name="xenial" # xenial = ubuntu16
+    local -r apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
+    local -r gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
 
-    local readonly ubuntu_distro_name="xenial" # xenial = ubuntu16
-    local readonly apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
-    local readonly gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
+    assert_uid_is_root_or_sudo
 
     import_gpg_key "$gpg_key_url"
     create_apt_sources_list_fragment "$apt_repo_url" "$ubuntu_distro_name"

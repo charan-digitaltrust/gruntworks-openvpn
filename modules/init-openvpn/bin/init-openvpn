@@ -8,6 +8,17 @@ readonly DEFAULT_KEY_SIZE=4096
 readonly DEFAULT_CA_EXPIRATION_DAYS=3650
 readonly DEFAULT_CERT_EXPIRATION_DAYS=3650
 readonly DEFAULT_CRL_EXPIRATION_DAYS=3650
+readonly BASH_COMMONS_DIR="/opt/gruntwork/bash-commons"
+
+if [[ ! -d "$BASH_COMMONS_DIR" ]]; then
+  echo "ERROR: this script requires that bash-commons is installed in $BASH_COMMONS_DIR. See https://github.com/gruntwork-io/bash-commons for more info."
+  exit 1
+fi
+
+source "$BASH_COMMONS_DIR/log.sh"
+source "$BASH_COMMONS_DIR/assert.sh"
+source "$BASH_COMMONS_DIR/os.sh"
+source "$BASH_COMMONS_DIR/file.sh"
 
 function print_usage() {
 	echo
@@ -48,45 +59,15 @@ function print_usage() {
 	echo "    --vpn-route \"10.200.0.0 255.255.0.0\" "
 }
 
-# Assert that a given binary is installed on this box
-function assert_is_installed() {
-	local readonly name="$1"
-
-	if [[ ! $(command -v ${name}) ]]; then
-		echo "ERROR: The binary '$name' is required by this script but is not installed or in the system's PATH."
-		exit 1
-	fi
-}
-
-# Assert that a command-line arg is not empty
-function assert_not_empty() {
-	local readonly arg_name="$1"
-	local readonly arg_value="$2"
-
-	if [[ -z "$arg_value" ]]; then
-		echo "ERROR: The value for '$arg_name' cannot be empty"
-		print_usage
-		exit 1
-	fi
-}
-
 # Assert that the given string is of the given length
 function assert_string_length() {
-	local readonly string_name="$1"
-	local readonly string_value="$2"
-	local readonly string_length_desired="$3"
+	local -r string_name="$1"
+	local -r string_value="$2"
+	local -r string_length_desired="$3"
 
 	string_length_actual="${#string_value}"
 	if [[ $string_length_actual != $string_length_desired ]]; then
-		echo "ERROR: The string value for \"$string_name\" must be of length $string_length_desired, but \"$string_value\" is of length $string_length_actual."
-		exit 1
-	fi
-}
-
-# Assert that the script is running as root
-function assert_uid_is_root_or_sudo() {
-	if [[ $EUID != 0 ]]; then
-		echo "ERROR: This script should be run using sudo or as the root user"
+		log_error "The string value for \"$string_name\" must be of length $string_length_desired, but \"$string_value\" is of length $string_length_actual."
 		exit 1
 	fi
 }
@@ -184,7 +165,7 @@ function mask2CIDR() {
 		128) let nbits+=1 ;;
 		0) ;;
 		*)
-			echo "Error: $dec is not a valid netmask"
+			log_error "$dec is not a valid netmask"
 			exit 1
 			;;
 		esac
@@ -225,18 +206,20 @@ function extractSubnet() {
 }
 
 function configure_tcpip() {
-	echo "Configure TCP/IP settings..."
 	local subnet
 	local mask
 	local cidr
-	local subnet_cidr
-
-    subnet=$(extractSubnet "$1")
+  subnet=$(extractSubnet "$1")
 	mask=$(extractMask "$1")
 	cidr=$(mask2CIDR $mask)
-	subnet_cidr="$subnet/$cidr"
+	local -r subnet_cidr="$subnet/$cidr"
+
+	log_info "Configure TCP/IP settings..."
+
 	cp /gruntwork/install-openvpn/ufw-default /etc/default/ufw
-	sed "s~__VPN_SUBNET__~$subnet_cidr~g;" /gruntwork/install-openvpn/before.rules >/etc/ufw/before.rules
+  
+	cp /gruntwork/install-openvpn/before.rules /etc/ufw/before.rules
+	file_replace_text "__VPN_SUBNET__" "$subnet_cidr" /etc/ufw/before.rules
 
 	# Enable TCP forwarding
 	sysctl -w net.ipv4.ip_forward=1
@@ -258,17 +241,41 @@ function is_pki_bootstrapped() {
 }
 
 function generate_easy_rsa_variables_file() {
-	echo "Generating EASY_RSA variables file..."
+	local -r country="$1"
+	local -r state="$2"
+	local -r locality="$3"
+	local -r org="$4"
+	local -r email="$5"
+	local -r org_unit="$6"
+	local -r key_name="$7"
+	local -r key_size="$8"
+	local -r ca_expiration_days="$9"
+	local -r cert_expiration_days="${10}"
+	local -r vars_file="$CA_PATH/vars.local"
+
+	log_info "Generating EASY_RSA variables file..."
 	[[ -d "$CA_PATH" ]] || make-cadir $CA_PATH
-	sed "s~__KEY_COUNTRY__~$1~g; s~__KEY_PROVINCE__~$2~g; s~__KEY_CITY__~$3~g; s~__KEY_ORG__~$4~g; s~__KEY_EMAIL__~$5~g; s~__KEY_OU__~$6~g; s~__KEY_NAME__~$7~g; s~__KEY_SIZE__~$8~g; s~__CA_EXPIRE__~$9~g; s~__KEY_EXPIRE__~${10}~g;" /gruntwork/install-openvpn/vars.local >"$CA_PATH/vars.local"
+
+	cp /gruntwork/install-openvpn/vars.local "$vars_file"
+
+	file_replace_text "__KEY_COUNTRY__"  "$country" "$vars_file"
+	file_replace_text "__KEY_PROVINCE__" "$state" "$vars_file"
+	file_replace_text "__KEY_CITY__" "$locality" "$vars_file"
+	file_replace_text "__KEY_ORG__" "$org" "$vars_file"
+	file_replace_text "__KEY_EMAIL__" "$email" "$vars_file"
+	file_replace_text "__KEY_OU__" "$org_unit" "$vars_file"
+	file_replace_text "__KEY_NAME__" "$key_name" "$vars_file"
+	file_replace_text "__KEY_SIZE__" "$key_size" "$vars_file"
+	file_replace_text "__CA_EXPIRE__" "$ca_expiration_days" "$vars_file"
+	file_replace_text "__KEY_EXPIRE__" "$cert_expiration_days" "$vars_file"
 }
 
 function update_default_crl_days() {
-	local crl_expiration_days="$1"
+	local -r crl_expiration_days="$1"
 
-	echo "Updating default_crl_days to $crl_expiration_days in $CA_PATH/openssl-1.0.0.cnf"
-	sed -i "s~default_crl_days=.*~default_crl_days= $crl_expiration_days~g;" $CA_PATH/openssl-1.0.0.cnf
-    generate_and_revoke_dummy_certificate
+	log_info "Updating default_crl_days to $crl_expiration_days in $CA_PATH/openssl-1.0.0.cnf"
+	file_replace_text "default_crl_days=.*" "default_crl_days= $crl_expiration_days" "$CA_PATH/openssl-1.0.0.cnf"
+	generate_and_revoke_dummy_certificate
 }
 
 #generate and revoke a dummy certificate to init certificate revocation list (crl)
@@ -279,7 +286,7 @@ function generate_and_revoke_dummy_certificate() {
 }
 
 function generate_pki() {
-	echo "Generating new PKI assets [this will take a long time]..."
+	log_info "Generating new PKI assets [this will take a long time]..."
 	#Build the CA
 	./build-ca --batch
 
@@ -296,15 +303,15 @@ function generate_pki() {
 }
 
 function change_config_dir_permissions() {
-	echo "Setting $OPENVPN_PATH owenership and permissions..."
+	log_info "Setting $OPENVPN_PATH owenership and permissions..."
 	chown -R nobody:nogroup $OPENVPN_PATH
 	chmod -R 770 $OPENVPN_PATH
 }
 
 function add_backup_pki_cron_job() {
-	local bucket_name="$1"
-	local kms_key_id="$2"
-        local cron_file=/etc/cron.hourly/backup-openvpn-pki
+	local -r bucket_name="$1"
+	local -r kms_key_id="$2"
+	local -r cron_file="/etc/cron.hourly/backup-openvpn-pki"
 
 	cat <<EOF > "$cron_file"
 #!/bin/bash
@@ -318,7 +325,7 @@ EOF
 }
 
 function start_openvpn() {
-	echo "Starting OpenVPN..."
+	log_info "Starting OpenVPN..."
 	systemctl enable supervisor
 	systemctl restart supervisor
 	systemctl enable openvpn@server
@@ -415,7 +422,7 @@ function init_openvpn() {
 			exit
 			;;
 		*)
-			echo "ERROR: Unrecognized argument: $key"
+			log_error "Unrecognized argument: $key"
 			print_usage
 			exit 1
 			;;
@@ -476,7 +483,7 @@ function init_openvpn() {
 	start_openvpn
 	add_backup_pki_cron_job "$bucket_name" "$kms_key_id"
 
-	echo "Success!"
+	log_info "Success!"
 }
 
 init_openvpn "$@"
