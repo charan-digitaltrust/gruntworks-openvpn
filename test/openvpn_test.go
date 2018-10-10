@@ -2,145 +2,306 @@ package test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/gruntwork-io/terratest/modules/aws"
 	"github.com/gruntwork-io/terratest/modules/git"
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/packer"
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/retry"
 	"github.com/gruntwork-io/terratest/modules/ssh"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
 )
 
-type suite struct {
-	terraformOptions *terraform.Options
-	keyPair          *aws.Ec2Keypair
-	accountId        string
-	region           string
-	ipAddress        string
-	host             ssh.Host
-	output           string
-	instanceId       string
+func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
+	t.Parallel()
+	testOpenVpnInitializationSuite(t, "ubuntu-16")
 }
 
-func TestOpenVpnInitializationSuite(t *testing.T) {
-	testSuite := suite{
-		ipAddress: "",
-	}
+func testOpenVpnInitializationSuite(t *testing.T, osName string) {
+	workingDir := test_structure.CopyTerraformFolderToTemp(t, "../", "examples/openvpn-host")
 
-	testSuite.region = aws.GetRandomRegion(t, nil, []string{"ap-northeast-1"})
-	testSuite.accountId = aws.GetAccountId(t)
+	// At the end of the test, delete the AMI
+	defer test_structure.RunTestStage(t, "cleanup_ami", func() {
+		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+		deleteAMI(t, awsRegion, workingDir)
+	})
 
-	//Build the AMI with packer
+	// At the end of the test, undeploy the web app using Terraform
+	defer test_structure.RunTestStage(t, "cleanup_terraform", func() {
+		undeployUsingTerraform(t, workingDir)
+	})
+
+	// At the end of the test, fetch the most recent syslog entries from each Instance. This can be useful for
+	// debugging issues without having to manually SSH to the server.
+	defer test_structure.RunTestStage(t, "logs", func() {
+		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+		fetchSyslogForInstance(t, awsRegion, workingDir)
+	})
+
+	// Build the AMI for the web app
+	test_structure.RunTestStage(t, "build_ami", func() {
+		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
+		awsRegion := aws.GetRandomRegion(t, nil, []string{"ap-northeast-1"})
+		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
+		buildAMI(t, awsRegion, osName, workingDir)
+	})
+
+	// Create a test container using Terraform
+	test_structure.RunTestStage(t, "deploy_terraform", func() {
+		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+		deployUsingTerraform(t, awsRegion, workingDir)
+	})
+
+	// Validate that the web app deployed and is responding to HTTP requests
+	test_structure.RunTestStage(t, "validate", func() {
+		validateInstanceRunningOpenVPNServer(t, osName, workingDir)
+	})
+
+}
+
+// Build the AMI with packer
+func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string) {
 	packerOptions := &packer.Options{
-		Template: "../examples/packer/openvpn-server-ubuntu1604.json",
+		// The path to where the Packer template is located
+		Template: "../examples/packer/build.json",
+
+		// Only build the AMI
+		Only: fmt.Sprintf("%s-build", osName),
+
+		// Variables to pass to our Packer build using -var options
 		Vars: map[string]string{
-			"aws_region":             testSuite.region,
-			"aws_account_id":         testSuite.accountId,
+			"aws_region":             awsRegion,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
 		},
 	}
 
-	amiId := packer.BuildArtifact(t, packerOptions)
+	// Save the Packer Options so future test stages can use them
+	test_structure.SavePackerOptions(t, workingDir, packerOptions)
 
-	vpc := aws.GetDefaultVpc(t, testSuite.region)
+	// Build the AMI
+	amiID := packer.BuildArtifact(t, packerOptions)
 
+	// Save the AMI ID so future test stages can use them
+	test_structure.SaveArtifactID(t, workingDir, amiID)
+}
+
+// Delete the AMI
+func deleteAMI(t *testing.T, awsRegion string, workingDir string) {
+	// Load the AMI ID and Packer Options saved by the earlier build_ami stage
+	amiID := test_structure.LoadArtifactID(t, workingDir)
+
+	aws.DeleteAmi(t, awsRegion, amiID)
+}
+
+// Deploy the terraform-packer-example using Terraform
+func deployUsingTerraform(t *testing.T, awsRegion string, workingDir string) {
+	// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
+	// tests running in parallel
+	uniqueID := random.UniqueId()
+
+	// Give this EC2 Instance and other resources in the Terraform code a name with a unique ID so it doesn't clash
+	// with anything else in the AWS account.
+	instanceName := fmt.Sprintf("tst-openvpn-host-%s", uniqueID)
+
+	// Load the AMI ID saved by the earlier build_ami stage
+	amiID := test_structure.LoadArtifactID(t, workingDir)
+
+	// Test that there are subnets in our vpc
+	vpc := aws.GetDefaultVpc(t, awsRegion)
 	if len(vpc.Subnets) == 0 {
 		t.Fatalf("Default vpc %s contained no subnets", vpc.Id)
 	}
 
-	testSuite.keyPair = aws.CreateAndImportEC2KeyPair(t, testSuite.region, getRandomizedString("tst-openvpn-key"))
+	// Create a keypair to use to connect to the server
+	keyPairName := fmt.Sprintf("tst-openvpn-key-%s", uniqueID)
+	keyPair := aws.CreateAndImportEC2KeyPair(t, awsRegion, keyPairName)
+	test_structure.SaveEc2KeyPair(t, workingDir, keyPair)
 
-	//Setup terratest
-	testSuite.terraformOptions = &terraform.Options{
-		TerraformDir: "../examples/openvpn-host",
+	terraformOptions := &terraform.Options{
+		// The path to where our Terraform code is located
+		TerraformDir: workingDir,
+
+		// Variables to pass to our Terraform code using -var options
 		Vars: map[string]interface{}{
-			"name":                  getRandomizedString("tst-openvpn-host"),
-			"backup_bucket_name":    getRandomizedString("tst-openvpn"),
-			"request_queue_name":    getRandomizedString("tst-openvpn-requests"),
-			"revocation_queue_name": getRandomizedString("tst-openvpn-revocations"),
-			"ami":                   amiId,
-			"keypair_name":          testSuite.keyPair.Name,
-			"aws_account_id":        testSuite.accountId,
-			"aws_region":            testSuite.region,
+			"aws_account_id":        aws.GetAccountId(t),
+			"aws_region":            awsRegion,
+			"name":                  instanceName,
+			"ami_id":                amiID,
+			"backup_bucket_name":    strings.ToLower(fmt.Sprintf("tst-openvpn-%s", uniqueID)),
+			"request_queue_name":    fmt.Sprintf("tst-openvpn-requests-%s", uniqueID),
+			"revocation_queue_name": fmt.Sprintf("tst-openvpn-revocations-%s", uniqueID),
+			"keypair_name":          keyPair.Name,
 		},
 	}
 
-	terraform.InitAndApply(t, testSuite.terraformOptions)
+	// Save the Terraform Options struct, instance name, and instance text so future test stages can use it
+	test_structure.SaveTerraformOptions(t, workingDir, terraformOptions)
 
-	defer func() {
-		terraform.Destroy(t, testSuite.terraformOptions)
+	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+	terraform.InitAndApply(t, terraformOptions)
+}
 
-		aws.DeleteAmi(t, testSuite.region, amiId)
-		logger.Log(t, "TearDownSuite Complete")
-	}()
+// Undeploy the terraform-packer-example using Terraform
+func undeployUsingTerraform(t *testing.T, workingDir string) {
+	// Load the Terraform Options saved by the earlier deploy_terraform stage
+	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
 
-	testSuite.ipAddress = terraform.Output(t, testSuite.terraformOptions, "openvpn_host_public_ip")
+	terraform.Destroy(t, terraformOptions)
+}
 
-	waitUntilSshAvailable(t, &testSuite)
-	waitUntilOpenVpnInitComplete(t, &testSuite)
+// Fetch the most recent syslogs for the instance. This is a handy way to see what happened on the Instance as part of
+// your test log output, without having to re-run the test and manually SSH to the Instance.
+func fetchSyslogForInstance(t *testing.T, awsRegion string, workingDir string) {
+	// Load the Terraform Options saved by the earlier deploy_terraform stage
+	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+
+	asgName := terraformOptions.Vars["name"].(string)
+
+	instanceIDs := aws.GetInstanceIdsForAsg(t, asgName, awsRegion)
+
+	for _, instanceID := range instanceIDs {
+		logs := aws.GetSyslogForInstance(t, instanceID, awsRegion)
+
+		logger.Logf(t, "Most recent syslog for Instance %s:\n\n%s\n", instanceID, logs)
+	}
+}
+
+// Validate the openvpn server has been deployed and is working
+func validateInstanceRunningOpenVPNServer(t *testing.T, osName string, workingDir string) {
+	// Load the Terraform Options saved by the earlier deploy_terraform stage
+	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+
+	// Load the keypair we saved before we ran terraform
+	keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
+
+	// Run `terraform output` to get the value of an output variable
+	instanceIPAddress := terraform.Output(t, terraformOptions, "openvpn_host_public_ip")
+
+	// Host details used to connect to the host
+	host := ssh.Host{
+		Hostname:    instanceIPAddress,
+		SshUserName: osToSSHUserName(t, osName),
+		SshKeyPair:  keyPair.KeyPair,
+	}
+
+	// It can take a minute or so for the Instance to boot up, so retry a few times
+	maxRetries := 30
+
+	waitUntilSSHAvailable(t, host, maxRetries, 5*time.Second)
+	waitUntilOpenVpnInitComplete(t, host, maxRetries, 30*time.Second)
 
 	logger.Log(t, "SetupSuite Complete, Running Tests")
 
 	t.Run("openvpn tests", func(t *testing.T) {
-		t.Run("running testOpenVpnIsRunning", wrapTestCase(testOpenVpnIsRunning, &testSuite))
-		t.Run("running testOpenVpnAdminProcessRequestsIsRunning", wrapTestCase(testOpenVpnAdminProcessRequestsIsRunning, &testSuite))
-		t.Run("running testOpenVpnAdminProcessRevokesIsRunning", wrapTestCase(testOpenVpnAdminProcessRevokesIsRunning, &testSuite))
-		t.Run("running testCrlExpirationDateUpdated", wrapTestCase(testCrlExpirationDateUpdated, &testSuite))
-		t.Run("running testCronJobExists", wrapTestCase(testCronJobExists, &testSuite))
+		t.Run("running testOpenVpnIsRunning", wrapTestCase(testOpenVpnIsRunning, host))
+		t.Run("running testOpenVpnAdminProcessRequestsIsRunning", wrapTestCase(testOpenVpnAdminProcessRequestsIsRunning, host))
+		t.Run("running testOpenVpnAdminProcessRevokesIsRunning", wrapTestCase(testOpenVpnAdminProcessRevokesIsRunning, host))
+		t.Run("running testCrlExpirationDateUpdated", wrapTestCase(testCrlExpirationDateUpdated, host))
+		t.Run("running testCronJobExists", wrapTestCase(testCronJobExists, host))
 	})
 }
 
-func wrapTestCase(testCase func(t *testing.T, testSuite *suite), testSuite *suite) func(t *testing.T) {
+func testOpenVpnIsRunning(t *testing.T, host ssh.Host) {
+	commandToTest := "sudo ps -ef|grep openvpn"
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(output)
+
+	assert.Contains(t, output, "/usr/sbin/openvpn")
+}
+
+func testOpenVpnAdminProcessRequestsIsRunning(t *testing.T, host ssh.Host) {
+	commandToTest := "sudo ps -ef|grep openvpn"
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(output)
+
+	assert.Contains(t, output, "/usr/local/bin/openvpn-admin process-requests")
+}
+
+func testOpenVpnAdminProcessRevokesIsRunning(t *testing.T, host ssh.Host) {
+	commandToTest := "sudo ps -ef|grep openvpn"
+	var err error
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+	if err != nil {
+		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", host.Hostname, err.Error())
+	}
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(output)
+
+	assert.Contains(t, output, "/usr/local/bin/openvpn-admin process-revokes")
+}
+
+func testCronJobExists(t *testing.T, host ssh.Host) {
+	commandToTest := "sudo cat /etc/cron.hourly/backup-openvpn-pki"
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(output)
+
+	assert.Contains(t, output, "backup-openvpn-pki")
+}
+
+func testCrlExpirationDateUpdated(t *testing.T, host ssh.Host) {
+	commandToTest := "sudo cat /etc/openvpn-ca/openssl-1.0.0.cnf"
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	t.Logf("Result of running \"%s\"\n", commandToTest)
+	t.Log(output)
+
+	assert.Contains(t, output, "default_crl_days= 3650")
+}
+
+func wrapTestCase(testCase func(t *testing.T, host ssh.Host), host ssh.Host) func(t *testing.T) {
 	return func(t *testing.T) {
-		testCase(t, testSuite)
+		testCase(t, host)
 	}
 }
 
-func getRandomizedString(prefix string) string {
-	return fmt.Sprintf("%s-%s", prefix, strconv.FormatInt(time.Now().Unix(), 10))
-}
-
-func waitUntilSshAvailable(t *testing.T, testSuite *suite) {
-	// SSH into EC2 Instance
-	testSuite.host = ssh.Host{
-		Hostname:    testSuite.ipAddress,
-		SshUserName: "ubuntu",
-		SshKeyPair:  testSuite.keyPair.KeyPair,
-	}
+func waitUntilSSHAvailable(t *testing.T, host ssh.Host, maxRetries int, timeBetweenRetries time.Duration) {
 
 	retry.DoWithRetry(
 		t,
-		fmt.Sprintf("SSH to public host %s", testSuite.ipAddress),
-		20,
-		30*time.Second,
+		fmt.Sprintf("SSH to public host %s", host.Hostname),
+		maxRetries,
+		timeBetweenRetries,
 		func() (string, error) {
-			return "", ssh.CheckSshConnectionE(t, testSuite.host)
+			return "", ssh.CheckSshConnectionE(t, host)
 		},
 	)
 
 }
 
-func waitUntilOpenVpnInitComplete(t *testing.T, testSuite *suite) {
+func waitUntilOpenVpnInitComplete(t *testing.T, host ssh.Host, maxRetries int, timeBetweenRetries time.Duration) {
 	retry.DoWithRetry(
 		t,
 		fmt.Sprintf("Waiting for OpenVPN initialization to complete"),
-		75,
-		30*time.Second,
+		maxRetries,
+		timeBetweenRetries,
 		func() (string, error) {
-			return "", initComplete(t, testSuite)
+			return "", initComplete(t, host)
 		},
 	)
 }
 
-func initComplete(t *testing.T, testSuite *suite) error {
+func initComplete(t *testing.T, host ssh.Host) error {
 	command := "sudo ls /etc/openvpn/openvpn-init-complete"
-	output, err := ssh.CheckSshCommandE(t, testSuite.host, command)
+	output, err := ssh.CheckSshCommandE(t, host, command)
 
 	if strings.Contains(output, "such file or directory") {
 		return fmt.Errorf("OpenVPN initialization not yet complete")
@@ -153,61 +314,10 @@ func initComplete(t *testing.T, testSuite *suite) error {
 	return nil
 }
 
-func testOpenVpnIsRunning(t *testing.T, testSuite *suite) {
-	commandToTest := "sudo ps -ef|grep openvpn"
-	testSuite.output = ssh.CheckSshCommand(t, testSuite.host, commandToTest)
-
-	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(testSuite.output)
-
-	assert.Contains(t, testSuite.output, "/usr/sbin/openvpn")
-}
-
-func testOpenVpnAdminProcessRequestsIsRunning(t *testing.T, testSuite *suite) {
-	commandToTest := "sudo ps -ef|grep openvpn"
-	testSuite.output = ssh.CheckSshCommand(t, testSuite.host, commandToTest)
-
-	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(testSuite.output)
-
-	assert.Contains(t, testSuite.output, "/usr/local/bin/openvpn-admin process-requests")
-}
-
-func testOpenVpnAdminProcessRevokesIsRunning(t *testing.T, testSuite *suite) {
-	commandToTest := "sudo ps -ef|grep openvpn"
-	var err error
-	testSuite.output = ssh.CheckSshCommand(t, testSuite.host, commandToTest)
-	if err != nil {
-		t.Fatalf("Failed to SSH to AMI Builder at %s and execute command :%s\n", testSuite.ipAddress, err.Error())
+func osToSSHUserName(t *testing.T, osName string) string {
+	if strings.Contains(osName, "ubuntu") {
+		return "ubuntu"
 	}
-
-	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(testSuite.output)
-
-	assert.Contains(t, testSuite.output, "/usr/local/bin/openvpn-admin process-revokes")
-}
-
-func testCronJobExists(t *testing.T, testSuite *suite) {
-	commandToTest := "sudo cat /etc/cron.hourly/backup-openvpn-pki"
-	testSuite.output = ssh.CheckSshCommand(t, testSuite.host, commandToTest)
-
-	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(testSuite.output)
-
-	assert.Contains(t, testSuite.output, "backup-openvpn-pki")
-}
-
-func testCrlExpirationDateUpdated(t *testing.T, testSuite *suite) {
-	commandToTest := "sudo cat /etc/openvpn-ca/openssl-1.0.0.cnf"
-	testSuite.output = ssh.CheckSshCommand(t, testSuite.host, commandToTest)
-
-	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(testSuite.output)
-
-	assert.Contains(t, testSuite.output, "default_crl_days= 3650")
+	t.Fatalf("Unknown osName - can't map the os (%s) to it's default user", osName)
+	return ""
 }

@@ -73,7 +73,7 @@ module "openvpn" {
 
   name               = "${var.name}"
   instance_type      = "m4.large"
-  ami                = "${var.ami}"
+  ami                = "${var.ami_id}"
   keypair_name       = "${var.keypair_name}"
   user_data          = "${data.template_file.user_data.rendered}"
   backup_bucket_name = "${var.backup_bucket_name}"

@@ -116,6 +116,7 @@
     "modules/shell",
     "modules/ssh",
     "modules/terraform",
+    "modules/test-structure",
   ]
   pruneopts = ""
   revision = "66f4aa69016ca3ded6e5e7fcb93037626b277f29"
@@ -197,9 +198,11 @@
     "github.com/gruntwork-io/terratest/modules/git",
     "github.com/gruntwork-io/terratest/modules/logger",
     "github.com/gruntwork-io/terratest/modules/packer",
+    "github.com/gruntwork-io/terratest/modules/random",
     "github.com/gruntwork-io/terratest/modules/retry",
     "github.com/gruntwork-io/terratest/modules/ssh",
     "github.com/gruntwork-io/terratest/modules/terraform",
+    "github.com/gruntwork-io/terratest/modules/test-structure",
     "github.com/stretchr/testify/assert",
   ]
   solver-name = "gps-cdcl"
