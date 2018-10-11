@@ -150,6 +150,10 @@ func deployUsingTerraform(t *testing.T, awsRegion string, workingDir string) {
 
 // Undeploy the terraform-packer-example using Terraform
 func undeployUsingTerraform(t *testing.T, workingDir string) {
+	// Cleanup the keypair that we created earlier
+	keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
+	aws.DeleteEC2KeyPair(t, keyPair)
+
 	// Load the Terraform Options saved by the earlier deploy_terraform stage
 	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
 
