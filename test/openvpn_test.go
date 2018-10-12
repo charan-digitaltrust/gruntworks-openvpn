@@ -40,8 +40,11 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	// At the end of the test, fetch the most recent syslog entries from each Instance. This can be useful for
 	// debugging issues without having to manually SSH to the server.
 	defer test_structure.RunTestStage(t, "logs", func() {
-		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
-		fetchSyslogForInstance(t, awsRegion, workingDir)
+		if t.Failed() {
+			logger.Log(t, "Fetching logs to help debug test failure.")
+			awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+			fetchSyslogForInstance(t, osName, awsRegion, workingDir)
+		}
 	})
 
 	// Build the AMI for the web app
@@ -162,19 +165,27 @@ func undeployUsingTerraform(t *testing.T, workingDir string) {
 
 // Fetch the most recent syslogs for the instance. This is a handy way to see what happened on the Instance as part of
 // your test log output, without having to re-run the test and manually SSH to the Instance.
-func fetchSyslogForInstance(t *testing.T, awsRegion string, workingDir string) {
+func fetchSyslogForInstance(t *testing.T, osName string, awsRegion string, workingDir string) {
 	// Load the Terraform Options saved by the earlier deploy_terraform stage
 	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
 
 	asgName := terraformOptions.Vars["name"].(string)
 
-	instanceIDs := aws.GetInstanceIdsForAsg(t, asgName, awsRegion)
+	sshUserName := osToSSHUserName(t, osName)
 
-	for _, instanceID := range instanceIDs {
-		logs := aws.GetSyslogForInstance(t, instanceID, awsRegion)
+	keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
 
-		logger.Logf(t, "Most recent syslog for Instance %s:\n\n%s\n", instanceID, logs)
+	logFileSpec := aws.RemoteFileSpecification{
+		AsgNames:               []string{asgName},
+		RemotePathToFileFilter: osToLogPathSpec(t, osName),
+		UseSudo:                false,
+		SshUser:                sshUserName,
+		KeyPair:                keyPair,
+		LocalDestinationDir:    workingDir,
 	}
+
+	aws.FetchFilesFromAsgs(t, awsRegion, logFileSpec)
+
 }
 
 // Validate the openvpn server has been deployed and is working
@@ -217,8 +228,8 @@ func testOpenVpnIsRunning(t *testing.T, host ssh.Host) {
 	output := ssh.CheckSshCommand(t, host, commandToTest)
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(output)
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
 
 	assert.Contains(t, output, "/usr/sbin/openvpn")
 }
@@ -228,8 +239,8 @@ func testOpenVpnAdminProcessRequestsIsRunning(t *testing.T, host ssh.Host) {
 	output := ssh.CheckSshCommand(t, host, commandToTest)
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(output)
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
 
 	assert.Contains(t, output, "/usr/local/bin/openvpn-admin process-requests")
 }
@@ -243,8 +254,8 @@ func testOpenVpnAdminProcessRevokesIsRunning(t *testing.T, host ssh.Host) {
 	}
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(output)
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
 
 	assert.Contains(t, output, "/usr/local/bin/openvpn-admin process-revokes")
 }
@@ -254,8 +265,8 @@ func testCronJobExists(t *testing.T, host ssh.Host) {
 	output := ssh.CheckSshCommand(t, host, commandToTest)
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(output)
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
 
 	assert.Contains(t, output, "backup-openvpn-pki")
 }
@@ -265,8 +276,8 @@ func testCrlExpirationDateUpdated(t *testing.T, host ssh.Host) {
 	output := ssh.CheckSshCommand(t, host, commandToTest)
 
 	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
-	t.Logf("Result of running \"%s\"\n", commandToTest)
-	t.Log(output)
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
 
 	assert.Contains(t, output, "default_crl_days= 3650")
 }
@@ -324,4 +335,14 @@ func osToSSHUserName(t *testing.T, osName string) string {
 	}
 	t.Fatalf("Unknown osName - can't map the os (%s) to it's default user", osName)
 	return ""
+}
+
+func osToLogPathSpec(t *testing.T, osName string) map[string][]string {
+	if strings.Contains(osName, "ubuntu") {
+		return map[string][]string{
+			"/var/log": []string{"cloud-init.log", "cloud-init-output.log", "syslog"},
+		}
+	}
+	t.Fatalf("Unknown osName - can't map the os (%s) to it's default user", osName)
+	return nil
 }

@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:0982c3448eeea2ad099ff9dc271065e32832e6921d302246ae1655b0a3187e9d"
+  digest = "1:8edea77665547a5a9a481abe7f813e825ecf9f1bdbb8960425ac6a59100c79b1"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -53,8 +53,8 @@
     "service/sts",
   ]
   pruneopts = ""
-  revision = "59124d90523f4c0491f997f9a36aef265fe3502c"
-  version = "v1.15.49"
+  revision = "46fe04784968cd7b54e859fcce45753456f736ac"
+  version = "v1.15.52"
 
 [[projects]]
   digest = "1:b529f4bf748979caa18b599d40d13e8b6e591a74b340f315ce4f95e119c288c2"
@@ -101,7 +101,7 @@
   version = "0.2"
 
 [[projects]]
-  digest = "1:87483867d63a4cf71d856bcc0572a81001d51185962aa6d7096cf7f34c90346e"
+  digest = "1:6ec5e119950e8113008fc5e0b1e8d64841327ed490642659345cd06affd03f1d"
   name = "github.com/gruntwork-io/terratest"
   packages = [
     "modules/aws",
@@ -119,8 +119,8 @@
     "modules/test-structure",
   ]
   pruneopts = ""
-  revision = "66f4aa69016ca3ded6e5e7fcb93037626b277f29"
-  version = "v0.12.2"
+  revision = "12218e23e6cf6877e7804c5145d67cd01e084149"
+  version = "v0.13.0"
 
 [[projects]]
   digest = "1:6f49eae0c1e5dab1dafafee34b207aeb7a42303105960944828c2079b92fc88e"
@@ -159,7 +159,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6914c49eed986dfb8dffb33516fa129c49929d4d873f41e073c83c11c372b870"
+  digest = "1:d263c39e9144265037f7473751f48b4193df3efe4763cc72e925c13d5bdbe551"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -172,7 +172,7 @@
     "ssh/agent",
   ]
   pruneopts = ""
-  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
+  revision = "7c1a557ab941a71c619514f229f0b27ccb0c27cf"
 
 [[projects]]
   branch = "master"
