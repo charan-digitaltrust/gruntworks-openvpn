@@ -45,6 +45,6 @@ variable "name" {
   default     = "openvpn-host"
 }
 
-variable "ami" {
-  description = "The ID of the AMI to run. Should be built with packer scripts in /examples/packer"
+variable "ami_id" {
+  description = "The ID of the AMI to run. Should be an AMI built from the Packer template in /examples/packer/build.json"
 }
