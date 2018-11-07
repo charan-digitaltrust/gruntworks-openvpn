@@ -35,7 +35,21 @@ jobs:
           at: /go/src/github.com/gruntwork-io/package-openvpn
       - run: build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path examples/bin --os linux --arch amd64 --ld-flags "-X main.VERSION=$CIRCLE_TAG"
       - run: mv examples/bin/openvpn-admin_linux_amd64 examples/bin/openvpn-admin
-      - run: run-go-tests --circle-ci-2 --path test
+
+      - run:
+          command: |
+              mkdir -p /tmp/logs
+              run-go-tests --circle-ci-2 --path test | tee /tmp/logs/all.log
+
+      - run:
+          name: parse test output
+          command: terratest_log_parser --testlog /tmp/logs/all.log --outputdir /tmp/logs
+          when: always
+      - store_artifacts:
+          path: /tmp/logs
+      - store_test_results:
+          path: /tmp/logs
+
 
   build:
     <<: *defaults
