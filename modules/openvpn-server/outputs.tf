@@ -49,3 +49,12 @@ output "allow_certificate_revocations_for_external_accounts_iam_role_id" {
 output "allow_certificate_revocations_for_external_accounts_iam_role_arn" {
   value = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.*.arn}"
 }
+
+output "openvpn_users_group_name" {
+  value = "${aws_iam_group.openvpn-users.name}"
+}
+
+output "openvpn_admins_group_name" {
+  value = "${aws_iam_group.openvpn-admins.name}"
+}
+
