@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/packer"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/retry"
+	"github.com/gruntwork-io/terratest/modules/shell"
 	"github.com/gruntwork-io/terratest/modules/ssh"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/gruntwork-io/terratest/modules/test-structure"
@@ -19,6 +21,17 @@ import (
 )
 
 func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
+	// For convenience - uncomment these as well as the "os" import
+	// when doing local testing if you need to skip any sections.
+	//os.Setenv("SKIP_", "true")
+	//os.Setenv("SKIP_build_binaries", "true")
+	//os.Setenv("SKIP_build_ami", "true")
+	//os.Setenv("SKIP_deploy_terraform", "true")
+	//os.Setenv("SKIP_validate", "true")
+	//os.Setenv("SKIP_logs", "true")
+	//os.Setenv("SKIP_cleanup_terraform", "true")
+	//os.Setenv("SKIP_cleanup_ami", "true")
+
 	t.Parallel()
 	testOpenVpnInitializationSuite(t, "ubuntu-16")
 }
@@ -34,31 +47,102 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 
 	// At the end of the test, undeploy the web app using Terraform
 	defer test_structure.RunTestStage(t, "cleanup_terraform", func() {
-		undeployUsingTerraform(t, workingDir)
+		// Cleanup the keypair that we created earlier
+		keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
+		aws.DeleteEC2KeyPair(t, keyPair)
+
+		// Load the Terraform Options saved by the earlier deploy_terraform stage
+		terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+
+		terraform.Destroy(t, terraformOptions)
+	})
+
+	//Build the openvpn-admin binary and copy that to examples/bin where the packer build expects to find it.
+	test_structure.RunTestStage(t, "build_binaries", func() {
+		absPath, _ := filepath.Abs(workingDir)
+
+		cmdDeletePrevious := shell.Command{
+			WorkingDir: "../modules/openvpn-admin/src",
+			Command:    "gox",
+			Args: []string{
+				"-os", "linux", // runtime.GOOS,
+				"-arch", "amd64", // runtime.GOARCH,
+				"-parallel", "32",
+				"-output", filepath.Join(absPath, "..", "bin", "openvpn-admin"),
+				"-ldflags", fmt.Sprintf("-X main.VERSION=%s", "TEST"),
+			},
+		}
+
+		shell.RunCommand(t, cmdDeletePrevious)
 	})
 
 	// At the end of the test, fetch the most recent syslog entries from each Instance. This can be useful for
 	// debugging issues without having to manually SSH to the server.
 	defer test_structure.RunTestStage(t, "logs", func() {
-		if t.Failed() {
-			logger.Log(t, "Fetching logs to help debug test failure.")
-			awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
-			fetchSyslogForInstance(t, osName, awsRegion, workingDir)
-		}
+		//if t.Failed() {
+		logger.Log(t, "Fetching logs to help debug test failure.")
+		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+		fetchSyslogForInstance(t, osName, awsRegion, workingDir)
+		//}
 	})
 
 	// Build the AMI for the web app
 	test_structure.RunTestStage(t, "build_ami", func() {
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
-		awsRegion := aws.GetRandomRegion(t, nil, []string{"ap-northeast-1"})
+		awsRegion := aws.GetRandomRegion(t, []string{"us-east-1"}, []string{"ap-northeast-1", "eu-north-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
 		buildAMI(t, awsRegion, osName, workingDir)
+
+		// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
+		// tests running in parallel
+		uniqueID := random.UniqueId()
+
+		// Give this EC2 Instance and other resources in the Terraform code a name with a unique ID so it doesn't clash
+		// with anything else in the AWS account.
+		instanceName := fmt.Sprintf("tst-openvpn-host-%s", uniqueID)
+
+		// Load the AMI ID saved by the earlier build_ami stage
+		amiID := test_structure.LoadArtifactID(t, workingDir)
+
+		// Test that there are subnets in our vpc
+		vpc := aws.GetDefaultVpc(t, awsRegion)
+		if len(vpc.Subnets) == 0 {
+			t.Fatalf("Default vpc %s contained no subnets", vpc.Id)
+		}
+
+		// Create a keypair to use to connect to the server
+		keyPairName := fmt.Sprintf("tst-openvpn-key-%s", uniqueID)
+		keyPair := aws.CreateAndImportEC2KeyPair(t, awsRegion, keyPairName)
+		test_structure.SaveEc2KeyPair(t, workingDir, keyPair)
+
+		terraformOptions := &terraform.Options{
+			// The path to where our Terraform code is located
+			TerraformDir: workingDir,
+
+			// Variables to pass to our Terraform code using -var options
+			Vars: map[string]interface{}{
+				"aws_account_id":        aws.GetAccountId(t),
+				"aws_region":            awsRegion,
+				"name":                  instanceName,
+				"ami_id":                amiID,
+				"backup_bucket_name":    strings.ToLower(fmt.Sprintf("tst-openvpn-%s", uniqueID)),
+				"request_queue_name":    fmt.Sprintf("tst-openvpn-requests-%s", uniqueID),
+				"revocation_queue_name": fmt.Sprintf("tst-openvpn-revocations-%s", uniqueID),
+				"keypair_name":          keyPair.Name,
+			},
+		}
+
+		// Save the Terraform Options struct, instance name, and instance text so future test stages can use it
+		test_structure.SaveTerraformOptions(t, workingDir, terraformOptions)
 	})
 
 	// Create a test container using Terraform
 	test_structure.RunTestStage(t, "deploy_terraform", func() {
-		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
-		deployUsingTerraform(t, awsRegion, workingDir)
+		// Load the Terraform Options saved by the earlier deploy_terraform stage
+		terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+
+		// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+		terraform.InitAndApply(t, terraformOptions)
 	})
 
 	// Validate that the web app deployed and is responding to HTTP requests
@@ -82,6 +166,7 @@ func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string) 
 			"aws_region":             awsRegion,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
+			"openvpn_admin_source":   filepath.Join(workingDir, "..", "bin", "openvpn-admin"),
 		},
 	}
 
@@ -101,66 +186,6 @@ func deleteAMI(t *testing.T, awsRegion string, workingDir string) {
 	amiID := test_structure.LoadArtifactID(t, workingDir)
 
 	aws.DeleteAmi(t, awsRegion, amiID)
-}
-
-// Deploy the terraform-packer-example using Terraform
-func deployUsingTerraform(t *testing.T, awsRegion string, workingDir string) {
-	// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
-	// tests running in parallel
-	uniqueID := random.UniqueId()
-
-	// Give this EC2 Instance and other resources in the Terraform code a name with a unique ID so it doesn't clash
-	// with anything else in the AWS account.
-	instanceName := fmt.Sprintf("tst-openvpn-host-%s", uniqueID)
-
-	// Load the AMI ID saved by the earlier build_ami stage
-	amiID := test_structure.LoadArtifactID(t, workingDir)
-
-	// Test that there are subnets in our vpc
-	vpc := aws.GetDefaultVpc(t, awsRegion)
-	if len(vpc.Subnets) == 0 {
-		t.Fatalf("Default vpc %s contained no subnets", vpc.Id)
-	}
-
-	// Create a keypair to use to connect to the server
-	keyPairName := fmt.Sprintf("tst-openvpn-key-%s", uniqueID)
-	keyPair := aws.CreateAndImportEC2KeyPair(t, awsRegion, keyPairName)
-	test_structure.SaveEc2KeyPair(t, workingDir, keyPair)
-
-	terraformOptions := &terraform.Options{
-		// The path to where our Terraform code is located
-		TerraformDir: workingDir,
-
-		// Variables to pass to our Terraform code using -var options
-		Vars: map[string]interface{}{
-			"aws_account_id":        aws.GetAccountId(t),
-			"aws_region":            awsRegion,
-			"name":                  instanceName,
-			"ami_id":                amiID,
-			"backup_bucket_name":    strings.ToLower(fmt.Sprintf("tst-openvpn-%s", uniqueID)),
-			"request_queue_name":    fmt.Sprintf("tst-openvpn-requests-%s", uniqueID),
-			"revocation_queue_name": fmt.Sprintf("tst-openvpn-revocations-%s", uniqueID),
-			"keypair_name":          keyPair.Name,
-		},
-	}
-
-	// Save the Terraform Options struct, instance name, and instance text so future test stages can use it
-	test_structure.SaveTerraformOptions(t, workingDir, terraformOptions)
-
-	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
-	terraform.InitAndApply(t, terraformOptions)
-}
-
-// Undeploy the terraform-packer-example using Terraform
-func undeployUsingTerraform(t *testing.T, workingDir string) {
-	// Cleanup the keypair that we created earlier
-	keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
-	aws.DeleteEC2KeyPair(t, keyPair)
-
-	// Load the Terraform Options saved by the earlier deploy_terraform stage
-	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
-
-	terraform.Destroy(t, terraformOptions)
 }
 
 // Fetch the most recent syslogs for the instance. This is a handy way to see what happened on the Instance as part of
@@ -340,7 +365,7 @@ func osToSSHUserName(t *testing.T, osName string) string {
 func osToLogPathSpec(t *testing.T, osName string) map[string][]string {
 	if strings.Contains(osName, "ubuntu") {
 		return map[string][]string{
-			"/var/log": []string{"cloud-init.log", "cloud-init-output.log", "syslog"},
+			"/var/log": {"cloud-init.log", "cloud-init-output.log", "syslog"},
 		}
 	}
 	t.Fatalf("Unknown osName - can't map the os (%s) to it's default user", osName)
