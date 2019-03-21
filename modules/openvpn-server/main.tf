@@ -43,9 +43,9 @@ resource "aws_launch_configuration" "openvpn" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_type = "${var.root_volume_type}"
-    volume_size = "${var.root_volume_size}"
-    iops = "${var.root_volume_iops}"
+    volume_type           = "${var.root_volume_type}"
+    volume_size           = "${var.root_volume_size}"
+    iops                  = "${var.root_volume_iops}"
     delete_on_termination = "${var.root_volume_delete_on_termination}"
   }
 
@@ -470,6 +470,18 @@ resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
   name        = "${var.name}-admin-certificate-revocations"
   description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
   policy      = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# CREATE IAM POLICIES THAT ALLOW AWS SSM HEALTHCHECKS TO FUNCTION
+# ----------------------------------------------------------------------------------------------------------------------
+
+module "aws_ssm_permissions" {
+  source = "../../../module-security/modules/iam-ssm-healthchecks"
+  # source = "git::git@github.com:gruntwork-io/module-security.git//modules/iam-ssm-healthchecks?ref=v0.0.1"
+
+  iam_role_id = "${aws_iam_role.openvpn.id}"
+  name_prefix = "${var.name}"
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
