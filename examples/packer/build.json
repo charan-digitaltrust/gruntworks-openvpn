@@ -2,6 +2,7 @@
   "variables": {
     "github_oauth_token": "{{env `GITHUB_OAUTH_TOKEN`}}",
     "aws_region": "us-east-1",
+    "openvpn_admin_source": "{{ template_dir }}/../bin/openvpn-admin",
     "gruntwork_installer_version": "v0.0.20",
     "bash_commons_version": "v0.0.6",
     "active_git_branch": null
@@ -38,7 +39,7 @@
     },
     {
       "type": "file",
-      "source": "{{ template_dir }}/../bin/openvpn-admin",
+      "source": "{{user `openvpn_admin_source`}}",
       "destination": "/tmp/openvpn-admin"
     },
     {
