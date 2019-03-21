@@ -27,3 +27,4 @@ vendor
 # OpenVPN Client Config files
 *.ovpn
 !/modules/install-openvpn/files/openvpn-client.ovpn
+examples/openvpn-host/.test-data
