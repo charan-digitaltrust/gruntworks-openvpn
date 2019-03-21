@@ -52,7 +52,10 @@
     {
       "type": "shell",
       "remote_folder": "/home/ubuntu",
-      "inline": "curl -Ls https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh | bash /dev/stdin --version {{user `gruntwork_installer_version`}}"
+      "inline": [
+        "echo curling: https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh with version: {{user `gruntwork_installer_version`}}",
+        "curl -Ls https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh | bash /dev/stdin --version {{user `gruntwork_installer_version`}}"
+      ]
     },
     {
       "type": "shell",
