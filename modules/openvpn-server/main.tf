@@ -473,18 +473,6 @@ resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-# CREATE IAM POLICIES THAT ALLOW AWS SSM HEALTHCHECKS TO FUNCTION
-# ----------------------------------------------------------------------------------------------------------------------
-
-module "aws_ssm_permissions" {
-  source = "../../../module-security/modules/iam-ssm-healthchecks"
-  # source = "git::git@github.com:gruntwork-io/module-security.git//modules/iam-ssm-healthchecks?ref=v0.0.1"
-
-  iam_role_id = "${aws_iam_role.openvpn.id}"
-  name_prefix = "${var.name}"
-}
-
-# ----------------------------------------------------------------------------------------------------------------------
 # ADD IAM GROUPS THAT GIVE USERS ACCESS TO THE SQS QUEUES
 # You can add users to these IAM groups to allow them to request or revoke certs.
 # ----------------------------------------------------------------------------------------------------------------------
