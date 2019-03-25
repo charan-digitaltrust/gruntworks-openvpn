@@ -39,6 +39,14 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	workingDir := test_structure.CopyTerraformFolderToTemp(t, "../", "examples/openvpn-host")
 
+	absPath, err := filepath.Abs(workingDir)
+
+	if err != nil {
+		t.Fatalf("Error: %s", err.Error())
+	}
+
+	openVpnAdminBinaryPath := filepath.Join(absPath, "..", "bin", "openvpn-admin")
+
 	// At the end of the test, delete the AMI
 	defer test_structure.RunTestStage(t, "cleanup_ami", func() {
 		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
@@ -59,7 +67,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 
 	//Build the openvpn-admin binary and copy that to examples/bin where the packer build expects to find it.
 	test_structure.RunTestStage(t, "build_binaries", func() {
-		absPath, _ := filepath.Abs(workingDir)
+
 
 		cmdDeletePrevious := shell.Command{
 			WorkingDir: "../modules/openvpn-admin/src",
@@ -68,7 +76,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 				"-os", "linux", // runtime.GOOS,
 				"-arch", "amd64", // runtime.GOARCH,
 				"-parallel", "32",
-				"-output", filepath.Join(absPath, "..", "bin", "openvpn-admin"),
+				"-output", openVpnAdminBinaryPath,
 				"-ldflags", fmt.Sprintf("-X main.VERSION=%s", "TEST"),
 			},
 		}
@@ -91,7 +99,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
 		awsRegion := aws.GetRandomRegion(t, nil, []string{"ap-northeast-1", "eu-north-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
-		buildAMI(t, awsRegion, osName, workingDir)
+		buildAMI(t, awsRegion, osName, workingDir, openVpnAdminBinaryPath)
 
 		// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
 		// tests running in parallel
@@ -153,7 +161,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 }
 
 // Build the AMI with packer
-func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string) {
+func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, openVpnAdminBinaryPath string) {
 	packerOptions := &packer.Options{
 		// The path to where the Packer template is located
 		Template: "../examples/packer/build.json",
@@ -166,7 +174,7 @@ func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string) 
 			"aws_region":             awsRegion,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
-			"openvpn_admin_source":   filepath.Join(workingDir, "..", "bin", "openvpn-admin"),
+			"openvpn_admin_source":   openVpnAdminBinaryPath,
 		},
 	}
 
