@@ -79,17 +79,17 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	// At the end of the test, fetch the most recent syslog entries from each Instance. This can be useful for
 	// debugging issues without having to manually SSH to the server.
 	defer test_structure.RunTestStage(t, "logs", func() {
-		//if t.Failed() {
-		logger.Log(t, "Fetching logs to help debug test failure.")
-		awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
-		fetchSyslogForInstance(t, osName, awsRegion, workingDir)
-		//}
+		if t.Failed() {
+			logger.Log(t, "Fetching logs to help debug test failure.")
+			awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
+			fetchSyslogForInstance(t, osName, awsRegion, workingDir)
+		}
 	})
 
 	// Build the AMI for the web app
 	test_structure.RunTestStage(t, "build_ami", func() {
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
-		awsRegion := aws.GetRandomRegion(t, []string{"us-east-1"}, []string{"ap-northeast-1", "eu-north-1"})
+		awsRegion := aws.GetRandomRegion(t, nil, []string{"ap-northeast-1", "eu-north-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
 		buildAMI(t, awsRegion, osName, workingDir)
 
