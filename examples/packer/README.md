@@ -7,7 +7,7 @@ This folder contains an example [Packer](https://www.packer.io/) template for bu
 In order to build this AMI you will need to provide some input variables. There are several variables but the most important ones are:
 
 * In which AWS region should Packer build your AMI
-* Where should Packer look for a copy of the [openvpn-admin](/modules/openvpn-admin) binary that you will use to manage your VPN certificates. If you haven't built this before, take a look at it's documentation for steps on how to build it. **Remember:** When building `openvpn-admin` for use in this packer template, keep in mind the OS and architecture where this will be _deployed_ and not the OS/architecture of the machine that's building `openvpn-admin`.
+* Where should Packer look for a copy of the [openvpn-admin](/modules/openvpn-admin) binary that you will use to manage your VPN certificates. If you haven't built this before, take a look at it's documentation for steps on how to build it. **Remember:** When building `openvpn-admin` for use in this packer template, keep in mind the OS and architecture where this will be _deployed_ and not the OS/architecture of the machine that's building `openvpn-admin`. E.g., if you're firing up an EC2 Instance that runs Linux, you'll need to build the binary for Linux, even if you happen to be running the build on a Mac.
 
 All variables below:
 
