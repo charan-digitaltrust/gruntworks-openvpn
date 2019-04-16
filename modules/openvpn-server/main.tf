@@ -232,6 +232,11 @@ resource "aws_s3_bucket" "openvpn" {
     enabled = true
   }
 
+  noncurrent_version_expiration {
+    days = "${var.backup_bucket_noncurrent_version_expiration}"
+  }
+
+
   tags {
     OpenVPNRole = "BackupBucket"
   }
