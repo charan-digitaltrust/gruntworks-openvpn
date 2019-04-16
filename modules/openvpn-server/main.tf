@@ -43,9 +43,9 @@ resource "aws_launch_configuration" "openvpn" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_type = "${var.root_volume_type}"
-    volume_size = "${var.root_volume_size}"
-    iops = "${var.root_volume_iops}"
+    volume_type           = "${var.root_volume_type}"
+    volume_size           = "${var.root_volume_size}"
+    iops                  = "${var.root_volume_iops}"
     delete_on_termination = "${var.root_volume_delete_on_termination}"
   }
 
@@ -232,10 +232,13 @@ resource "aws_s3_bucket" "openvpn" {
     enabled = true
   }
 
-  noncurrent_version_expiration {
-    days = "${var.backup_bucket_noncurrent_version_expiration}"
-  }
+  lifecycle_rule {
+    enabled = true
 
+    noncurrent_version_expiration {
+      days = "${var.backup_bucket_noncurrent_version_expiration}"
+    }
+  }
 
   tags {
     OpenVPNRole = "BackupBucket"
