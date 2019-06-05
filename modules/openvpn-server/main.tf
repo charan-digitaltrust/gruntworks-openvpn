@@ -43,9 +43,9 @@ resource "aws_launch_configuration" "openvpn" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_type = "${var.root_volume_type}"
-    volume_size = "${var.root_volume_size}"
-    iops = "${var.root_volume_iops}"
+    volume_type           = "${var.root_volume_type}"
+    volume_size           = "${var.root_volume_size}"
+    iops                  = "${var.root_volume_iops}"
     delete_on_termination = "${var.root_volume_delete_on_termination}"
   }
 
@@ -302,7 +302,7 @@ data "aws_iam_policy_document" "backup" {
 
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "backup" {
-  name   = "openvpn-backup"
+  name   = "${var.name}-openvpn-backup"
   role   = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.backup.json}"
 }
@@ -365,7 +365,7 @@ data "aws_iam_policy_document" "certificate-requests" {
 
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "certificate-requests" {
-  name   = "openvpn-client-requests"
+  name   = "${var.name}-openvpn-client-requests"
   role   = "${aws_iam_role.openvpn.id}"
   policy = "${data.aws_iam_policy_document.certificate-requests.json}"
 }
