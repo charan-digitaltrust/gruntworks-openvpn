@@ -47,8 +47,8 @@ function create_apt_sources_list_fragment {
 # Use apt to install the latest OpenVPN
 function install_openvpn_package {
   log_info "Installing OpenVPN package..."
-  apt-get update
-  apt-get -y install openssl easy-rsa openvpn supervisor
+  DEBIAN_FRONTEND=noninteractive apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get -y install openssl easy-rsa openvpn supervisor
   log_info "Making CA directory in $CA_PATH..."
   make-cadir $CA_PATH
 }
