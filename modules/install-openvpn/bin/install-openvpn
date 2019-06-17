@@ -24,7 +24,7 @@ source "$BASH_COMMONS_DIR/file.sh"
 function assert_is_supported_ubuntu {
   local -r distro_name="$1"
 
-  if [[ ("$distro_name" != "bionic") && ("$distro_name" != "xenial") ]]; then
+  if [[ "$distro_name" != "bionic" && "$distro_name" != "xenial" ]]; then
     log_error "install-openvpn only works on Ubuntu 16.04 or Ubuntu 18.04"
     exit 1
   fi
