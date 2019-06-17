@@ -233,7 +233,7 @@ resource "aws_s3_bucket" "openvpn" {
   }
 
   lifecycle_rule {
-    enabled = "${var.backup_bucket_noncurrent_version_expiration}"
+    enabled = "${var.enable_backup_bucket_noncurrent_version_expiration}"
 
     noncurrent_version_expiration {
       days = "${var.backup_bucket_noncurrent_version_expiration_days}"
