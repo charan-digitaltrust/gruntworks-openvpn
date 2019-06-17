@@ -1,7 +1,7 @@
 defaults: &defaults
   working_directory: /go/src/github.com/gruntwork-io/package-openvpn
   docker:
-    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:latest
+    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.11
 
 version: 2
 jobs:
