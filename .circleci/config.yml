@@ -37,6 +37,16 @@ jobs:
       - run: mv examples/bin/openvpn-admin_linux_amd64 examples/bin/openvpn-admin
 
       - run:
+          name: install terraform 0.11
+          command: |
+            # Since this module hasn't been updated with terraform 0.12 yet, we replace terraform in the image with
+            # 0.11.
+            wget https://releases.hashicorp.com/terraform/0.11.14/terraform_0.11.14_linux_amd64.zip
+            unzip -o terraform_0.11.14_linux_amd64.zip -d ~/terraform
+            chmod u+x ~/terraform/terraform*
+            mv ~/terraform/terraform /usr/local/bin/terraform
+
+      - run:
           command: |
               mkdir -p /tmp/logs
               run-go-tests --circle-ci-2 --path test | tee /tmp/logs/all.log
