@@ -86,13 +86,13 @@ variable "backup_bucket_force_destroy" {
   default     = false
 }
 
-variable "backup_bucket_noncurrent_version_expiration" {
+variable "enable_backup_bucket_noncurrent_version_expiration" {
   description = "Should lifecycle policy to expire noncurrent versions be enabled."
   default     = false
 }
 
 variable "backup_bucket_noncurrent_version_expiration_days" {
-  description = "Number of days that non current versions of file should be kept."
+  description = "Number of days that non current versions of file should be kept. Only used if var.enable_backup_bucket_noncurrent_version_expiration is true"
   default     = 30
 }
 
@@ -109,20 +109,20 @@ variable "external_account_arns" {
 
 variable "root_volume_type" {
   description = "The root volume type. Must be one of: standard, gp2, io1."
-  default = "standard"
+  default     = "standard"
 }
 
 variable "root_volume_size" {
   description = "The size of the root volume, in gigabytes."
-  default = 8
+  default     = 8
 }
 
 variable "root_volume_iops" {
   description = "The amount of provisioned IOPS. This is only valid for volume_type of io1, and must be specified if using that type."
-  default = 0
+  default     = 0
 }
 
 variable "root_volume_delete_on_termination" {
   description = "If set to true, the root volume will be deleted when the Instance is terminated."
-  default = true
+  default     = true
 }
