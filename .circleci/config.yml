@@ -44,7 +44,7 @@ jobs:
             wget https://releases.hashicorp.com/terraform/0.11.14/terraform_0.11.14_linux_amd64.zip
             unzip -o terraform_0.11.14_linux_amd64.zip -d ~/terraform
             chmod u+x ~/terraform/terraform*
-            mv ~/terraform/terraform /usr/local/bin/terraform
+            sudo mv ~/terraform/terraform /usr/local/bin/terraform
 
       - run:
           command: |
