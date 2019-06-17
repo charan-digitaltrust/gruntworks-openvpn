@@ -1,7 +1,7 @@
 defaults: &defaults
   working_directory: /go/src/github.com/gruntwork-io/package-openvpn
   docker:
-    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:latest
+    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.11
 
 version: 2
 jobs:
@@ -35,6 +35,16 @@ jobs:
           at: /go/src/github.com/gruntwork-io/package-openvpn
       - run: build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path examples/bin --os linux --arch amd64 --ld-flags "-X main.VERSION=$CIRCLE_TAG"
       - run: mv examples/bin/openvpn-admin_linux_amd64 examples/bin/openvpn-admin
+
+      - run:
+          name: install terraform 0.11
+          command: |
+            # Since this module hasn't been updated with terraform 0.12 yet, we replace terraform in the image with
+            # 0.11.
+            wget https://releases.hashicorp.com/terraform/0.11.14/terraform_0.11.14_linux_amd64.zip
+            unzip -o terraform_0.11.14_linux_amd64.zip -d ~/terraform
+            chmod u+x ~/terraform/terraform*
+            sudo mv ~/terraform/terraform /usr/local/bin/terraform
 
       - run:
           command: |
