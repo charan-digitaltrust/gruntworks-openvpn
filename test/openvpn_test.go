@@ -24,6 +24,11 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	testOpenVpnInitializationSuite(t, "ubuntu-16")
 }
 
+func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
+	t.Parallel()
+	testOpenVpnInitializationSuite(t, "ubuntu-18")
+}
+
 func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	// Uncomment any of the following to skip that section during the test
 	//os.Setenv("SKIP_build_ami", "true")
