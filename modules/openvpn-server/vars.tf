@@ -86,6 +86,16 @@ variable "backup_bucket_force_destroy" {
   default     = false
 }
 
+variable "backup_bucket_noncurrent_version_expiration" {
+  description = "Should lifecycle policy to expire noncurrent versions be enabled."
+  default     = false
+}
+
+variable "backup_bucket_noncurrent_version_expiration_days" {
+  description = "Number of days that non current versions of file should be kept."
+  default     = 30
+}
+
 variable "tenancy" {
   description = "The tenancy of this server. Must be one of: default, dedicated, or host."
   default     = "default"
