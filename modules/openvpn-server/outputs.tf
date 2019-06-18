@@ -35,19 +35,19 @@ output "backup_bucket_name" {
 }
 
 output "allow_certificate_requests_for_external_accounts_iam_role_id" {
-  value = aws_iam_role.allow_certificate_requests_for_external_accounts.*.id[0]
+  value = element(concat(aws_iam_role.allow_certificate_requests_for_external_accounts.*.id, [""]), 0)
 }
 
 output "allow_certificate_requests_for_external_accounts_iam_role_arn" {
-  value = aws_iam_role.allow_certificate_requests_for_external_accounts.*.arn[0]
+  value = element(concat(aws_iam_role.allow_certificate_requests_for_external_accounts.*.arn, [""]), 0)
 }
 
 output "allow_certificate_revocations_for_external_accounts_iam_role_id" {
-  value = aws_iam_role.allow_certificate_revocations_for_external_accounts.*.id[0]
+  value = element(concat(aws_iam_role.allow_certificate_revocations_for_external_accounts.*.id, [""]), 0)
 }
 
 output "allow_certificate_revocations_for_external_accounts_iam_role_arn" {
-  value = aws_iam_role.allow_certificate_revocations_for_external_accounts.*.arn[0]
+  value = element(concat(aws_iam_role.allow_certificate_revocations_for_external_accounts.*.arn, [""]), 0)
 }
 
 output "openvpn_users_group_name" {
