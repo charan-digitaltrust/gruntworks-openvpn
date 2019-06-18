@@ -440,6 +440,8 @@ data "aws_iam_policy_document" "send-certificate-requests" {
     ]
 
     resources = [
+      # Because AWS IAM Policy Variables (i.e. ${aws:username}) use the same interpolation syntax as Terraform, we have
+      # to escape the $ from Terraform with "$$".
       "arn:aws:iam::${var.aws_account_id}:user/$${aws:username}",
     ]
   }
