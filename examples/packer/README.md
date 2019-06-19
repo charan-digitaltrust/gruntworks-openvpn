@@ -34,4 +34,4 @@ packer build \
 **Notes**
 
 - `-only` flag allows you to execute one specific builder with the given name.  This parameter can be ommitted if the packer template has only one builder defined in it. This example has just one builder, but we're including the parameter for reference.
-- `openvpn_admin_source` in the example above is pointing to a sample location. Unless you execute the [automated test](/test/openvpn_test.go), which will actually build the artifact for you and place it into that folder, you will have to provide your own path where that binary is located.
+- `openvpn_admin_binary` in the example above is pointing to a sample location. Unless you execute the [automated test](/test/openvpn_test.go), which will actually build the artifact for you and place it into that folder, you will have to provide your own path where that binary is located.

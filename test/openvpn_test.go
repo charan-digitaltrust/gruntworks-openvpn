@@ -187,7 +187,7 @@ func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, 
 			"aws_region":             awsRegion,
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
-			"openvpn_admin_source":   openVpnAdminBinaryPath,
+			"openvpn_admin_binary":   openVpnAdminBinaryPath,
 		},
 	}
 
