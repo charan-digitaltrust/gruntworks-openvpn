@@ -15,7 +15,7 @@ All variables below:
 | --------------------------- | ------------------------------------------------------------ | ----------------------------- |
 | aws_region                  | Tells Packer in which AWS region to build your AMI           | `us-east-1`                   |
 | github_oauth_token          | Your github OAuth token.                                     | `env.GITHUB_OAUTH_TOKEN`      |
-| openvpn_admin_source        | Where should Packer look for a copy of the `openvpn-admin` binary that you will use to manage the VPN certificates on your VPN server. See: [openvpn-admin](/modules/openvpn-admin) for more info. | `/examples/bin/openvpn-admin` |
+| openvpn_admin_binary        | Where should Packer look for a copy of the `openvpn-admin` binary that you will use to manage the VPN certificates on your VPN server. See: [openvpn-admin](/modules/openvpn-admin) for more info. | `/examples/bin/openvpn-admin` |
 | gruntwork_installer_version | What version of [Gruntwork Installer](https://github.com/gruntwork-io/gruntwork-installer) to use | `v0.0.20`                     |
 | bash_commons_version        | What version of [bash-commons](https://github.com/gruntwork-io/bash-commons) to use | `v0.0.6`                      |
 
@@ -26,7 +26,7 @@ Below is an example of the command you could run to build this packer template.
 ```bash
 packer build \
 	-var aws_region=us-east-1 \
-	-var openvpn_admin_source=../examples/bin/openvpn-admin \
+	-var openvpn_admin_binary=../examples/bin/openvpn-admin \
 	-only=ubuntu-16-build \
 	../examples/packer/build.json
 ```
