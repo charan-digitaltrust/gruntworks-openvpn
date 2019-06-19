@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"path/filepath"
+	//"os"
 	"strings"
 	"testing"
 	"time"
@@ -36,7 +37,20 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	testOpenVpnInitializationSuite(t, "ubuntu-16")
 }
 
+func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
+	t.Parallel()
+	testOpenVpnInitializationSuite(t, "ubuntu-18")
+}
+
 func testOpenVpnInitializationSuite(t *testing.T, osName string) {
+	// Uncomment any of the following to skip that section during the test
+	//os.Setenv("SKIP_build_ami", "true")
+	//os.Setenv("SKIP_deploy_terraform", "true")
+	//os.Setenv("SKIP_validate", "true")
+	//os.Setenv("SKIP_logs", "true")
+	//os.Setenv("SKIP_cleanup_terraform", "true")
+	//os.Setenv("SKIP_cleanup_ami", "true")
+
 	workingDir := test_structure.CopyTerraformFolderToTemp(t, "../", "examples/openvpn-host")
 
 	absPath, err := filepath.Abs(workingDir)
@@ -68,7 +82,6 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	//Build the openvpn-admin binary and copy that to examples/bin where the packer build expects to find it.
 	test_structure.RunTestStage(t, "build_binaries", func() {
 
-
 		cmdDeletePrevious := shell.Command{
 			WorkingDir: "../modules/openvpn-admin/src",
 			Command:    "gox",
@@ -97,7 +110,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 	// Build the AMI for the web app
 	test_structure.RunTestStage(t, "build_ami", func() {
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
-		awsRegion := aws.GetRandomRegion(t, nil, []string{"ap-northeast-1", "eu-north-1"})
+		awsRegion := aws.GetRandomStableRegion(t, []string{}, []string{"ap-northeast-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
 		buildAMI(t, awsRegion, osName, workingDir, openVpnAdminBinaryPath)
 
@@ -218,7 +231,6 @@ func fetchSyslogForInstance(t *testing.T, osName string, awsRegion string, worki
 	}
 
 	aws.FetchFilesFromAsgs(t, awsRegion, logFileSpec)
-
 }
 
 // Validate the openvpn server has been deployed and is working

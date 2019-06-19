@@ -1,23 +1,32 @@
 # ---------------------------------------------------------------------------------------------------------------------
+# SET TERRAFORM REQUIREMENTS FOR RUNNING THIS MODULE
+# This module has been updated with 0.12 syntax, which means it is no longer compatible with any versions below 0.12.
+# ---------------------------------------------------------------------------------------------------------------------
+
+terraform {
+  required_version = ">= 0.12"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
 # CREATE THE ASG
 # This defines the number of EC2 Instances to launch
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_autoscaling_group" "openvpn" {
-  name                 = "${var.name}"
-  launch_configuration = "${aws_launch_configuration.openvpn.name}"
+  name                 = var.name
+  launch_configuration = aws_launch_configuration.openvpn.name
 
   desired_capacity = 1
   min_size         = 1
   max_size         = 1
 
-  vpc_zone_identifier = ["${var.subnet_id}"]
+  vpc_zone_identifier = [var.subnet_id]
 
   health_check_type = "EC2"
 
   tag {
     key                 = "Name"
-    value               = "${var.name}"
+    value               = var.name
     propagate_at_launch = true
   }
 }
@@ -34,19 +43,19 @@ resource "aws_launch_configuration" "openvpn" {
   # without destroying and re-creating the Auto Scaling Group.
   name_prefix = "${var.name}-"
 
-  image_id                    = "${var.ami}"
-  instance_type               = "${var.instance_type}"
-  key_name                    = "${var.keypair_name}"
-  user_data                   = "${var.user_data}"
-  security_groups             = ["${aws_security_group.openvpn.id}"]
-  iam_instance_profile        = "${aws_iam_instance_profile.openvpn.name}"
+  image_id                    = var.ami
+  instance_type               = var.instance_type
+  key_name                    = var.keypair_name
+  user_data                   = var.user_data
+  security_groups             = [aws_security_group.openvpn.id]
+  iam_instance_profile        = aws_iam_instance_profile.openvpn.name
   associate_public_ip_address = true
 
   root_block_device {
-    volume_type           = "${var.root_volume_type}"
-    volume_size           = "${var.root_volume_size}"
-    iops                  = "${var.root_volume_iops}"
-    delete_on_termination = "${var.root_volume_delete_on_termination}"
+    volume_type           = var.root_volume_type
+    volume_size           = var.root_volume_size
+    iops                  = var.root_volume_iops
+    delete_on_termination = var.root_volume_delete_on_termination
   }
 
   # Important note: whenever using a launch configuration with an auto scaling group, you must set
@@ -63,9 +72,9 @@ resource "aws_launch_configuration" "openvpn" {
 
 # Create the Security Group for the OpenVPN server
 resource "aws_security_group" "openvpn" {
-  name        = "${var.name}"
+  name        = var.name
   description = "For OpenVPN instances EC2 Instances."
-  vpc_id      = "${var.vpc_id}"
+  vpc_id      = var.vpc_id
 
   # See aws_launch_configuration.openvpn for why this directive exists.
   lifecycle {
@@ -81,44 +90,44 @@ resource "aws_security_group_rule" "allow_outbound_all" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.openvpn.id}"
+  security_group_id = aws_security_group.openvpn.id
 }
 
 # Allow SSH access to OpenVPN from the specified Security Group IDs
 resource "aws_security_group_rule" "allow_inbound_ssh_security_groups" {
-  count = "${var.allow_ssh_from_security_group}"
+  count = var.allow_ssh_from_security_group ? 1 : 0
 
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.allow_ssh_from_security_group_id}"
+  source_security_group_id = var.allow_ssh_from_security_group_id
 
-  security_group_id = "${aws_security_group.openvpn.id}"
+  security_group_id = aws_security_group.openvpn.id
 }
 
 # Allow SSH access to OpenVPN from the specified CIDR blocks
 resource "aws_security_group_rule" "allow_inbound_ssh_cidr_blocks" {
-  count = "${var.allow_ssh_from_cidr}"
+  count = var.allow_ssh_from_cidr ? 1 : 0
 
   type        = "ingress"
   from_port   = 22
   to_port     = 22
   protocol    = "tcp"
-  cidr_blocks = ["${var.allow_ssh_from_cidr_list}"]
+  cidr_blocks = var.allow_ssh_from_cidr_list
 
-  security_group_id = "${aws_security_group.openvpn.id}"
+  security_group_id = aws_security_group.openvpn.id
 }
 
 # Allow access to the OpenVPN service from Everywhere
 resource "aws_security_group_rule" "allow_inbound_openvpn" {
   type        = "ingress"
-  from_port   = "1194"
-  to_port     = "1194"
+  from_port   = 1194
+  to_port     = 1194
   protocol    = "udp"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.openvpn.id}"
+  security_group_id = aws_security_group.openvpn.id
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -128,8 +137,8 @@ resource "aws_security_group_rule" "allow_inbound_openvpn" {
 
 # To assign an IAM Role to an EC2 instance, we actually need to assign the "IAM Instance Profile"
 resource "aws_iam_instance_profile" "openvpn" {
-  name = "${var.name}"
-  role = "${aws_iam_role.openvpn.name}"
+  name = var.name
+  role = aws_iam_role.openvpn.name
 
   # See aws_launch_configuration.openvpn for why this directive exists.
   lifecycle {
@@ -139,13 +148,16 @@ resource "aws_iam_instance_profile" "openvpn" {
   # There may be a bug where Terraform sometimes doesn't wait long enough for the IAM instance profile to propagate.
   # https://github.com/hashicorp/terraform/issues/4306 suggests it's fixed, but add a "local-exec" provisioner here that
   # sleeps for 30 seconds if this is a problem when running "terraform apply".
+  provisioner "local-exec" {
+    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 30"
+  }
 }
 
 # Create the IAM Role where we'll attach permissions
 resource "aws_iam_role" "openvpn" {
-  name               = "${var.name}"
+  name               = var.name
   path               = "/"
-  assume_role_policy = "${data.aws_iam_policy_document.instance_assume_role_policy.json}"
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role_policy.json
 
   # Workaround for a bug where Terraform sometimes doesn't wait long enough for the IAM role to propagate.
   # https://github.com/hashicorp/terraform/issues/2660
@@ -183,9 +195,9 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
 # Enable a baseline set of permissions required by OpenVPN
 resource "aws_iam_role_policy" "openvpn" {
   name = "${var.name}-allow-default"
-  role = "${aws_iam_role.openvpn.id}"
+  role = aws_iam_role.openvpn.id
 
-  policy = "${data.aws_iam_policy_document.openvpn.json}"
+  policy = data.aws_iam_policy_document.openvpn.json
 
   # See aws_launch_configuration.openvpn for why this directive exists.
   lifecycle {
@@ -235,21 +247,29 @@ resource "aws_eip" "openvpn" {
 # This bucket is used to store the PKI for OpenVPN for backup purposes should an OpenVPN instance crash
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_s3_bucket" "openvpn" {
-  bucket = "${var.backup_bucket_name}"
+  bucket = var.backup_bucket_name
 
-  force_destroy = "${var.backup_bucket_force_destroy}"
+  force_destroy = var.backup_bucket_force_destroy
 
   versioning {
     enabled = true
   }
 
-  tags {
+  lifecycle_rule {
+    enabled = var.enable_backup_bucket_noncurrent_version_expiration
+
+    noncurrent_version_expiration {
+      days = var.backup_bucket_noncurrent_version_expiration_days
+    }
+  }
+
+  tags = {
     OpenVPNRole = "BackupBucket"
   }
 }
 
 resource "aws_s3_bucket_object" "server-prefix" {
-  bucket = "${aws_s3_bucket.openvpn.bucket}"
+  bucket = aws_s3_bucket.openvpn.bucket
   key    = "server/"
   source = "/dev/null"
 }
@@ -306,7 +326,7 @@ data "aws_iam_policy_document" "backup" {
     ]
 
     resources = [
-      "${var.kms_key_arn}",
+      var.kms_key_arn,
     ]
   }
 }
@@ -314,8 +334,8 @@ data "aws_iam_policy_document" "backup" {
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "backup" {
   name   = "openvpn-backup"
-  role   = "${aws_iam_role.openvpn.id}"
-  policy = "${data.aws_iam_policy_document.backup.json}"
+  role   = aws_iam_role.openvpn.id
+  policy = data.aws_iam_policy_document.backup.json
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -353,8 +373,8 @@ data "aws_iam_policy_document" "certificate-requests" {
     ]
 
     resources = [
-      "${aws_sqs_queue.client-request-queue.arn}",
-      "${aws_sqs_queue.client-revocation-queue.arn}",
+      aws_sqs_queue.client-request-queue.arn,
+      aws_sqs_queue.client-revocation-queue.arn,
     ]
   }
 
@@ -377,8 +397,8 @@ data "aws_iam_policy_document" "certificate-requests" {
 # Attach the IAM Policy to our IAM Role
 resource "aws_iam_role_policy" "certificate-requests" {
   name   = "openvpn-client-requests"
-  role   = "${aws_iam_role.openvpn.id}"
-  policy = "${data.aws_iam_policy_document.certificate-requests.json}"
+  role   = aws_iam_role.openvpn.id
+  policy = data.aws_iam_policy_document.certificate-requests.json
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -395,7 +415,7 @@ data "aws_iam_policy_document" "send-certificate-requests" {
     ]
 
     resources = [
-      "${aws_sqs_queue.client-request-queue.arn}",
+      aws_sqs_queue.client-request-queue.arn,
     ]
   }
 
@@ -441,7 +461,7 @@ data "aws_iam_policy_document" "send-certificate-requests" {
 resource "aws_iam_policy" "certificate-requests-openvpnusers" {
   name        = "${var.name}-users-certificate-requests"
   description = "Allow OpenVPN users to submit certificate requests via ${aws_sqs_queue.client-request-queue.id}"
-  policy      = "${data.aws_iam_policy_document.send-certificate-requests.json}"
+  policy      = data.aws_iam_policy_document.send-certificate-requests.json
 }
 
 data "aws_iam_policy_document" "send-certificate-revocations" {
@@ -454,7 +474,7 @@ data "aws_iam_policy_document" "send-certificate-revocations" {
     ]
 
     resources = [
-      "${aws_sqs_queue.client-revocation-queue.arn}",
+      aws_sqs_queue.client-revocation-queue.arn,
     ]
   }
 
@@ -469,7 +489,7 @@ data "aws_iam_policy_document" "send-certificate-revocations" {
 resource "aws_iam_policy" "certificate-revocation-openvpnadmins" {
   name        = "${var.name}-admin-certificate-revocations"
   description = "Allow OpenVPN admins to submit certificate revocation requests via ${aws_sqs_queue.client-revocation-queue.id}"
-  policy      = "${data.aws_iam_policy_document.send-certificate-revocations.json}"
+  policy      = data.aws_iam_policy_document.send-certificate-revocations.json
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -486,13 +506,13 @@ resource "aws_iam_group" "openvpn-admins" {
 }
 
 resource "aws_iam_group_policy_attachment" "certificate-requests" {
-  policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
-  group      = "${aws_iam_group.openvpn-users.name}"
+  policy_arn = aws_iam_policy.certificate-requests-openvpnusers.arn
+  group      = aws_iam_group.openvpn-users.name
 }
 
 resource "aws_iam_group_policy_attachment" "revocation-requests" {
-  policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
-  group      = "${aws_iam_group.openvpn-admins.name}"
+  policy_arn = aws_iam_policy.certificate-revocation-openvpnadmins.arn
+  group      = aws_iam_group.openvpn-admins.name
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -502,15 +522,15 @@ resource "aws_iam_group_policy_attachment" "revocation-requests" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "allow_certificate_requests_for_external_accounts" {
-  count              = "${signum(length(var.external_account_arns))}"
+  count              = signum(length(var.external_account_arns))
   name               = "${var.name}-allow-certificate-requests-for-external-accounts"
-  assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
+  assume_role_policy = data.aws_iam_policy_document.allow_external_accounts.json
 }
 
 resource "aws_iam_role" "allow_certificate_revocations_for_external_accounts" {
-  count              = "${signum(length(var.external_account_arns))}"
+  count              = signum(length(var.external_account_arns))
   name               = "${var.name}-allow-certificate-revocations-for-external-accounts"
-  assume_role_policy = "${data.aws_iam_policy_document.allow_external_accounts.json}"
+  assume_role_policy = data.aws_iam_policy_document.allow_external_accounts.json
 }
 
 data "aws_iam_policy_document" "allow_external_accounts" {
@@ -520,19 +540,19 @@ data "aws_iam_policy_document" "allow_external_accounts" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.external_account_arns}"]
+      identifiers = var.external_account_arns
     }
   }
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_requests_for_external_accounts" {
-  count      = "${signum(length(var.external_account_arns))}"
-  role       = "${aws_iam_role.allow_certificate_requests_for_external_accounts.id}"
-  policy_arn = "${aws_iam_policy.certificate-requests-openvpnusers.arn}"
+  count      = signum(length(var.external_account_arns))
+  role       = aws_iam_role.allow_certificate_requests_for_external_accounts[0].id
+  policy_arn = aws_iam_policy.certificate-requests-openvpnusers.arn
 }
 
 resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_external_accounts" {
-  count      = "${signum(length(var.external_account_arns))}"
-  role       = "${aws_iam_role.allow_certificate_revocations_for_external_accounts.id}"
-  policy_arn = "${aws_iam_policy.certificate-revocation-openvpnadmins.arn}"
+  count      = signum(length(var.external_account_arns))
+  role       = aws_iam_role.allow_certificate_revocations_for_external_accounts[0].id
+  policy_arn = aws_iam_policy.certificate-revocation-openvpnadmins.arn
 }

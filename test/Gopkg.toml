@@ -21,9 +21,5 @@
 #  version = "2.4.0"
 
 [[constraint]]
-  name = "github.com/stretchr/testify"
-  version = "1.2.2"
-
-[[constraint]]
   name = "github.com/gruntwork-io/terratest"
-  version = "0.13.0"
+  version = "0.17.0"

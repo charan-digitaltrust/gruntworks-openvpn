@@ -27,6 +27,26 @@
         "owners": ["099720109477"]
       },
       "ssh_username": "ubuntu"
+    },
+    {
+      "name": "ubuntu-18-build",
+      "ami_name": "openvpn-server-ubuntu18 {{isotime | clean_ami_name}}",
+      "ami_description": "OpenVPN Server built on Ubuntu 18.04.",
+      "instance_type": "t2.micro",
+      "region": "{{user `aws_region`}}",
+      "type": "amazon-ebs",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "architecture": "x86_64",
+          "name": "*ubuntu-bionic-18.04-amd64-server-*",
+          "block-device-mapping.volume-type": "gp2",
+          "root-device-type": "ebs"
+        },
+        "most_recent": true,
+        "owners": ["099720109477"]
+      },
+      "ssh_username": "ubuntu"
     }
   ],
   "provisioners": [
@@ -60,7 +80,7 @@
     {
       "type": "shell",
       "inline": [
-        "DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y",
+        "sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",
         "gruntwork-install --module-name 'bash-commons' --repo 'https://github.com/gruntwork-io/bash-commons' --tag '{{user `bash_commons_version`}}'",
         "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "gruntwork-install --module-name 'backup-openvpn-pki' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
