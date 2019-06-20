@@ -164,6 +164,17 @@ resource "aws_iam_role" "openvpn" {
   provisioner "local-exec" {
     command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 30"
   }
+
+  # Important note: whenever using a launch configuration with an auto scaling group, you must set
+  # create_before_destroy = true. However, as soon as you set create_before_destroy = true in one resource, you must
+  # also set it in every resource that it depends on, or you'll get an error about cyclic dependencies (especially when
+  # removing resources). For more info, see:
+  #
+  # https://www.terraform.io/docs/providers/aws/r/launch_configuration.html
+  # https://terraform.io/docs/configuration/resources.html
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Use a standard assume-role policy to enable this IAM Role for use with an EC2 Instance

@@ -33,8 +33,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
-      - run: build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path examples/bin --os linux --arch amd64 --ld-flags "-X main.VERSION=$CIRCLE_TAG"
-      - run: mv examples/bin/openvpn-admin_linux_amd64 examples/bin/openvpn-admin
 
       - run:
           command: |

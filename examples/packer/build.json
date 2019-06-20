@@ -2,6 +2,7 @@
   "variables": {
     "github_oauth_token": "{{env `GITHUB_OAUTH_TOKEN`}}",
     "aws_region": "us-east-1",
+    "openvpn_admin_binary": "{{ template_dir }}/../bin/openvpn-admin",
     "gruntwork_installer_version": "v0.0.20",
     "bash_commons_version": "v0.0.6",
     "active_git_branch": null
@@ -18,7 +19,7 @@
         "filters": {
           "virtualization-type": "hvm",
           "architecture": "x86_64",
-          "name": "*ubuntu-xenial-16.04-amd64-server-*",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*",
           "block-device-mapping.volume-type": "gp2",
           "root-device-type": "ebs"
         },
@@ -38,7 +39,7 @@
         "filters": {
           "virtualization-type": "hvm",
           "architecture": "x86_64",
-          "name": "*ubuntu-bionic-18.04-amd64-server-*",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
           "block-device-mapping.volume-type": "gp2",
           "root-device-type": "ebs"
         },
@@ -58,7 +59,7 @@
     },
     {
       "type": "file",
-      "source": "{{ template_dir }}/../bin/openvpn-admin",
+      "source": "{{user `openvpn_admin_binary`}}",
       "destination": "/tmp/openvpn-admin"
     },
     {
@@ -71,7 +72,9 @@
     {
       "type": "shell",
       "remote_folder": "/home/ubuntu",
-      "inline": "curl -Ls https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh | bash /dev/stdin --version {{user `gruntwork_installer_version`}}"
+      "inline": [
+        "curl -Ls https://raw.githubusercontent.com/gruntwork-io/gruntwork-installer/master/bootstrap-gruntwork-installer.sh | bash /dev/stdin --version {{user `gruntwork_installer_version`}}"
+      ]
     },
     {
       "type": "shell",
