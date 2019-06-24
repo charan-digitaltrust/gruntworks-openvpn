@@ -107,15 +107,16 @@ function generate_server_conf() {
 	local keySize="$3"
 	local searchDomains="$4"
 	local dnsServer
+	local resolvConf
 
 	# https://github.com/Nyr/openvpn-install/blob/master/openvpn-install.sh#L272-L282
 	# Locate the proper resolv.conf needed for systems running systemd-resolved
 	if grep -q "127.0.0.53" "/etc/resolv.conf"; then
-		RESOLVCONF='/run/systemd/resolve/resolv.conf'
+		resolvConf='/run/systemd/resolve/resolv.conf'
 	else
-		RESOLVCONF='/etc/resolv.conf'
+		resolvConf='/etc/resolv.conf'
 	fi
-	dnsServer=$(grep -v '#' | grep nameserver "${RESOLVCONF}" | awk '{print $2}')
+	dnsServer=$(grep nameserver "${resolvConf}" | awk '{print $2}')
 
 	cat <<EOF >$OPENVPN_PATH/server.conf
 ##
