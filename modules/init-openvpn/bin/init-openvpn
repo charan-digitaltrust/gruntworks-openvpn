@@ -107,7 +107,18 @@ function generate_server_conf() {
 	local keySize="$3"
 	local searchDomains="$4"
 	local dnsServer
-	dnsServer=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
+	local resolvConf
+
+	# Locate the proper resolv.conf needed for systems running systemd-resolved (e.g. Ubuntu 18.04).
+	# systemd-resolved is a systemd service that provides network name resolution to local applications
+	# via a D-Bus interface, the resolve NSS service, and a local DNS stub listener on 127.0.0.53.
+	# For detailed explanation about this change see https://github.com/gruntwork-io/package-openvpn/pull/71
+	if grep -q "127.0.0.53" "/etc/resolv.conf"; then
+		resolvConf='/run/systemd/resolve/resolv.conf'
+	else
+		resolvConf='/etc/resolv.conf'
+	fi
+	dnsServer=$(grep nameserver "${resolvConf}" | awk '{print $2}')
 
 	cat <<EOF >$OPENVPN_PATH/server.conf
 ##
