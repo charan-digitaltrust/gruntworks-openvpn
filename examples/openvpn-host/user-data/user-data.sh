@@ -42,6 +42,9 @@ sudo init-openvpn  \
  --ca-expiration-days "${ca_expiration_days}" \
  --cert-expiration-days "${cert_expiration_days}" \
  --vpn-subnet "${vpn_subnet}" \
+ --duo-ikey "${duo_ikey}" \
+ --duo-skey "${duo_skey}" \
+ --duo-host "${duo_host}" \
  ${routes}
 
 echo 'Starting Certificate Request/Revoke Daemons...'

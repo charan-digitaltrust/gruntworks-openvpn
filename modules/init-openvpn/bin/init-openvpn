@@ -43,6 +43,9 @@ function print_usage() {
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
 	echo -e "  --search-domain\t\t\tPush a DNS search domain to clients (e.g., my.domain.internal). Optional. May be specified multiple times."
+	echo -e "  --duo-ikey\t\t\tSpecify the IKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
+	echo -e "  --duo-skey\t\t\tSpecify the SKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
+	echo -e "  --duo-host\t\t\tSpecify the HOST value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
 	echo
 	echo "Example:"
 	echo
@@ -106,6 +109,9 @@ function generate_server_conf() {
 	local routes="$2"
 	local keySize="$3"
 	local searchDomains="$4"
+	local duoIkey="$5"
+	local duoSkey="$6"
+	local duoHost="$7"
 	local dnsServer
 	local resolvConf
 
@@ -158,6 +164,11 @@ daemon
 mute 20
 
 EOF
+
+  if [[ -z ${duoIkey} ]]; then
+    echo "plugin /opt/duo/duo_openvpn.so '${duoIkey} ${duoSkey} ${duoHost}'" >> $OPENVPN_PATH/server.conf
+    echo "reneg-sec 0" >> $OPENVPN_PATH/server.conf
+  fi
 }
 
 #Takes a subnet mask (255.255.255.0) and returns network portion bit length (24)
@@ -228,7 +239,7 @@ function configure_tcpip() {
 	log_info "Configure TCP/IP settings..."
 
 	cp /gruntwork/install-openvpn/ufw-default /etc/default/ufw
-  
+
 	cp /gruntwork/install-openvpn/before.rules /etc/ufw/before.rules
 	file_replace_text "__VPN_SUBNET__" "$subnet_cidr" /etc/ufw/before.rules
 
@@ -428,6 +439,18 @@ function init_openvpn() {
 			routes=("${routes[@]}" "$2")
 			shift
 			;;
+		--duo-ikey)
+		    duo_ikey=$2
+		    shift
+		    ;;
+		--duo-skey)
+		    duo_skey=$2
+		    shift
+		    ;;
+		--duo-host)
+		    duo_host=$2
+		    shift
+		    ;;
 		--help)
 			print_usage
 			exit
@@ -457,6 +480,12 @@ function init_openvpn() {
 	assert_not_empty "--crl-expiration-days" "$crl_expiration_days"
 	assert_not_empty "--vpn-route" "$routes"
 	assert_not_empty "--vpn-subnet" "$vpn_subnet"
+
+	if [[ -z ${duo_ikey} ]]; then
+        assert_not_empty "--duo-ikey" "$duo_ikey"
+        assert_not_empty "--duo-skey" "$duo_skey"
+        assert_not_empty "--duo-host" "$duo_host"
+	fi
 
 	#Pre-Reqs
 	assert_uid_is_root_or_sudo
@@ -488,7 +517,7 @@ function init_openvpn() {
 	done
 
 	copy_config_templates
-	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr"
+	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr" "$duo_ikey" "$duo_skey" "$duo_host"
 	change_config_dir_permissions
 	configure_tcpip "$vpn_subnet"
 	start_openvpn

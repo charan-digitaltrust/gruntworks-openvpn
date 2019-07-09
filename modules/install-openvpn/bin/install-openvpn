@@ -67,6 +67,14 @@ function install_aws_cli {
   pip install awscli
 }
 
+function install_duo_openvpn {
+  log_info "Install Duo OpenVPN Plugin..."
+  curl https://codeload.github.com/duosecurity/duo_openvpn/tar.gz/2.2 -o duo_openvpn.tar.gz
+  tar zxf duo_openvpn.tar.gz
+  cd duosecurity-duo_openvpn-2.2
+  make && make install
+}
+
 # Upgrade OpenSSL to the latest version
 function upgrade_openssl {
   log_info "Upgrading OpenSSL..."
@@ -88,6 +96,9 @@ function install_openvpn {
   copy_wrapper_scripts
   upgrade_openssl
   install_aws_cli
+  if [[ $1 == "true" ]]; then
+    install_duo_openvpn
+  fi
 }
 
 install_openvpn
