@@ -96,7 +96,7 @@ function install_openvpn {
   copy_wrapper_scripts
   upgrade_openssl
   install_aws_cli
-  if [[ $1 == "true" ]]; then
+  if [[ $1 == "--enable-duo-plugin" && $2 == "true" ]]; then
     install_duo_openvpn
   fi
 }
