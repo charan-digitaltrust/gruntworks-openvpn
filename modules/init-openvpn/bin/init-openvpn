@@ -231,7 +231,7 @@ function configure_tcpip() {
 	local subnet
 	local mask
 	local cidr
-  subnet=$(extractSubnet "$1")
+    subnet=$(extractSubnet "$1")
 	mask=$(extractMask "$1")
 	cidr=$(mask2CIDR $mask)
 	local -r subnet_cidr="$subnet/$cidr"
