@@ -71,7 +71,7 @@ function install_duo_openvpn {
   log_info "Install Duo OpenVPN Plugin..."
   curl https://codeload.github.com/duosecurity/duo_openvpn/tar.gz/2.2 -o duo_openvpn.tar.gz
   tar zxf duo_openvpn.tar.gz
-  cd duosecurity-duo_openvpn-2.2
+  cd duo_openvpn-2.2
   make && make install
 }
 
