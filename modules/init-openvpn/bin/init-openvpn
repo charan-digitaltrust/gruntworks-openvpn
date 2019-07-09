@@ -481,8 +481,7 @@ function init_openvpn() {
 	assert_not_empty "--vpn-route" "$routes"
 	assert_not_empty "--vpn-subnet" "$vpn_subnet"
 
-	if [[ -z ${duo_ikey} ]]; then
-        assert_not_empty "--duo-ikey" "$duo_ikey"
+	if [[ ! -z ${duo_ikey} ]]; then
         assert_not_empty "--duo-skey" "$duo_skey"
         assert_not_empty "--duo-host" "$duo_host"
 	fi
