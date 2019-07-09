@@ -239,7 +239,6 @@ function configure_tcpip() {
 	log_info "Configure TCP/IP settings..."
 
 	cp /gruntwork/install-openvpn/ufw-default /etc/default/ufw
-
 	cp /gruntwork/install-openvpn/before.rules /etc/ufw/before.rules
 	file_replace_text "__VPN_SUBNET__" "$subnet_cidr" /etc/ufw/before.rules
 
