@@ -15,7 +15,6 @@ All variables below:
 | --------------------------- | ------------------------------------------------------------ | ----------------------------- |
 | active_git_branch           | The git branch to use for gruntwork-install.                 | `null`                        |
 | aws_region                  | Tells Packer in which AWS region to build your AMI           | `us-east-1`                   |
-| enable_duo_plugin           | Enables installation of the [duo_openvpn](https://duo.com/docs/openvpn) plugin for two-factor authentication (optional). | `false` |
 | github_oauth_token          | Your github OAuth token.                                     | `env.GITHUB_OAUTH_TOKEN`      |
 | openvpn_admin_binary        | Where should Packer look for a copy of the `openvpn-admin` binary that you will use to manage the VPN certificates on your VPN server. See: [openvpn-admin](/modules/openvpn-admin) for more info. | `/examples/bin/openvpn-admin` |
 | gruntwork_installer_version | What version of [Gruntwork Installer](https://github.com/gruntwork-io/gruntwork-installer) to use | `v0.0.20`                     |
