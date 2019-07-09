@@ -165,7 +165,7 @@ mute 20
 
 EOF
 
-  if [[ -z ${duoIkey} ]]; then
+  if [[ ! -z ${duoIkey} ]]; then
     echo "plugin /opt/duo/duo_openvpn.so '${duoIkey} ${duoSkey} ${duoHost}'" >> $OPENVPN_PATH/server.conf
     echo "reneg-sec 0" >> $OPENVPN_PATH/server.conf
   fi
