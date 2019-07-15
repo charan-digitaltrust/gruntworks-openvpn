@@ -165,8 +165,9 @@ mute 20
 
 EOF
 
-  if [[ ! -z ${duoIkey} ]]; then
-    echo "plugin /opt/duo/duo_openvpn.so '${duoIkey} ${duoSkey} ${duoHost}'" >> $OPENVPN_PATH/server.conf
+  if [[ ! -z "$duoIkey" ]]; then
+    log_info "Found Duo parameters. Configuring the duo_openvpn plugin..."
+    echo "plugin /opt/duo/duo_openvpn.so '$duoIkey $duoSkey $duoHost'" >> $OPENVPN_PATH/server.conf
     echo "reneg-sec 0" >> $OPENVPN_PATH/server.conf
   fi
 }
@@ -480,7 +481,8 @@ function init_openvpn() {
 	assert_not_empty "--vpn-route" "$routes"
 	assert_not_empty "--vpn-subnet" "$vpn_subnet"
 
-	if [[ ! -z ${duo_ikey} ]]; then
+	if [[ ! -z "$duo_ikey" || ! -z "$duo_skey" || ! -z "$duo_host" ]]; then
+        assert_not_empty "--duo-ikey" "$duo_ikey"
         assert_not_empty "--duo-skey" "$duo_skey"
         assert_not_empty "--duo-host" "$duo_host"
 	fi
