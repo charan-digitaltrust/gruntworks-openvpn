@@ -100,8 +100,14 @@ function restore_pki_assets_from_s3() {
 }
 
 function copy_config_templates() {
+    local duo_enabled="$1"
 	echo "Copying OpenVPN config templates into place..."
 	cp /gruntwork/install-openvpn/openvpn-client.ovpn $OPENVPN_PATH/
+    if [[ $duo_enabled == "true" ]]; then
+        log_info "Duo is enabled. Adding appropriate configuration to the openvpn-client.ovpn template..."
+        echo "auth-user-pass" >> $OPENVPN_PATH/openvpn-client.ovpn
+        echo "reneg-sec 0" >> $OPENVPN_PATH/openvpn-client.ovpn
+    fi
 }
 
 function generate_server_conf() {
@@ -374,6 +380,7 @@ function init_openvpn() {
 	local vpn_subnet=""
 	local search_domains=()
 	local routes=()
+	local duo_enabled="false"
 
 	while [[ $# -gt 0 ]]; do
 		local key="$1"
@@ -485,6 +492,7 @@ function init_openvpn() {
         assert_not_empty "--duo-ikey" "$duo_ikey"
         assert_not_empty "--duo-skey" "$duo_skey"
         assert_not_empty "--duo-host" "$duo_host"
+        duo_enabled="true"
 	fi
 
 	#Pre-Reqs
@@ -516,7 +524,7 @@ function init_openvpn() {
 		routesStr=$(printf "$routesStr\npush \"route $i\"")
 	done
 
-	copy_config_templates
+	copy_config_templates "$duo_enabled"
 	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr" "$duo_ikey" "$duo_skey" "$duo_host"
 	change_config_dir_permissions
 	configure_tcpip "$vpn_subnet"
