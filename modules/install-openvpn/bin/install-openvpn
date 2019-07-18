@@ -107,26 +107,26 @@ function install_openvpn {
   local duo_version="2.2"
 
   while [[ $# -gt 0 ]]; do
-		local key="$1"
+    local key="$1"
 
-		case "$key" in
-		--duo-version)
-			duo_version="$2"
-			shift
-			;;
-		--help)
-			print_usage
-			exit
-			;;
-		*)
-			log_error "Unrecognized argument: $key"
-			print_usage
-			exit 1
-			;;
-		esac
+    case "$key" in
+    --duo-version)
+      duo_version="$2"
+      shift
+      ;;
+    --help)
+      print_usage
+      exit
+      ;;
+    *)
+      log_error "Unrecognized argument: $key"
+      print_usage
+      exit 1
+      ;;
+    esac
 
-		shift
-	done
+    shift
+  done
 
   assert_uid_is_root_or_sudo
   assert_is_supported_ubuntu "$ubuntu_distro_name"
@@ -138,7 +138,7 @@ function install_openvpn {
   upgrade_openssl
   install_aws_cli
   if [[ "$duo_version" != "__NONE__" ]]; then
-      install_duo_openvpn "$duo_version"
+    install_duo_openvpn "$duo_version"
   fi
 }
 
