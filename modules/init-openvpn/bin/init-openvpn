@@ -100,12 +100,12 @@ function restore_pki_assets_from_s3() {
 }
 
 function copy_config_templates() {
-    local duo_enabled="$1"
+	local duo_enabled="$1"
 	echo "Copying OpenVPN config templates into place..."
 	cp /gruntwork/install-openvpn/openvpn-client.ovpn $OPENVPN_PATH/
-    if [[ $duo_enabled == "true" ]]; then
-        log_info "Duo is enabled. Adding appropriate configuration to the openvpn-client.ovpn template..."
-        cat <<EOF >$OPENVPN_PATH/openvpn-client.ovpn
+	if [[ $duo_enabled == "true" ]]; then
+		log_info "Duo is enabled. Adding appropriate configuration to the openvpn-client.ovpn template..."
+		cat <<EOF >$OPENVPN_PATH/openvpn-client.ovpn
 # Duo Plugin parameters (see https://duo.com/docs/openvpn#configure-the-client).
 # Enables password prompt, as required for Duo authentication.
 auth-user-pass
@@ -113,7 +113,7 @@ auth-user-pass
 # Disable renegotiating the connection every hour to avoid unexpected push notifications.
 reneg-sec 0
 EOF
-    fi
+	fi
 }
 
 function generate_server_conf() {
@@ -177,11 +177,11 @@ mute 20
 
 EOF
 
-  if [[ ! -z "$duoIkey" ]]; then
-    log_info "Found Duo parameters. Configuring the duo_openvpn plugin..."
-    echo "plugin /opt/duo/duo_openvpn.so '$duoIkey $duoSkey $duoHost'" >> $OPENVPN_PATH/server.conf
-    echo "reneg-sec 0" >> $OPENVPN_PATH/server.conf
-  fi
+	if [[ ! -z "$duoIkey" ]]; then
+		log_info "Found Duo parameters. Configuring the duo_openvpn plugin..."
+		echo "plugin /opt/duo/duo_openvpn.so '$duoIkey $duoSkey $duoHost'" >> $OPENVPN_PATH/server.conf
+		echo "reneg-sec 0" >> $OPENVPN_PATH/server.conf
+	fi
 }
 
 #Takes a subnet mask (255.255.255.0) and returns network portion bit length (24)
@@ -244,7 +244,7 @@ function configure_tcpip() {
 	local subnet
 	local mask
 	local cidr
-    subnet=$(extractSubnet "$1")
+	subnet=$(extractSubnet "$1")
 	mask=$(extractMask "$1")
 	cidr=$(mask2CIDR $mask)
 	local -r subnet_cidr="$subnet/$cidr"
@@ -252,6 +252,7 @@ function configure_tcpip() {
 	log_info "Configure TCP/IP settings..."
 
 	cp /gruntwork/install-openvpn/ufw-default /etc/default/ufw
+
 	cp /gruntwork/install-openvpn/before.rules /etc/ufw/before.rules
 	file_replace_text "__VPN_SUBNET__" "$subnet_cidr" /etc/ufw/before.rules
 
