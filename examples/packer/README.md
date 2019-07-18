@@ -19,6 +19,7 @@ All variables below:
 | openvpn_admin_binary        | Where should Packer look for a copy of the `openvpn-admin` binary that you will use to manage the VPN certificates on your VPN server. See: [openvpn-admin](/modules/openvpn-admin) for more info. | `/examples/bin/openvpn-admin` |
 | gruntwork_installer_version | What version of [Gruntwork Installer](https://github.com/gruntwork-io/gruntwork-installer) to use | `v0.0.20`                     |
 | bash_commons_version        | What version of [bash-commons](https://github.com/gruntwork-io/bash-commons) to use | `v0.0.6`                      |
+| duo_version                 | What version of [duo_openvpn](https://github.com/duosecurity/duo_openvpn) to use; specify `__NONE__` to skip installing the plugin. | `2.2` |
 
 ## Building the packer template
 
