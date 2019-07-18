@@ -454,17 +454,17 @@ function init_openvpn() {
 			shift
 			;;
 		--duo-ikey)
-		    duo_ikey=$2
-		    shift
-		    ;;
+			duo_ikey=$2
+			shift
+			;;
 		--duo-skey)
-		    duo_skey=$2
-		    shift
-		    ;;
+			duo_skey=$2
+			shift
+			;;
 		--duo-host)
-		    duo_host=$2
-		    shift
-		    ;;
+			duo_host=$2
+			shift
+			;;
 		--help)
 			print_usage
 			exit
@@ -496,10 +496,10 @@ function init_openvpn() {
 	assert_not_empty "--vpn-subnet" "$vpn_subnet"
 
 	if [[ ! -z "$duo_ikey" || ! -z "$duo_skey" || ! -z "$duo_host" ]]; then
-        assert_not_empty "--duo-ikey" "$duo_ikey"
-        assert_not_empty "--duo-skey" "$duo_skey"
-        assert_not_empty "--duo-host" "$duo_host"
-        duo_enabled="true"
+		assert_not_empty "--duo-ikey" "$duo_ikey"
+		assert_not_empty "--duo-skey" "$duo_skey"
+		assert_not_empty "--duo-host" "$duo_host"
+		duo_enabled="true"
 	fi
 
 	#Pre-Reqs
