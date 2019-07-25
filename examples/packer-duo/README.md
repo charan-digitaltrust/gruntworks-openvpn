@@ -1,6 +1,6 @@
-# Open VPN example AMI
+# Open VPN example AMI with Duo Plugin
 
-This folder contains an example [Packer](https://www.packer.io/) template for building an AMI (Amazon Machine Image) containing  the OpenVPN server.
+This folder contains an example [Packer](https://www.packer.io/) template for building an AMI (Amazon Machine Image) containing the OpenVPN server with the [duo_openvpn plugin](https://github.com/duosecurity/duo_openvpn) enabled.
 
 ## Pre-requisites:
 
