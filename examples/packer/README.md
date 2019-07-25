@@ -28,8 +28,6 @@ Below is an example of the command you could run to build this packer template.
 packer build \
 	-var aws_region=us-east-1 \
 	-var openvpn_admin_binary=../examples/bin/openvpn-admin \
-	-var active_git_branch=master \
-	-var github_oauth_token=${GITHUB_OAUTH_TOKEN} \
 	-only=ubuntu-16-build \
 	../examples/packer/build.json
 ```
