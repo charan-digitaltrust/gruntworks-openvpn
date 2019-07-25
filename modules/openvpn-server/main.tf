@@ -75,6 +75,8 @@ resource "aws_security_group" "openvpn" {
 
 # Allow all outbound traffic from the OpenVPN Server
 resource "aws_security_group_rule" "allow_outbound_all" {
+  count = "${var.allow_all_outbound_traffic ? 1 : 0}"
+
   type        = "egress"
   from_port   = 0
   to_port     = 0

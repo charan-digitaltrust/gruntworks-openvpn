@@ -60,6 +60,11 @@ variable "user_data" {
 # Generally, these values won't need to be changed.
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "allow_all_outbound_traffic" {
+  description = "A boolean that specifies if this server should be allowed to make any outbound requests. If true, this will add a rule to allow all outbound network traffic on the security group."
+  default     = true
+}
+
 variable "allow_ssh_from_cidr" {
   description = "A boolean that specifies if this server will allow SSH connections from the list of CIDR blocks specified in var.allow_ssh_from_cidr_list."
   default     = false
