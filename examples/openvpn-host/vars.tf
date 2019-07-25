@@ -60,17 +60,17 @@ variable "ami_id" {
 variable "duo_ikey" {
   description = "The IKEY value to use for the duo_openvpn plugin. If a value is provided, the plugin will be enabled."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "duo_skey" {
   description = "The SKEY value to use for the duo_openvpn plugin. Must be provided if duo_ikey is set."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "duo_host" {
   description = "The HOST value to use for the duo_openvpn plugin. Must be provided if duo_ikey is set."
   type        = string
-  default     = null
+  default     = ""
 }
