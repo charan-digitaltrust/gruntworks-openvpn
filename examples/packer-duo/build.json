@@ -5,7 +5,8 @@
     "openvpn_admin_binary": "{{ template_dir }}/../bin/openvpn-admin",
     "gruntwork_installer_version": "v0.0.20",
     "bash_commons_version": "v0.0.6",
-    "active_git_branch": null
+    "active_git_branch": null,
+    "duo_version": "2.2"
   },
   "builders": [
     {
@@ -85,7 +86,7 @@
         "gruntwork-install --module-name 'backup-openvpn-pki' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
         "gruntwork-install --module-name 'start-openvpn-admin' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
-        "sudo /usr/local/bin/install-openvpn"
+        "sudo /usr/local/bin/install-openvpn --duo-version '{{user `duo_version`}}'"
       ],
       "environment_vars": [
         "GITHUB_OAUTH_TOKEN={{user `github_oauth_token`}}"

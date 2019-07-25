@@ -104,7 +104,7 @@ function install_openvpn {
   local -r apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
   local -r gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
 
-  local duo_version="2.2"
+  local duo_version="__NONE__"
 
   while [[ $# -gt 0 ]]; do
     local key="$1"
