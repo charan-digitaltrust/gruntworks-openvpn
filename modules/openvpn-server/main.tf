@@ -97,6 +97,39 @@ resource "aws_security_group_rule" "allow_outbound_all" {
   security_group_id = aws_security_group.openvpn.id
 }
 
+# If we don't want to allow all outbound traffic, instead configure security group rules to restrict access to only the
+# outbound traffic we need:
+# - S3 endpoint
+# - SQS endpoint
+resource "aws_security_group_rule" "allow_outbound_s3_and_sqs" {
+  count = var.allow_all_outbound_traffic ? 0 : 1
+
+  type      = "egress"
+  from_port = 443
+  to_port   = 443
+  protocol  = "tcp"
+  prefix_list_ids = concat(
+    data.aws_vpc_endpoint.s3.*.prefix_list_id,
+    data.aws_vpc_endpoint.sqs.*.prefix_list_id,
+  )
+  security_group_id = aws_security_group.openvpn.id
+}
+
+# - Outbound traffic to target CIDR blocks
+resource "aws_security_group_rule" "allow_outbound_to_target_blocks" {
+  count = var.allow_all_outbound_traffic ? 0 : 1
+
+  type      = "egress"
+  from_port = 0
+  to_port   = 0
+  protocol  = -1
+  cidr_blocks = concat(
+    [data.aws_vpc.vpc.cidr_block],
+    var.vpn_target_cidr_blocks,
+  )
+  security_group_id = aws_security_group.openvpn.id
+}
+
 # Allow SSH access to OpenVPN from the specified Security Group IDs
 resource "aws_security_group_rule" "allow_inbound_ssh_security_groups" {
   count = var.allow_ssh_from_security_group ? 1 : 0
@@ -347,6 +380,7 @@ resource "aws_iam_role_policy" "backup" {
 # CREATE THE SQS QUEUES
 # This queue is used to receive requests for new certificates
 # ---------------------------------------------------------------------------------------------------------------------
+
 resource "aws_sqs_queue" "client-request-queue" {
   name = "openvpn-requests-${var.request_queue_name}"
 }
@@ -560,4 +594,31 @@ resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_ext
   count      = signum(length(var.external_account_arns))
   role       = aws_iam_role.allow_certificate_revocations_for_external_accounts[0].id
   policy_arn = aws_iam_policy.certificate-revocation-openvpnadmins.arn
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# DATA SOURCES
+# - Lookup VPC endpoints to configure outbound traffic
+# ----------------------------------------------------------------------------------------------------------------------
+
+data "aws_vpc_endpoint" "s3" {
+  # This data source should only be looked up when var.allow_all_outbound_traffic is false, so that we don't force the
+  # user's VPC to always have these endpoints.
+  count = var.allow_all_outbound_traffic ? 0 : 1
+
+  vpc_id       = var.vpc_id
+  service_name = "com.amazonaws.${var.aws_region}.s3"
+}
+
+data "aws_vpc_endpoint" "sqs" {
+  # This data source should only be looked up when var.allow_all_outbound_traffic is false, so that we don't force the
+  # user's VPC to always have these endpoints.
+  count = var.allow_all_outbound_traffic ? 0 : 1
+
+  vpc_id       = var.vpc_id
+  service_name = "com.amazonaws.${var.aws_region}.sqs"
+}
+
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
 }

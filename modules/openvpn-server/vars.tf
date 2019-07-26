@@ -74,9 +74,15 @@ variable "user_data" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 variable "allow_all_outbound_traffic" {
-  description = "A boolean that specifies if this server should be allowed to make any outbound requests. If true, this will add a rule to allow all outbound network traffic on the security group."
+  description = "A boolean that specifies if this server should be allowed to make any outbound requests. If true, this will add a rule to allow all outbound network traffic on the security group. When false, var.vpn_target_cidr_blocks is required."
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "vpn_target_cidr_blocks" {
+  description = "List of CIDR blocks that this VPN allows communication into. Used to configure outbound security group rules to allow all traffic to these CIDR blocks. Required for VPN to function when var.allow_all_outbound_traffic is false."
+  type        = list(string)
+  default     = []
 }
 
 variable "allow_ssh_from_cidr" {

@@ -56,3 +56,9 @@ variable "ami_id" {
   description = "The ID of the AMI to run. Should be an AMI built from the Packer template in /examples/packer/build.json"
   type        = string
 }
+
+variable "allow_all_outbound_traffic" {
+  description = "Whether or not to allow all outbound traffic, or just a restricted subset that is necessary."
+  type        = bool
+  default     = true
+}

@@ -21,6 +21,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testOpenVpnOptions struct {
+	OsName                      string
+	PackerBuildJsonPath         string
+	DuoPlugin                   bool
+	RestrictOutboundConnections bool
+}
+
 func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	// For convenience - uncomment these as well as the "os" import
 	// when doing local testing if you need to skip any sections.
@@ -34,20 +41,49 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	//os.Setenv("SKIP_cleanup_ami", "true")
 
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-16", "../examples/packer/build.json", false)
+	options := testOpenVpnOptions{
+		OsName:                      "ubuntu-16",
+		PackerBuildJsonPath:         "../examples/packer/build.json",
+		DuoPlugin:                   false,
+		RestrictOutboundConnections: false,
+	}
+	testOpenVpnInitializationSuite(t, options)
 }
 
 func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer/build.json", false)
+	options := testOpenVpnOptions{
+		OsName:                      "ubuntu-18",
+		PackerBuildJsonPath:         "../examples/packer/build.json",
+		DuoPlugin:                   false,
+		RestrictOutboundConnections: false,
+	}
+	testOpenVpnInitializationSuite(t, options)
 }
 
 func TestOpenVpnInitializationDuo(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer-duo/build.json", true)
+	options := testOpenVpnOptions{
+		OsName:                      "ubuntu-18",
+		PackerBuildJsonPath:         "../examples/packer-duo/build.json",
+		DuoPlugin:                   true,
+		RestrictOutboundConnections: false,
+	}
+	testOpenVpnInitializationSuite(t, options)
 }
 
-func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJsonPath string, testDuoPlugin bool) {
+func TestOpenVpnInitializationUbuntuBionicWithRestrictedOutboundConnections(t *testing.T) {
+	t.Parallel()
+	options := testOpenVpnOptions{
+		OsName:                      "ubuntu-18",
+		PackerBuildJsonPath:         "../examples/packer/build.json",
+		DuoPlugin:                   false,
+		RestrictOutboundConnections: true,
+	}
+	testOpenVpnInitializationSuite(t, options)
+}
+
+func testOpenVpnInitializationSuite(t *testing.T, options testOpenVpnOptions) {
 	// Uncomment any of the following to skip that section during the test
 	//os.Setenv("SKIP_build_ami", "true")
 	//os.Setenv("SKIP_deploy_terraform", "true")
@@ -108,7 +144,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 		if t.Failed() {
 			logger.Log(t, "Fetching logs to help debug test failure.")
 			awsRegion := test_structure.LoadString(t, workingDir, "awsRegion")
-			fetchSyslogForInstance(t, osName, awsRegion, workingDir)
+			fetchSyslogForInstance(t, options.OsName, awsRegion, workingDir)
 		}
 	})
 
@@ -117,7 +153,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
 		awsRegion := aws.GetRandomStableRegion(t, []string{}, []string{"ap-northeast-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
-		buildAMI(t, awsRegion, osName, workingDir, openVpnAdminBinaryPath, packerBuildJsonPath)
+		buildAMI(t, awsRegion, options.OsName, workingDir, openVpnAdminBinaryPath, options.PackerBuildJsonPath)
 
 		// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
 		// tests running in parallel
@@ -157,6 +193,9 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 				"keypair_name":          keyPair.Name,
 			},
 		}
+		if options.RestrictOutboundConnections {
+			terraformOptions.Vars["allow_all_outbound_traffic"] = false
+		}
 
 		// Save the Terraform Options struct, instance name, and instance text so future test stages can use it
 		test_structure.SaveTerraformOptions(t, workingDir, terraformOptions)
@@ -173,12 +212,12 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 
 	// Validate that the web app deployed and is responding to HTTP requests
 	test_structure.RunTestStage(t, "validate", func() {
-		validateInstanceRunningOpenVPNServer(t, osName, workingDir)
+		validateInstanceRunningOpenVPNServer(t, options.OsName, workingDir)
 	})
 
-	if testDuoPlugin {
+	if options.DuoPlugin {
 		test_structure.RunTestStage(t, "validate_duo_plugin", func() {
-			validateInstanceHasDuoPlugin(t, osName, workingDir)
+			validateInstanceHasDuoPlugin(t, options.OsName, workingDir)
 		})
 	}
 

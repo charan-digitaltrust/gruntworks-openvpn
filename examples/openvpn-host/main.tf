@@ -24,6 +24,7 @@ resource "aws_kms_key" "backups" {
 # ---------------------------------------------------------------------------------------------------------------------
 # SETUP DATA STRUCTURES
 # ---------------------------------------------------------------------------------------------------------------------
+
 data "aws_vpc" "default" {
   default = true
 }
@@ -72,6 +73,22 @@ data "template_file" "user_data" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# CREATE REQUIRED VPC ENDPOINTS
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_vpc_endpoint" "s3" {
+  count        = var.allow_all_outbound_traffic ? 0 : 1
+  vpc_id       = data.aws_vpc.default.id
+  service_name = "com.amazonaws.${var.aws_region}.s3"
+}
+
+resource "aws_vpc_endpoint" "sqs" {
+  count        = var.allow_all_outbound_traffic ? 0 : 1
+  vpc_id       = data.aws_vpc.default.id
+  service_name = "com.amazonaws.${var.aws_region}.sqs"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
 # LAUNCH THE OPENVPN HOST
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -80,6 +97,11 @@ module "openvpn" {
   # to a specific version of the modules, such as the following example:
   # source = "git::git@github.com:gruntwork-io/module-openvpn.git//modules/openvpn-server?ref=v1.0.0"
   source = "../../modules/openvpn-server"
+
+  depends_on = [
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.sqs,
+  ]
 
   aws_account_id = var.aws_account_id
   aws_region     = var.aws_region
@@ -103,4 +125,6 @@ module "openvpn" {
 
   #WARNING: Only set this to true for testing/dev, never in production
   backup_bucket_force_destroy = "true"
+
+  allow_all_outbound_traffic = var.allow_all_outbound_traffic
 }
