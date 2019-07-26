@@ -92,16 +92,21 @@ resource "aws_vpc_endpoint" "sqs" {
 # LAUNCH THE OPENVPN HOST
 # ---------------------------------------------------------------------------------------------------------------------
 
+# This data source solely exists to simulate a dependency for the module, so that any resources that reference the VPC
+# will wait for the VPC endpoint to be created first.
+data "template_file" "vpc_id" {
+  template = data.aws_vpc.default.id
+  depends_on = [
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.sqs,
+  ]
+}
+
 module "openvpn" {
   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
   # to a specific version of the modules, such as the following example:
   # source = "git::git@github.com:gruntwork-io/module-openvpn.git//modules/openvpn-server?ref=v1.0.0"
   source = "../../modules/openvpn-server"
-
-  depends_on = [
-    aws_vpc_endpoint.s3,
-    aws_vpc_endpoint.sqs,
-  ]
 
   aws_account_id = var.aws_account_id
   aws_region     = var.aws_region
@@ -116,7 +121,7 @@ module "openvpn" {
   request_queue_name    = var.request_queue_name
   revocation_queue_name = var.revocation_queue_name
   kms_key_arn           = aws_kms_key.backups.arn
-  vpc_id                = data.aws_vpc.default.id
+  vpc_id                = data.template_file.vpc_id.rendered
   subnet_id             = data.aws_subnet.default.id
 
   #WARNING: Only allow SSH from everywhere for test/dev, never in production
