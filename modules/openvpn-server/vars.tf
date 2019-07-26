@@ -130,7 +130,7 @@ variable "external_account_arns" {
 variable "root_volume_type" {
   description = "The root volume type. Must be one of: standard, gp2, io1."
   type        = string
-  default     = "standard"
+  default     = "gp2"
 }
 
 variable "root_volume_size" {
