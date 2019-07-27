@@ -83,9 +83,10 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint" "sqs" {
-  count        = var.allow_all_outbound_traffic ? 0 : 1
-  vpc_id       = data.aws_vpc.default.id
-  service_name = "com.amazonaws.${var.aws_region}.sqs"
+  count             = var.allow_all_outbound_traffic ? 0 : 1
+  vpc_id            = data.aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.aws_region}.sqs"
+  vpc_endpoint_type = "Interface"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
