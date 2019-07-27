@@ -83,10 +83,28 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint" "sqs" {
+  count              = var.allow_all_outbound_traffic ? 0 : 1
+  vpc_id             = data.aws_vpc.default.id
+  service_name       = "com.amazonaws.${var.aws_region}.sqs"
+  vpc_endpoint_type  = "Interface"
+  security_group_ids = aws_security_group.sqs_endpoint.*.id
+}
+
+resource "aws_security_group" "sqs_endpoint" {
+  count       = var.allow_all_outbound_traffic ? 0 : 1
+  name        = "sqs_endpoint_allow_https"
+  description = "Allow inbound requests on port 443 for the SQS VPC endpoint."
+  vpc_id      = data.aws_vpc.default.id
+}
+
+resource "aws_security_group_rule" "sqs_endpoint" {
   count             = var.allow_all_outbound_traffic ? 0 : 1
-  vpc_id            = data.aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.aws_region}.sqs"
-  vpc_endpoint_type = "Interface"
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [data.aws_vpc.cidr_block]
+  security_group_id = aws_security_group.sqs_endpoint.*.id[0]
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
