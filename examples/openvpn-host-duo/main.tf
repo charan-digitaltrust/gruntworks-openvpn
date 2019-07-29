@@ -58,6 +58,9 @@ data "template_file" "user_data" {
     revocation_queue_url = module.openvpn.client_revocation_queue
     queue_region         = data.aws_region.current.name
     vpn_subnet           = "192.168.99.0 255.255.255.0"
+    duo_ikey             = var.duo_ikey
+    duo_skey             = var.duo_skey
+    duo_host             = var.duo_host
     routes = chomp(
       join(
         " ",

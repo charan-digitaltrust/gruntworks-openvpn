@@ -56,3 +56,21 @@ variable "ami_id" {
   description = "The ID of the AMI to run. Should be an AMI built from the Packer template in /examples/packer/build.json"
   type        = string
 }
+
+variable "duo_ikey" {
+  description = "The IKEY value to use for the duo_openvpn plugin. If a value is provided, the plugin will be enabled."
+  type        = string
+  default     = ""
+}
+
+variable "duo_skey" {
+  description = "The SKEY value to use for the duo_openvpn plugin. Must be provided if duo_ikey is set."
+  type        = string
+  default     = ""
+}
+
+variable "duo_host" {
+  description = "The HOST value to use for the duo_openvpn plugin. Must be provided if duo_ikey is set."
+  type        = string
+  default     = ""
+}
