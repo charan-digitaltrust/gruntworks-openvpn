@@ -103,7 +103,7 @@ resource "aws_security_group_rule" "sqs_endpoint" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = [data.aws_vpc.cidr_block]
+  cidr_blocks       = [data.aws_vpc.default.cidr_block]
   security_group_id = aws_security_group.sqs_endpoint.*.id[0]
 }
 
