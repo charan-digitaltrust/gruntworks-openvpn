@@ -1,6 +1,6 @@
-# Open VPN example AMI
+# Open VPN example AMI with Duo Plugin
 
-This folder contains an example [Packer](https://www.packer.io/) template for building an AMI (Amazon Machine Image) containing  the OpenVPN server.
+This folder contains an example [Packer](https://www.packer.io/) template for building an AMI (Amazon Machine Image) containing the OpenVPN server with the [duo_openvpn plugin](https://github.com/duosecurity/duo_openvpn) enabled.
 
 ## Pre-requisites:
 
@@ -19,6 +19,7 @@ All variables below:
 | openvpn_admin_binary        | Where should Packer look for a copy of the `openvpn-admin` binary that you will use to manage the VPN certificates on your VPN server. See: [openvpn-admin](/modules/openvpn-admin) for more info. | `/examples/bin/openvpn-admin` |
 | gruntwork_installer_version | What version of [Gruntwork Installer](https://github.com/gruntwork-io/gruntwork-installer) to use | `v0.0.20`                     |
 | bash_commons_version        | What version of [bash-commons](https://github.com/gruntwork-io/bash-commons) to use | `v0.0.6`                      |
+| duo_version                 | What version of [duo_openvpn](https://github.com/duosecurity/duo_openvpn) to use; specify `__NONE__` to skip installing the plugin. | `2.2` |
 
 ## Building the packer template
 
@@ -28,6 +29,8 @@ Below is an example of the command you could run to build this packer template.
 packer build \
 	-var aws_region=us-east-1 \
 	-var openvpn_admin_binary=../examples/bin/openvpn-admin \
+	-var active_git_branch=master \
+	-var github_oauth_token=${GITHUB_OAUTH_TOKEN} \
 	-only=ubuntu-16-build \
 	../examples/packer/build.json
 ```

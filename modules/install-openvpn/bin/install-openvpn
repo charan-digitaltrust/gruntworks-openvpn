@@ -20,6 +20,22 @@ source "$BASH_COMMONS_DIR/log.sh"
 source "$BASH_COMMONS_DIR/assert.sh"
 source "$BASH_COMMONS_DIR/file.sh"
 
+function print_usage() {
+	echo
+	echo "Usage: install-openvpn [OPTIONS]"
+	echo
+	echo "Install the latest OpenVPN Server on Ubuntu 16.04 or 18.04 from the OpenVPN apt repositories."
+	echo
+	echo "Options:"
+	echo
+	echo -e "  --duo-version\t\t\tSpecify the version to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). To skip installing the plugin, specify `__NONE__`."
+	echo
+	echo "Example:"
+	echo
+	echo "  install-openvpn.sh \\"
+	echo "    --duo-version __NONE__ "
+}
+
 # This script only works on ubuntu 16.04 or 18.04
 function assert_is_supported_ubuntu {
   local -r distro_name="$1"
@@ -67,6 +83,15 @@ function install_aws_cli {
   pip install awscli
 }
 
+function install_duo_openvpn {
+  local -r duo_plugin_version="$1"
+  log_info "Install Duo OpenVPN Plugin version $duo_plugin_version..."
+  curl https://codeload.github.com/duosecurity/duo_openvpn/tar.gz/$duo_plugin_version -o duo_openvpn.tar.gz
+  tar zxf duo_openvpn.tar.gz
+  cd duo_openvpn-$duo_plugin_version
+  make && make install
+}
+
 # Upgrade OpenSSL to the latest version
 function upgrade_openssl {
   log_info "Upgrading OpenSSL..."
@@ -79,6 +104,30 @@ function install_openvpn {
   local -r apt_repo_url="http://build.openvpn.net/debian/openvpn/stable"
   local -r gpg_key_url="https://swupdate.openvpn.net/repos/repo-public.gpg"
 
+  local duo_version="__NONE__"
+
+  while [[ $# -gt 0 ]]; do
+    local key="$1"
+
+    case "$key" in
+    --duo-version)
+      duo_version="$2"
+      shift
+      ;;
+    --help)
+      print_usage
+      exit
+      ;;
+    *)
+      log_error "Unrecognized argument: $key"
+      print_usage
+      exit 1
+      ;;
+    esac
+
+    shift
+  done
+
   assert_uid_is_root_or_sudo
   assert_is_supported_ubuntu "$ubuntu_distro_name"
 
@@ -88,6 +137,9 @@ function install_openvpn {
   copy_wrapper_scripts
   upgrade_openssl
   install_aws_cli
+  if [[ "$duo_version" != "__NONE__" ]]; then
+    install_duo_openvpn "$duo_version"
+  fi
 }
 
 install_openvpn
