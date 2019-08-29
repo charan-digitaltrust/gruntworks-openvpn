@@ -34,24 +34,20 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	//os.Setenv("SKIP_cleanup_ami", "true")
 
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-16", "../examples/packer/build.json")
+	testOpenVpnInitializationSuite(t, "ubuntu-16", "../examples/packer/build.json", false)
 }
 
 func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer/build.json")
+	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer/build.json", false)
 }
 
 func TestOpenVpnInitializationDuo(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer-duo/build.json")
-	workingDir := test_structure.CopyTerraformFolderToTemp(t, "../", "examples/openvpn-host")
-	test_structure.RunTestStage(t, "validate_duo_plugin", func() {
-		validateInstanceHasDuoPlugin(t, "ubuntu-18", workingDir)
-	})
+	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer-duo/build.json", true)
 }
 
-func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJsonPath string) {
+func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJsonPath string, testDuoPlugin bool) {
 	// Uncomment any of the following to skip that section during the test
 	//os.Setenv("SKIP_build_ami", "true")
 	//os.Setenv("SKIP_deploy_terraform", "true")
@@ -179,6 +175,12 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 	test_structure.RunTestStage(t, "validate", func() {
 		validateInstanceRunningOpenVPNServer(t, osName, workingDir)
 	})
+
+	if testDuoPlugin {
+		test_structure.RunTestStage(t, "validate_duo_plugin", func() {
+			validateInstanceHasDuoPlugin(t, osName, workingDir)
+		})
+	}
 
 }
 
