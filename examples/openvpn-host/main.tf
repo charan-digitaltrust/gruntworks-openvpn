@@ -57,6 +57,7 @@ data "template_file" "user_data" {
     request_queue_url    = module.openvpn.client_request_queue
     revocation_queue_url = module.openvpn.client_revocation_queue
     queue_region         = data.aws_region.current.name
+    search_domain        = "foo.bar.com"
     vpn_subnet           = "192.168.99.0 255.255.255.0"
     routes = chomp(
       join(

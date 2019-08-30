@@ -42,6 +42,7 @@ sudo init-openvpn  \
  --ca-expiration-days "${ca_expiration_days}" \
  --cert-expiration-days "${cert_expiration_days}" \
  --vpn-subnet "${vpn_subnet}" \
+ --search-domain "${search_domain}" \
  ${routes}
 
 echo 'Starting Certificate Request/Revoke Daemons...'
