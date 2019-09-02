@@ -142,4 +142,4 @@ function install_openvpn {
   fi
 }
 
-install_openvpn
+install_openvpn "$@"

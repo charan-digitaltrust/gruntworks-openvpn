@@ -34,15 +34,20 @@ func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
 	//os.Setenv("SKIP_cleanup_ami", "true")
 
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-16")
+	testOpenVpnInitializationSuite(t, "ubuntu-16", "../examples/packer/build.json", false)
 }
 
 func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-18")
+	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer/build.json", false)
 }
 
-func testOpenVpnInitializationSuite(t *testing.T, osName string) {
+func TestOpenVpnInitializationDuo(t *testing.T) {
+	t.Parallel()
+	testOpenVpnInitializationSuite(t, "ubuntu-18", "../examples/packer-duo/build.json", true)
+}
+
+func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJsonPath string, testDuoPlugin bool) {
 	// Uncomment any of the following to skip that section during the test
 	//os.Setenv("SKIP_build_ami", "true")
 	//os.Setenv("SKIP_deploy_terraform", "true")
@@ -112,7 +117,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 		// Pick a random AWS region to test in. This helps ensure your code works in all regions.
 		awsRegion := aws.GetRandomStableRegion(t, []string{}, []string{"ap-northeast-1"})
 		test_structure.SaveString(t, workingDir, "awsRegion", awsRegion)
-		buildAMI(t, awsRegion, osName, workingDir, openVpnAdminBinaryPath)
+		buildAMI(t, awsRegion, osName, workingDir, openVpnAdminBinaryPath, packerBuildJsonPath)
 
 		// A unique ID we can use to namespace resources so we don't clash with anything already in the AWS account or
 		// tests running in parallel
@@ -171,13 +176,19 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string) {
 		validateInstanceRunningOpenVPNServer(t, osName, workingDir)
 	})
 
+	if testDuoPlugin {
+		test_structure.RunTestStage(t, "validate_duo_plugin", func() {
+			validateInstanceHasDuoPlugin(t, osName, workingDir)
+		})
+	}
+
 }
 
 // Build the AMI with packer
-func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, openVpnAdminBinaryPath string) {
+func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, openVpnAdminBinaryPath string, packerBuildJsonPath string) {
 	packerOptions := &packer.Options{
 		// The path to where the Packer template is located
-		Template: "../examples/packer/build.json",
+		Template: packerBuildJsonPath,
 
 		// Only build the AMI
 		Only: fmt.Sprintf("%s-build", osName),
@@ -390,4 +401,46 @@ func osToLogPathSpec(t *testing.T, osName string) map[string][]string {
 	}
 	t.Fatalf("Unknown osName - can't map the os (%s) to it's default user", osName)
 	return nil
+}
+
+// Validate the duo plugin is installed
+func validateInstanceHasDuoPlugin(t *testing.T, osName string, workingDir string) {
+	// Load the Terraform Options saved by the earlier deploy_terraform stage
+	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+
+	// Load the keypair we saved before we ran terraform
+	keyPair := test_structure.LoadEc2KeyPair(t, workingDir)
+
+	// Run `terraform output` to get the value of an output variable
+	instanceIPAddress := terraform.Output(t, terraformOptions, "openvpn_host_public_ip")
+
+	// Host details used to connect to the host
+	host := ssh.Host{
+		Hostname:    instanceIPAddress,
+		SshUserName: osToSSHUserName(t, osName),
+		SshKeyPair:  keyPair.KeyPair,
+	}
+
+	// It can take a minute or so for the Instance to boot up, so retry a few times
+	maxRetries := 30
+
+	waitUntilSSHAvailable(t, host, maxRetries, 5*time.Second)
+	waitUntilOpenVpnInitComplete(t, host, maxRetries, 30*time.Second)
+
+	logger.Log(t, "SetupSuite Complete, Running Tests")
+
+	t.Run("duo plugin tests", func(t *testing.T) {
+		t.Run("running testDuoPluginIsPresent", wrapTestCase(testDuoPluginIsPresent, host))
+	})
+}
+
+func testDuoPluginIsPresent(t *testing.T, host ssh.Host) {
+	commandToTest := "ls /opt/duo|grep duo_openvpn.so"
+	output := ssh.CheckSshCommand(t, host, commandToTest)
+
+	// It will be convenient to see the full command output directly in logs. This will show only when there's a test failure.
+	logger.Logf(t, "Result of running \"%s\"\n", commandToTest)
+	logger.Log(t, output)
+
+	assert.Contains(t, output, "duo_openvpn.so")
 }
