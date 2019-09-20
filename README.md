@@ -42,7 +42,19 @@ module](/modules/openvpn-server), you can specify the ARNs of the AWS account wh
 assumed by users in those accounts to get access to the SQS queues. See the [how to switch between accounts
 documentation](https://github.com/gruntwork-io/module-security/tree/master/modules/cross-account-iam-roles#how-to-switch-between-accounts)
 for instructions on assuming IAM roles in other AWS accounts.  
-  
+
+#### Connecting to multiple VPNs
+Your VPN users may have problems connecting to multiple VPNs at the same time, unless you follow these best practices:
+1. Make sure that your VPC CIDRs do not overlap.
+1. Make sure that your VPN subnet CIDRs do not overlap. For example, use `172.16.1.0` for Dev, `172.16.2.0` for Prod, 
+   and so on.
+1. Make sure that your `openvpn-server` module's `user-data/user-data.sh` includes `--search-domain "${search_domain}"`
+   in its arguments to `init-openvpn`, and pass the appropriate search domain in to the user data template object.
+   See the [example here](./examples/openvpn-host) for details.
+1. Use [Viscosity](https://www.sparklabs.com/viscosity/) rather than [Tunnelblick](https://tunnelblick.net/).
+   Tunnelblick does not support setting DNS nameservers when connecting to multiple VPNs at the same time,
+   and suffers from [a bug](https://github.com/Tunnelblick/Tunnelblick/issues/573) that clobbers the state of your
+   internet connection if you ever connect to more than one VPN at a time.
 
 ## What is a module?
 
