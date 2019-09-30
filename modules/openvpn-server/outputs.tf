@@ -11,7 +11,7 @@ output "private_ip" {
 }
 
 output "elastic_ip" {
-  value = aws_eip.openvpn.id
+  value = aws_eip.openvpn[0].id
 }
 
 output "security_group_id" {
