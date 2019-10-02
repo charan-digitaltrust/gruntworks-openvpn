@@ -69,3 +69,20 @@ resource "aws_iam_policy_attachment" "attachment" {
   policy_arn = "${aws_iam_policy.my_custom_policy.arn}"
 }
 ```
+
+## What if I want to enable MFA?
+
+The scripts [init-openvpn](../init-openvpn) and [install-openvpn](../install-openvpn) support setting up the
+[duo_openvpn](https://github.com/duosecurity/duo_openvpn) plugin for 2FA authentication. To enable the duo plugin, you
+need to:
+
+1. Build an AMI that has the `duo_openvpn` plugin installed. You can use `install-openvpn` to install the plugin
+   alongside openvpn by passing in the argument `--duo-version`. For example:
+
+     sudo /usr/local/bin/install-openvpn --duo-version 2.2
+
+1. In the `user_data` script for the server, pass in the duo keys to `init-openvpn` using the arguments `--duo-ikey`,
+   `--duo-skey`, and `--duo-host` to configure the integration key, secret key, and API hostname respectively.
+
+See the [packer-duo](../examples/packer-duo) and [openvpn-host-duo](../examples/openvpn-host-duo) examples for an
+example configuration to deploy the OpenVPN server with Duo enabled.
