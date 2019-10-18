@@ -150,3 +150,9 @@ variable "root_volume_delete_on_termination" {
   type        = bool
   default     = true
 }
+
+variable "enable_eip" {
+  description = "When set to true AWS will create an eip for the OpenVPN server and output it so it can be attached during boot with the user data script when set to false no eip will be created"
+  type = bool
+  default = true
+}

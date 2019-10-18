@@ -239,6 +239,7 @@ data "aws_iam_policy_document" "openvpn" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_eip" "openvpn" {
+  count = var.enable_eip ? 1 : 0
   vpc = true
 }
 

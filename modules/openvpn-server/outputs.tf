@@ -3,15 +3,15 @@ output "autoscaling_group_id" {
 }
 
 output "public_ip" {
-  value = aws_eip.openvpn.public_ip
+  value = aws_eip.openvpn[0].public_ip
 }
 
 output "private_ip" {
-  value = aws_eip.openvpn.private_ip
+  value = aws_eip.openvpn[0].private_ip
 }
 
 output "elastic_ip" {
-  value = aws_eip.openvpn.id
+  value = aws_eip.openvpn[0].id
 }
 
 output "security_group_id" {
