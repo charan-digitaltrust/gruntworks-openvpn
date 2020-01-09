@@ -51,6 +51,8 @@ resource "aws_launch_configuration" "openvpn" {
   iam_instance_profile        = aws_iam_instance_profile.openvpn.name
   associate_public_ip_address = true
 
+  spot_price = var.spot_price
+
   root_block_device {
     volume_type           = var.root_volume_type
     volume_size           = var.root_volume_size
