@@ -158,7 +158,7 @@ variable "enable_eip" {
 }
 
 variable "spot_price" {
-  description = "The maximum price to use for reserving spot instances."
+  description = "Set this parameter to use spot instances for your OpenVPN server. This parameter controls the maximum price to use for reserving spot instances. This can save you a lot of money on the VPN server, but it also risks that the server will be down if your requested spot instance price cannot be met."
   type        = number
   default     = null
 }
