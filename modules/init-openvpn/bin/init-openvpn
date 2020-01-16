@@ -42,6 +42,7 @@ function print_usage() {
 	echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
+	echo -e "  --link-mtu\t\t\t The OpenVPN server-configuration link-mtu to use. OpenVPN default is 1500, but depending on your network you may have to decrease it. Required. For example, 1400"
 	echo -e "  --search-domain\t\t\tPush a DNS search domain to clients (e.g., my.domain.internal). Optional. May be specified multiple times."
 	echo -e "  --duo-ikey\t\t\tSpecify the IKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
 	echo -e "  --duo-skey\t\t\tSpecify the SKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
@@ -59,7 +60,8 @@ function print_usage() {
 	echo "    --s3-bucket-name \"gruntwork-openvpn\" \\"
 	echo "    --kms-key-id \"01533cb9-b46b-4380-b63e-54edf025d5d1\" \\"
 	echo "    --vpn-subnet \"10.1.14.0 255.255.255.0\" \\"
-	echo "    --vpn-route \"10.200.0.0 255.255.0.0\" "
+	echo "    --vpn-route \"10.200.0.0 255.255.0.0\" \\"
+	echo "    --link-mtu 1400 "
 }
 
 # Assert that the given string is of the given length
@@ -124,6 +126,7 @@ function generate_server_conf() {
 	local duoIkey="$5"
 	local duoSkey="$6"
 	local duoHost="$7"
+	local linkMtu="$8"
 	local dnsServer
 	local resolvConf
 
@@ -157,6 +160,8 @@ persist-key
 persist-tun
 server $vpnSubnet
 ifconfig-pool-persist ipp.txt
+
+link-mtu $linkMtu # OpenVPN default is 1500
 
 # Certain Windows-specific network settings
 # can be pushed to clients, such as DNS
@@ -385,6 +390,7 @@ function init_openvpn() {
 	local kms_key_id=""
 	local region=""
 	local vpn_subnet=""
+	local link_mtu=""
 	local search_domains=()
 	local routes=()
 	local duo_enabled="false"
@@ -445,6 +451,10 @@ function init_openvpn() {
 			vpn_subnet=$2
 			shift
 			;;
+        --link-mtu)
+			link_mtu=$2
+			shift
+			;;
 		--search-domain)
 			search_domains+=("$2")
 			shift
@@ -494,6 +504,7 @@ function init_openvpn() {
 	assert_not_empty "--crl-expiration-days" "$crl_expiration_days"
 	assert_not_empty "--vpn-route" "$routes"
 	assert_not_empty "--vpn-subnet" "$vpn_subnet"
+	assert_not_empty "--link-mtu" "$link_mtu"
 
 	if [[ ! -z "$duo_ikey" || ! -z "$duo_skey" || ! -z "$duo_host" ]]; then
 		assert_not_empty "--duo-ikey" "$duo_ikey"
@@ -532,7 +543,7 @@ function init_openvpn() {
 	done
 
 	copy_config_templates "$duo_enabled"
-	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr" "$duo_ikey" "$duo_skey" "$duo_host"
+	generate_server_conf "$vpn_subnet" "$routesStr" "$key_size" "$searchDomainsStr" "$duo_ikey" "$duo_skey" "$duo_host" "$link_mtu"
 	change_config_dir_permissions
 	configure_tcpip "$vpn_subnet"
 	start_openvpn
