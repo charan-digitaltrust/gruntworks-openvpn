@@ -42,7 +42,6 @@ sudo init-openvpn  \
  --ca-expiration-days "${ca_expiration_days}" \
  --cert-expiration-days "${cert_expiration_days}" \
  --vpn-subnet "${vpn_subnet}" \
- --link-mtu ${link_mtu} \
  --search-domain "${search_domain}" \
  ${routes}
 

@@ -42,7 +42,7 @@ function print_usage() {
 	echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
-	echo -e "  --link-mtu\t\t\t The OpenVPN server-configuration link-mtu to use. OpenVPN default is 1500, but depending on your network you may have to decrease it. Required. For example, 1400"
+	echo -e "  --link-mtu\t\t\t The OpenVPN server-configuration link-mtu to use. OpenVPN default is 1500, but depending on your network you may have to decrease it. Optional. Defaults to 1500"
 	echo -e "  --search-domain\t\t\tPush a DNS search domain to clients (e.g., my.domain.internal). Optional. May be specified multiple times."
 	echo -e "  --duo-ikey\t\t\tSpecify the IKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
 	echo -e "  --duo-skey\t\t\tSpecify the SKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
@@ -61,7 +61,7 @@ function print_usage() {
 	echo "    --kms-key-id \"01533cb9-b46b-4380-b63e-54edf025d5d1\" \\"
 	echo "    --vpn-subnet \"10.1.14.0 255.255.255.0\" \\"
 	echo "    --vpn-route \"10.200.0.0 255.255.0.0\" \\"
-	echo "    --link-mtu 1400 "
+	echo "    --link-mtu \"1400\" "
 }
 
 # Assert that the given string is of the given length
@@ -451,7 +451,7 @@ function init_openvpn() {
 			vpn_subnet=$2
 			shift
 			;;
-        --link-mtu)
+		--link-mtu)
 			link_mtu=$2
 			shift
 			;;
@@ -512,6 +512,10 @@ function init_openvpn() {
 		assert_not_empty "--duo-host" "$duo_host"
 		duo_enabled="true"
 	fi
+
+    if [[ -z "$link_mtu" ]]
+      then "${link_mtu}" = 1500
+    fi
 
 	#Pre-Reqs
 	assert_uid_is_root_or_sudo

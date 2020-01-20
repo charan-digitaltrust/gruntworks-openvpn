@@ -61,7 +61,6 @@ data "template_file" "user_data" {
     duo_ikey             = var.duo_ikey
     duo_skey             = var.duo_skey
     duo_host             = var.duo_host
-    link_mtu             = 1500
     routes = chomp(
       join(
         " ",

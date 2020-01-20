@@ -59,7 +59,6 @@ data "template_file" "user_data" {
     queue_region         = data.aws_region.current.name
     search_domain        = "foo.bar.com"
     vpn_subnet           = "192.168.99.0 255.255.255.0"
-    link_mtu             = 1500
     routes = chomp(
       join(
         " ",
