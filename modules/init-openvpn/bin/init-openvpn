@@ -43,7 +43,7 @@ function print_usage() {
 	echo -e "  --crl-expiration-days\t\t\tThe number of days the certificate revocation list will be valid for. Defaults to 3650 (10 years)."
 	echo -e "  --vpn-subnet\t\t\tThe subnet the vpn clients will be assigned addresses from. Required. For example, 10.10.10.0 255.255.255.0"
 	echo -e "  --vpn-route\t\t\tAdditional routes that will be pushed to the VPN clients and routed over the VPN. Can be specified multiple times. Required. For example, 10.200.0.0 255.255.255.0"
-    echo -e "  --link-mtu\t\t\t The OpenVPN server-configuration link-mtu to use. OpenVPN default is $DEFAULT_LINK_MTU, but depending on your network you may have to decrease it. Optional. Defaults to $DEFAULT_LINK_MTU."
+	echo -e "  --link-mtu\t\t\t The OpenVPN server-configuration link-mtu to use. OpenVPN default is $DEFAULT_LINK_MTU, but depending on your network you may have to decrease it. Optional. Defaults to $DEFAULT_LINK_MTU."
 	echo -e "  --search-domain\t\t\tPush a DNS search domain to clients (e.g., my.domain.internal). Optional. May be specified multiple times."
 	echo -e "  --duo-ikey\t\t\tSpecify the IKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
 	echo -e "  --duo-skey\t\t\tSpecify the SKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn). Optional."
