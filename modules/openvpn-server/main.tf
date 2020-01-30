@@ -108,10 +108,10 @@ resource "aws_security_group_rule" "allow_outbound_s3_and_sqs" {
   from_port = 443
   to_port   = 443
   protocol  = "tcp"
-  prefix_list_ids = concat(
-    data.aws_vpc_endpoint.s3.*.prefix_list_id,
-    data.aws_vpc_endpoint.sqs.*.prefix_list_id,
-  )
+  prefix_list_ids = [
+    var.outbound_traffic_configuration.s3_prefix_list_id,
+    var.outbound_traffic_configuration.sqs_prefix_list_id,
+  ]
   security_group_id = aws_security_group.openvpn.id
 }
 
@@ -124,7 +124,7 @@ resource "aws_security_group_rule" "allow_outbound_to_target_blocks" {
   to_port   = 0
   protocol  = -1
   cidr_blocks = concat(
-    [data.aws_vpc.vpc.cidr_block],
+    [var.outbound_traffic_configuration.vpc_cidr_block],
     var.vpn_target_cidr_blocks,
   )
   security_group_id = aws_security_group.openvpn.id
@@ -277,7 +277,7 @@ data "aws_iam_policy_document" "openvpn" {
 
 resource "aws_eip" "openvpn" {
   count = var.enable_eip ? 1 : 0
-  vpc = true
+  vpc   = true
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -594,31 +594,4 @@ resource "aws_iam_role_policy_attachment" "allow_certificate_revocations_for_ext
   count      = signum(length(var.external_account_arns))
   role       = aws_iam_role.allow_certificate_revocations_for_external_accounts[0].id
   policy_arn = aws_iam_policy.certificate-revocation-openvpnadmins.arn
-}
-
-# ----------------------------------------------------------------------------------------------------------------------
-# DATA SOURCES
-# - Lookup VPC endpoints to configure outbound traffic
-# ----------------------------------------------------------------------------------------------------------------------
-
-data "aws_vpc_endpoint" "s3" {
-  # This data source should only be looked up when var.allow_all_outbound_traffic is false, so that we don't force the
-  # user's VPC to always have these endpoints.
-  count = var.allow_all_outbound_traffic ? 0 : 1
-
-  vpc_id       = var.vpc_id
-  service_name = "com.amazonaws.${var.aws_region}.s3"
-}
-
-data "aws_vpc_endpoint" "sqs" {
-  # This data source should only be looked up when var.allow_all_outbound_traffic is false, so that we don't force the
-  # user's VPC to always have these endpoints.
-  count = var.allow_all_outbound_traffic ? 0 : 1
-
-  vpc_id       = var.vpc_id
-  service_name = "com.amazonaws.${var.aws_region}.sqs"
-}
-
-data "aws_vpc" "vpc" {
-  id = var.vpc_id
 }

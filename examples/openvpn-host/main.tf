@@ -111,16 +111,6 @@ resource "aws_security_group_rule" "sqs_endpoint" {
 # LAUNCH THE OPENVPN HOST
 # ---------------------------------------------------------------------------------------------------------------------
 
-# This data source solely exists to simulate a dependency for the module, so that any resources that reference the VPC
-# will wait for the VPC endpoint to be created first.
-data "template_file" "vpc_id" {
-  template = data.aws_vpc.default.id
-  depends_on = [
-    aws_vpc_endpoint.s3,
-    aws_vpc_endpoint.sqs,
-  ]
-}
-
 module "openvpn" {
   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
   # to a specific version of the modules, such as the following example:
@@ -140,7 +130,7 @@ module "openvpn" {
   request_queue_name    = var.request_queue_name
   revocation_queue_name = var.revocation_queue_name
   kms_key_arn           = aws_kms_key.backups.arn
-  vpc_id                = data.template_file.vpc_id.rendered
+  vpc_id                = data.aws_vpc.default.id
   subnet_id             = data.aws_subnet.default.id
 
   #WARNING: Only allow SSH from everywhere for test/dev, never in production
@@ -151,4 +141,13 @@ module "openvpn" {
   backup_bucket_force_destroy = "true"
 
   allow_all_outbound_traffic = var.allow_all_outbound_traffic
+  outbound_traffic_configuration = (
+    ! var.allow_all_outbound_traffic
+    ? {
+      vpc_cidr_block     = data.aws_vpc.default.cidr_block
+      s3_prefix_list_id  = aws_vpc_endpoint.s3[0].prefix_list_id
+      sqs_prefix_list_id = aws_vpc_endpoint.sqs[0].prefix_list_id
+    }
+    : null
+  )
 }

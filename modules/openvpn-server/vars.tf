@@ -79,6 +79,16 @@ variable "allow_all_outbound_traffic" {
   default     = false
 }
 
+variable "outbound_traffic_configuration" {
+  description = "Used to restrict outbound access from the VPN server. At a minimum, the openvpn server needs outbound access to the VPC CIDR block, an S3 VPC endpoint, and an SQS VPC endpoint. Only used if var.allow_all_outbound_traffic is false."
+  type = object({
+    vpc_cidr_block     = string
+    s3_prefix_list_id  = string
+    sqs_prefix_list_id = string
+  })
+  default = null
+}
+
 variable "vpn_target_cidr_blocks" {
   description = "List of CIDR blocks that this VPN allows communication into. Used to configure outbound security group rules to allow all traffic to these CIDR blocks. Required for VPN to function when var.allow_all_outbound_traffic is false."
   type        = list(string)
