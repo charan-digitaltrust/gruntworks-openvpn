@@ -121,13 +121,13 @@ resource "aws_security_group_rule" "allow_inbound_ssh_cidr_blocks" {
   security_group_id = aws_security_group.openvpn.id
 }
 
-# Allow access to the OpenVPN service from Everywhere
+# Configure inbound VPN access based on var.allow_vpn_from_cidr_list.
 resource "aws_security_group_rule" "allow_inbound_openvpn" {
   type        = "ingress"
   from_port   = 1194
   to_port     = 1194
   protocol    = "udp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = var.allow_vpn_from_cidr_list
 
   security_group_id = aws_security_group.openvpn.id
 }
@@ -242,7 +242,7 @@ data "aws_iam_policy_document" "openvpn" {
 
 resource "aws_eip" "openvpn" {
   count = var.enable_eip ? 1 : 0
-  vpc = true
+  vpc   = true
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

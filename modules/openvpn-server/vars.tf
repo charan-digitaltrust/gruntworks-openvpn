@@ -72,6 +72,12 @@ variable "user_data" {
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.
 # ---------------------------------------------------------------------------------------------------------------------
+#
+variable "allow_vpn_from_cidr_list" {
+  description = "A list of IP address ranges in CIDR format from which VPN access will be permitted. Attempts to access the VPN server from all other IP addresses will be blocked."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
 
 variable "allow_ssh_from_cidr" {
   description = "A boolean that specifies if this server will allow SSH connections from the list of CIDR blocks specified in var.allow_ssh_from_cidr_list."
@@ -80,7 +86,7 @@ variable "allow_ssh_from_cidr" {
 }
 
 variable "allow_ssh_from_cidr_list" {
-  description = "A list of IP address ranges in CIDR format from which SSH access will be permitted. Attempts to access the bastion host from all other IP addresses will be blocked. This is only used if var.allow_ssh_from_cidr is true."
+  description = "A list of IP address ranges in CIDR format from which SSH access will be permitted. Attempts to access the VPN server from all other IP addresses will be blocked. This is only used if var.allow_ssh_from_cidr is true."
   type        = list(string)
   default     = []
 }
