@@ -63,21 +63,24 @@ variable "instance_type" {
   type        = string
 }
 
-variable "user_data" {
-  description = "The User Data script to run on this instance when it is booting. If you need to pass gzipped, base64-encoded data (e.g., for a cloud-init script), use var.user_data_base64 instead."
-  type        = string
-}
-
-variable "user_data_base64" {
-  description = "The base64-encoded User Data script to run on the server when it is booting. This can be used to pass binary User Data, such as a gzipped cloud-init script. If you wish to pass in plain text (e.g., typical Bash script) for User Data, use var.user_data instead."
-  type        = string
-}
-
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+variable "user_data" {
+  description = "The User Data script to run on this instance when it is booting. If you need to pass gzipped, base64-encoded data (e.g., for a cloud-init script), use var.user_data_base64 instead. Either user_data or user_data_base64 are required."
+  type        = string
+  default     = null
+}
+
+variable "user_data_base64" {
+  description = "The base64-encoded User Data script to run on the server when it is booting. This can be used to pass binary User Data, such as a gzipped cloud-init script. If you wish to pass in plain text (e.g., typical Bash script) for User Data, use var.user_data instead. Either user_data or user_data_base64 are required."
+  type        = string
+  default     = null
+}
+
 variable "allow_vpn_from_cidr_list" {
   description = "A list of IP address ranges in CIDR format from which VPN access will be permitted. Attempts to access the VPN server from all other IP addresses will be blocked."
   type        = list(string)
