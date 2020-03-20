@@ -47,7 +47,6 @@ resource "aws_launch_configuration" "openvpn" {
   instance_type               = var.instance_type
   key_name                    = var.keypair_name
   user_data                   = var.user_data
-  user_data_base64            = var.user_data_base64
   security_groups             = [aws_security_group.openvpn.id]
   iam_instance_profile        = aws_iam_instance_profile.openvpn.name
   associate_public_ip_address = true
