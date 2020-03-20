@@ -64,7 +64,12 @@ variable "instance_type" {
 }
 
 variable "user_data" {
-  description = "The User Data script to run on this instance when it is booting."
+  description = "The User Data script to run on this instance when it is booting. If you need to pass gzipped, base64-encoded data (e.g., for a cloud-init script), use var.user_data_base64 instead."
+  type        = string
+}
+
+variable "user_data_base64" {
+  description = "The base64-encoded User Data script to run on the server when it is booting. This can be used to pass binary User Data, such as a gzipped cloud-init script. If you wish to pass in plain text (e.g., typical Bash script) for User Data, use var.user_data instead."
   type        = string
 }
 
