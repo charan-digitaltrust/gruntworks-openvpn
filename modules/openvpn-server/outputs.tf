@@ -3,15 +3,15 @@ output "autoscaling_group_id" {
 }
 
 output "public_ip" {
-  value = aws_eip.openvpn[0].public_ip
+  value = element(concat(aws_eip.openvpn.*.public_ip, [""]), 0)
 }
 
 output "private_ip" {
-  value = aws_eip.openvpn[0].private_ip
+  value = element(concat(aws_eip.openvpn.*.private_ip, [""]), 0)
 }
 
 output "elastic_ip" {
-  value = aws_eip.openvpn[0].id
+  value = element(concat(aws_eip.openvpn.*.id, [""]), 0)
 }
 
 output "security_group_id" {
