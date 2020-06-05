@@ -48,6 +48,20 @@ There are several sub-commands and switches that control the behavior of this ut
 - Users requesting a new OpenVPN request must be a member of the `OpenVPNUsers` IAM group. 
 - Users requesting a certificate revocation must a member of the `OpenVPNAdmins` IAM group.
 
+### Using openvpn-admin for read-only users
+Users who have read only access to AWS will not be able to submit requests to the SQS requests queue used by `openvpn-admin`. Read only users can temporarily assume the `openvpn-allow-certificate-requests-for-external-accounts` role which grants write access to the queue. To do so, they should add a profile to their `~/.aws/config` file as follows:
+
+```
+[profile foo-vpn]
+region=us-west-2
+role_arn=arn:aws:iam::11111111111:role/openvpn-allow-certificate-requests-for-external-accounts
+mfa_serial=arn:aws:iam::22222222222:mfa/user@company.com
+source_profile=foo-security
+```
+
+The user can assume the role defined by this profile (using [`aws-auth`](https://github.com/gruntwork-io/module-security/blob/master/modules/aws-auth/README.md) or [`aws-vault`](https://github.com/99designs/aws-vault), run the `openvpn-admin request --aws-region us-east-1 --username foo` command, and then run subsequent commands using the read only role once again.
+
+
 ### Using profiles
 
 To use a [named profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html), set the `AWS_PROFILE` environment variable. This tool does not implement CLI flags (e.g. the `--profile` flag in the AWS CLI) for setting named profiles.
