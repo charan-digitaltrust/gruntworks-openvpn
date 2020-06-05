@@ -48,9 +48,13 @@ There are several sub-commands and switches that control the behavior of this ut
 - Users requesting a new OpenVPN request must be a member of the `OpenVPNUsers` IAM group. 
 - Users requesting a certificate revocation must a member of the `OpenVPNAdmins` IAM group.
 
+### Using profiles
+
+To use a [named profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html), set the `AWS_PROFILE` environment variable. This tool does not implement CLI flags (e.g. the `--profile` flag in the AWS CLI) for setting named profiles.
+
+
 ## New Certificate Request Workflow
 ![openvpn-request-flow-diagram](./openvpn-request-flow-diagram.svg)
 
 ## Revoke Certificate Workflow
 ![openvpn-revoke-flow-diagram](./openvpn-revoke-flow-diagram.svg)
-
