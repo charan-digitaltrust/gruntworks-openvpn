@@ -48,9 +48,9 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnet_id" {
-  description = "The id of the subnet where this server should be deployed."
-  type        = string
+variable "subnet_ids" {
+  description = "The ids of the subnets where this server should be deployed."
+  type        = list(string)
 }
 
 variable "keypair_name" {
