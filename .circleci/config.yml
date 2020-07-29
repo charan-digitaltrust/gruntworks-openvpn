@@ -1,32 +1,10 @@
 defaults: &defaults
   working_directory: /go/src/github.com/gruntwork-io/package-openvpn
   docker:
-    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.11
+    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.13
 
-version: 2
+version: 2.0
 jobs:
-  install_dependencies:
-    <<: *defaults
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /go/src/github.com/gruntwork-io/package-openvpn
-      - restore_cache:
-          keys:
-            - dep-{{ checksum "modules/openvpn-admin/Gopkg.lock" }}-{{ checksum "test/Gopkg.lock" }}
-      - run: (cd modules/openvpn-admin && dep ensure)
-      - run: (cd test && dep ensure)
-      - save_cache:
-          key: dep-{{ checksum "modules/openvpn-admin/Gopkg.lock" }}-{{ checksum "test/Gopkg.lock" }}
-          paths:
-            - /go/src/github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/vendor
-            - /go/src/github.com/gruntwork-io/package-openvpn/test/vendor
-      - persist_to_workspace:
-          root: .
-          paths:
-            - modules/openvpn-admin/vendor
-            - test/vendor
-
   test:
     <<: *defaults
     steps:
@@ -37,7 +15,7 @@ jobs:
       - run:
           command: |
               mkdir -p /tmp/logs
-              run-go-tests --circle-ci-2 --path test | tee /tmp/logs/all.log
+              run-go-tests --path test | tee /tmp/logs/all.log
 
       - run:
           name: parse test output
@@ -55,7 +33,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
-      - run: build-go-binaries --circle-ci-2 --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG"
+      - run: build-go-binaries --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG"
       - persist_to_workspace:
           root: .
           paths: bin
@@ -72,10 +50,6 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - install_dependencies:
-          filters:
-            tags:
-              only: /^v.*/
       - test:
           requires:
             - install_dependencies
