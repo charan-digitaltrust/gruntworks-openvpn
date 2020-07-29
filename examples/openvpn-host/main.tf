@@ -95,7 +95,7 @@ module "openvpn" {
   revocation_queue_name = var.revocation_queue_name
   kms_key_arn           = aws_kms_key.backups.arn
   vpc_id                = data.aws_vpc.default.id
-  subnet_id             = data.aws_subnet.default.id
+  subnet_ids            = [data.aws_subnet.default.id]
 
   #WARNING: Only allow SSH from everywhere for test/dev, never in production
   allow_ssh_from_cidr      = true

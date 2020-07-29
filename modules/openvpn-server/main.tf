@@ -19,8 +19,8 @@ resource "aws_autoscaling_group" "openvpn" {
   desired_capacity = 1
   min_size         = 1
   max_size         = 1
-
-  vpc_zone_identifier = [var.subnet_id]
+  
+  vpc_zone_identifier = var.subnet_ids
 
   health_check_type = "EC2"
 
