@@ -1,17 +1,13 @@
 defaults: &defaults
-  working_directory: /go/src/github.com/gruntwork-io/package-openvpn
   docker:
     - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.13
 
-version: 2.0
+version: 2
 jobs:
   test:
     <<: *defaults
     steps:
       - checkout
-      - attach_workspace:
-          at: /go/src/github.com/gruntwork-io/package-openvpn
-
       - run:
           command: |
               mkdir -p /tmp/logs
@@ -51,8 +47,6 @@ workflows:
   build-and-test:
     jobs:
       - test:
-          requires:
-            - install_dependencies
           filters:
             tags:
               only: /^v.*/
@@ -81,7 +75,4 @@ workflows:
             branches:
               only: master
     jobs:
-      - install_dependencies
-      - test:
-          requires:
-            - install_dependencies
+      - test

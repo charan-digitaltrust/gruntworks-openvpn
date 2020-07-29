@@ -74,3 +74,8 @@ variable "duo_host" {
   type        = string
   default     = ""
 }
+variable "instance_type" {
+  description = "The EC2 instance type to use, e.g. m5.large, t3.large, etc."
+  type        = string
+  default     = "t3.large"
+}

@@ -11,7 +11,7 @@
   "builders": [
     {
       "name": "ubuntu-16-build",
-      "ami_name": "openvpn-server-duo-ubuntu16 {{isotime | clean_ami_name}}",
+      "ami_name": "openvpn-server-duo-ubuntu16 {{isotime | clean_resource_name}}",
       "ami_description": "OpenVPN Server built on Ubuntu 16.04.",
       "instance_type": "t2.micro",
       "region": "{{user `aws_region`}}",
@@ -31,7 +31,7 @@
     },
     {
       "name": "ubuntu-18-build",
-      "ami_name": "openvpn-server-duo-ubuntu18 {{isotime | clean_ami_name}}",
+      "ami_name": "openvpn-server-duo-ubuntu18 {{isotime | clean_resource_name}}",
       "ami_description": "OpenVPN Server built on Ubuntu 18.04.",
       "instance_type": "t2.micro",
       "region": "{{user `aws_region`}}",
