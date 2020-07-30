@@ -87,7 +87,7 @@ module "openvpn" {
   aws_region     = var.aws_region
 
   name               = var.name
-  instance_type      = "m4.large"
+  instance_type      = var.instance_type
   ami                = var.ami_id
   keypair_name       = var.keypair_name
   user_data          = data.template_file.user_data.rendered

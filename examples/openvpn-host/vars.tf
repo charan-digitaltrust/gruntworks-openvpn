@@ -11,15 +11,20 @@
 # These variables are expected to be passed in by the operator
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "aws_account_id" {
+  description = "The AWS account ID where the OpenVPN Server will be created. Note that all IAM Users who receive OpenVPN access must also reside in this AWS account."
+  type        = string
+}
+
+variable "ami_id" {
+  description = "The ID of the AMI to run. Should be an AMI built from the Packer template in /examples/packer/build.json"
+  type        = string
+}
+
 variable "aws_region" {
   description = "The AWS region in which all resources will be created"
   type        = string
   default     = "us-east-1"
-}
-
-variable "aws_account_id" {
-  description = "The AWS account ID where the OpenVPN Server will be created. Note that all IAM Users who receive OpenVPN access must also reside in this AWS account."
-  type        = string
 }
 
 variable "keypair_name" {
@@ -52,7 +57,8 @@ variable "name" {
   default     = "openvpn-host"
 }
 
-variable "ami_id" {
-  description = "The ID of the AMI to run. Should be an AMI built from the Packer template in /examples/packer/build.json"
+variable "instance_type" {
+  description = "The EC2 instance type to use, e.g. m5.large, t3.large, etc."
   type        = string
+  default     = "t3.large"
 }

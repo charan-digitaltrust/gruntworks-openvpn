@@ -127,6 +127,10 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 		// with anything else in the AWS account.
 		instanceName := fmt.Sprintf("tst-openvpn-host-%s", uniqueID)
 
+		// Use the GetRecommendedInstanceType func to dynamically choose an available instance type
+		possibleInstanceTypes := []string{"m4.large", "m5.large", "t3.large"}
+		instanceType := aws.GetRecommendedInstanceType(t, awsRegion, possibleInstanceTypes)
+
 		// Load the AMI ID saved by the earlier build_ami stage
 		amiID := test_structure.LoadArtifactID(t, workingDir)
 
@@ -155,6 +159,7 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 				"request_queue_name":    fmt.Sprintf("tst-openvpn-requests-%s", uniqueID),
 				"revocation_queue_name": fmt.Sprintf("tst-openvpn-revocations-%s", uniqueID),
 				"keypair_name":          keyPair.Name,
+				"instance_type":         instanceType,
 			},
 		}
 
@@ -186,6 +191,9 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 
 // Build the AMI with packer
 func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, openVpnAdminBinaryPath string, packerBuildJsonPath string) {
+	possibleInstanceTypes := []string{"t2.micro", "t3.micro"}
+	instanceType := aws.GetRecommendedInstanceType(t, awsRegion, possibleInstanceTypes)
+
 	packerOptions := &packer.Options{
 		// The path to where the Packer template is located
 		Template: packerBuildJsonPath,
@@ -199,6 +207,7 @@ func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, 
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
 			"openvpn_admin_binary":   openVpnAdminBinaryPath,
+			"builder_instance_type":  instanceType,
 		},
 	}
 
