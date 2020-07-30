@@ -6,6 +6,7 @@
     "gruntwork_installer_version": "v0.0.20",
     "bash_commons_version": "v0.0.6",
     "active_git_branch": null,
+    "builder_instance_type": "t2.micro",
     "duo_version": "2.2"
   },
   "builders": [
@@ -13,7 +14,7 @@
       "name": "ubuntu-16-build",
       "ami_name": "openvpn-server-duo-ubuntu16 {{isotime | clean_resource_name}}",
       "ami_description": "OpenVPN Server built on Ubuntu 16.04.",
-      "instance_type": "t2.micro",
+      "instance_type": "{{user `builder_instance_type`}}'",
       "region": "{{user `aws_region`}}",
       "type": "amazon-ebs",
       "source_ami_filter": {
@@ -33,7 +34,7 @@
       "name": "ubuntu-18-build",
       "ami_name": "openvpn-server-duo-ubuntu18 {{isotime | clean_resource_name}}",
       "ami_description": "OpenVPN Server built on Ubuntu 18.04.",
-      "instance_type": "t2.micro",
+      "instance_type": "{{user `builder_instance_type`}}'",
       "region": "{{user `aws_region`}}",
       "type": "amazon-ebs",
       "source_ami_filter": {

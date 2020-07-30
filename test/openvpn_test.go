@@ -191,6 +191,9 @@ func testOpenVpnInitializationSuite(t *testing.T, osName string, packerBuildJson
 
 // Build the AMI with packer
 func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, openVpnAdminBinaryPath string, packerBuildJsonPath string) {
+	possibleInstanceTypes := []string{"t2.micro", "t3.micro"}
+	instanceType := aws.GetRecommendedInstanceType(t, awsRegion, possibleInstanceTypes)
+
 	packerOptions := &packer.Options{
 		// The path to where the Packer template is located
 		Template: packerBuildJsonPath,
@@ -204,6 +207,7 @@ func buildAMI(t *testing.T, awsRegion string, osName string, workingDir string, 
 			"package_openvpn_branch": git.GetCurrentBranchName(t),
 			"active_git_branch":      git.GetCurrentBranchName(t),
 			"openvpn_admin_binary":   openVpnAdminBinaryPath,
+			"builder_instance_type":  instanceType,
 		},
 	}
 
