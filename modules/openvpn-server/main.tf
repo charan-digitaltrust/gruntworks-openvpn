@@ -19,7 +19,7 @@ resource "aws_autoscaling_group" "openvpn" {
   desired_capacity = 1
   min_size         = 1
   max_size         = 1
-  
+
   vpc_zone_identifier = var.subnet_ids
 
   health_check_type = "EC2"
@@ -152,7 +152,7 @@ resource "aws_iam_instance_profile" "openvpn" {
   # https://github.com/hashicorp/terraform/issues/4306 suggests it's fixed, but add a "local-exec" provisioner here that
   # sleeps for 30 seconds if this is a problem when running "terraform apply".
   provisioner "local-exec" {
-    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 30"
+    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && python -c 'import time; time.sleep(30)'"
   }
 }
 
@@ -165,7 +165,7 @@ resource "aws_iam_role" "openvpn" {
   # Workaround for a bug where Terraform sometimes doesn't wait long enough for the IAM role to propagate.
   # https://github.com/hashicorp/terraform/issues/2660
   provisioner "local-exec" {
-    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 30"
+    command = "echo 'Sleeping for 30 seconds to work around IAM Instance Profile propagation bug in Terraform' && python -c 'import time; time.sleep(30)'"
   }
 
   # Important note: whenever using a launch configuration with an auto scaling group, you must set
