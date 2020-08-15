@@ -37,10 +37,11 @@ jobs:
   deploy:
     <<: *defaults
     steps:
-      - checkout
       - attach_workspace:
           at: /go/src/github.com/gruntwork-io/package-openvpn
-      - run: upload-github-release-assets bin/*
+      - run: |
+          cd /go/src/github.com/gruntwork-io/package-openvpn
+          upload-github-release-assets bin/*
 
 workflows:
   version: 2
