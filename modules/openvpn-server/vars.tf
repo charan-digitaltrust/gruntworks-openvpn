@@ -176,3 +176,9 @@ variable "spot_price" {
   type        = number
   default     = null
 }
+
+variable "tags" {
+  description = "Tags to apply to every resource created by this module."
+  type        = map(string)
+  default     = {}
+}
