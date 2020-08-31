@@ -267,6 +267,16 @@ resource "aws_s3_bucket" "openvpn" {
     }
   }
 
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        # If a KMS key is not provided (kms_key_arn is null), the default aws/s3 key is used
+        kms_master_key_id = var.kms_key_arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+  }
+
   tags = {
     OpenVPNRole = "BackupBucket"
   }
