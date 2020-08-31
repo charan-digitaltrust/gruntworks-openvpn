@@ -282,6 +282,15 @@ resource "aws_s3_bucket" "openvpn" {
   }
 }
 
+# Block all possibility of accidentally enabling public access to this bucket
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.openvpn.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_object" "server-prefix" {
   bucket = aws_s3_bucket.openvpn.bucket
   key    = "server/"
