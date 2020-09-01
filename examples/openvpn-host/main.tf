@@ -103,4 +103,8 @@ module "openvpn" {
 
   #WARNING: Only set this to true for testing/dev, never in production
   backup_bucket_force_destroy = "true"
+
+  tags = {
+    Foo = "Bar"
+  }
 }

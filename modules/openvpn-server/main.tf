@@ -29,6 +29,15 @@ resource "aws_autoscaling_group" "openvpn" {
     value               = var.name
     propagate_at_launch = true
   }
+
+  dynamic "tag" {
+    for_each = var.tags
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -78,6 +87,7 @@ resource "aws_security_group" "openvpn" {
   name        = var.name
   description = "For OpenVPN instances EC2 Instances."
   vpc_id      = var.vpc_id
+  tags        = var.tags
 
   # See aws_launch_configuration.openvpn for why this directive exists.
   lifecycle {
@@ -161,6 +171,7 @@ resource "aws_iam_role" "openvpn" {
   name               = var.name
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.instance_assume_role_policy.json
+  tags               = var.tags
 
   # Workaround for a bug where Terraform sometimes doesn't wait long enough for the IAM role to propagate.
   # https://github.com/hashicorp/terraform/issues/2660
@@ -244,6 +255,7 @@ data "aws_iam_policy_document" "openvpn" {
 resource "aws_eip" "openvpn" {
   count = var.enable_eip ? 1 : 0
   vpc   = true
+  tags  = var.tags
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -267,9 +279,28 @@ resource "aws_s3_bucket" "openvpn" {
     }
   }
 
-  tags = {
-    OpenVPNRole = "BackupBucket"
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        # If a KMS key is not provided (kms_key_arn is null), the default aws/s3 key is used
+        kms_master_key_id = var.kms_key_arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
   }
+
+  tags = merge({
+    OpenVPNRole = "BackupBucket"
+  }, var.tags)
+}
+
+# Block all possibility of accidentally enabling public access to this bucket
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.openvpn.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_object" "server-prefix" {
@@ -348,10 +379,12 @@ resource "aws_iam_role_policy" "backup" {
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_sqs_queue" "client-request-queue" {
   name = "openvpn-requests-${var.request_queue_name}"
+  tags = var.tags
 }
 
 resource "aws_sqs_queue" "client-revocation-queue" {
   name = "openvpn-revocations-${var.revocation_queue_name}"
+  tags = var.tags
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -529,12 +562,14 @@ resource "aws_iam_role" "allow_certificate_requests_for_external_accounts" {
   count              = signum(length(var.external_account_arns))
   name               = "${var.name}-allow-certificate-requests-for-external-accounts"
   assume_role_policy = data.aws_iam_policy_document.allow_external_accounts.json
+  tags               = var.tags
 }
 
 resource "aws_iam_role" "allow_certificate_revocations_for_external_accounts" {
   count              = signum(length(var.external_account_arns))
   name               = "${var.name}-allow-certificate-revocations-for-external-accounts"
   assume_role_policy = data.aws_iam_policy_document.allow_external_accounts.json
+  tags               = var.tags
 }
 
 data "aws_iam_policy_document" "allow_external_accounts" {
