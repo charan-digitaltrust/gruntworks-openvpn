@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:go1.13
+    - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:tf13
 
 version: 2
 jobs:
@@ -8,6 +8,19 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+
+      # Run pre-commit hooks and fail the build if any hook finds required changes.
+      - run:
+          name: run precommit
+          command: |
+            # Oct 26, 2019: Install the last known working version of pre-commit. Also, we have to pin the version of
+            # transitive dependencies that are being pulled in which released new versions that are no longer compatible
+            # with any python < 3.6.
+            pyenv global 3.5.2
+            pip install pre-commit==1.21.0 cfgv==2.0.1 zipp==1.1.0
+            pre-commit install
+            pre-commit run --all-files
+
       - run:
           command: |
               mkdir -p /tmp/logs
