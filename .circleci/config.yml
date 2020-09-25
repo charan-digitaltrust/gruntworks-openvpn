@@ -40,7 +40,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: /go/src/github.com/gruntwork-io/package-openvpn
+          at: /home/circleci/project
       - run: build-go-binaries --src-path modules/openvpn-admin/src --app-name openvpn-admin --dest-path bin --ld-flags "-X main.VERSION=$CIRCLE_TAG"
       - persist_to_workspace:
           root: .
@@ -50,9 +50,9 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/github.com/gruntwork-io/package-openvpn
+          at: /home/circleci/project
       - run: |
-          cd /go/src/github.com/gruntwork-io/package-openvpn
+          cd /home/circleci/project
           upload-github-release-assets bin/*
 
 workflows:
