@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/urfave/cli"
 	"encoding/json"
+	"fmt"
 	"github.com/gruntwork-io/gruntwork-cli/errors"
 	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"fmt"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"github.com/urfave/cli"
 )
 
 // NOTE: This method runs in an infinite loop
@@ -84,7 +84,7 @@ func processNewCertificateRequestMessage(awsRegion string, receipt string, messa
 		return "", "", err
 	}
 
-	if (!certificateAlreadyExists) {
+	if !certificateAlreadyExists {
 		certificate, err := generateCertificate(request.Username)
 		if err != nil {
 			return request.ResponseQueue, "", err
@@ -120,4 +120,3 @@ func sendCertificateReply(awsRegion string, responseQueue string, certificate st
 	}
 	return nil
 }
-

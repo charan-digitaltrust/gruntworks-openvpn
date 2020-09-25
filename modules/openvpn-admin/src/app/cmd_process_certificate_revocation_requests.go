@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/urfave/cli"
 	"encoding/json"
+	"fmt"
 	"github.com/gruntwork-io/gruntwork-cli/errors"
 	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"fmt"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"github.com/urfave/cli"
 )
 
 // NOTE: This method runs in an infinite loop
@@ -73,7 +73,7 @@ func processRevokeRequest(awsRegion string, receipt string, message string) (str
 		return revokeRequest.ResponseQueue, err
 	}
 
-	if (certificateAlreadyExists) {
+	if certificateAlreadyExists {
 		err := revokeCertificate(revokeRequest.Username)
 		if err != nil {
 			return revokeRequest.ResponseQueue, err
@@ -110,4 +110,3 @@ func sendRevokeReply(awsRegion string, responseQueue string, error error) error 
 	}
 	return nil
 }
-

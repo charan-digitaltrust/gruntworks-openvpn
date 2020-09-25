@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/urfave/cli"
-	"fmt"
-	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"encoding/json"
+	"fmt"
 	"github.com/gruntwork-io/gruntwork-cli/errors"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"github.com/urfave/cli"
 )
 
 type CertificateRevokeRequest struct {
@@ -82,8 +82,8 @@ func requestCertificateRevocation(cliContext *cli.Context) error {
 
 func sendRevoke(awsRegion string, revokeQueue string, username string, responseQueue string) error {
 	req := &CertificateRevokeRequest{
-		Username: username,
-		ResponseQueue:responseQueue,
+		Username:      username,
+		ResponseQueue: responseQueue,
 	}
 	requestJson, _ := json.Marshal(req)
 
@@ -98,7 +98,7 @@ func processRevokeResponse(awsRegion string, responseQueue string, receipt strin
 	response := CertificateRevokeResponse{}
 	json.Unmarshal([]byte(message), &response)
 
-	if (!response.Success) {
+	if !response.Success {
 		aws_helpers.DeleteMessageFromQueue(awsRegion, responseQueue, receipt)
 		return errors.WithStackTrace(fmt.Errorf(response.ErrorMessage))
 	}
@@ -106,4 +106,3 @@ func processRevokeResponse(awsRegion string, responseQueue string, receipt strin
 	aws_helpers.DeleteMessageFromQueue(awsRegion, responseQueue, receipt)
 	return nil
 }
-

@@ -1,13 +1,13 @@
 package app
 
 import (
-	"os/exec"
-	"strings"
-	"github.com/gruntwork-io/gruntwork-cli/errors"
-	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"fmt"
-	"regexp"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
 	"github.com/gruntwork-io/gruntwork-cli/files"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
+	"os/exec"
+	"regexp"
+	"strings"
 )
 
 type certificatePartData struct {
@@ -57,33 +57,33 @@ func generateCertificateTemplate(username string) (string, error) {
 func getCertificatePartData(username string) certificatePartData {
 	ipAddress, err := getIpAddress()
 	if err != nil {
-		return certificatePartData{Error:err, }
+		return certificatePartData{Error: err}
 	}
 
 	caCert, err := readCaCert()
 	if err != nil {
-		return certificatePartData{Error:err, }
+		return certificatePartData{Error: err}
 	}
 
 	userCert, err := readUserCert(username)
 	if err != nil {
-		return certificatePartData{Error:err, }
+		return certificatePartData{Error: err}
 	}
 
 	userKey, err := readUserKey(username)
 	if err != nil {
-		return certificatePartData{Error:err, }
+		return certificatePartData{Error: err}
 	}
 
 	return certificatePartData{
-		IpAddress:ipAddress,
-		CaCertificate:caCert,
-		UserCertificate:userCert,
-		UserKey: userKey,
+		IpAddress:       ipAddress,
+		CaCertificate:   caCert,
+		UserCertificate: userCert,
+		UserKey:         userKey,
 	}
 }
 
-func revokeCertificate(username string) (error) {
+func revokeCertificate(username string) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Running revoke script ./revoke-wrapper.sh %s", username)
 	command := exec.Command("./revoke-wrapper.sh", username)

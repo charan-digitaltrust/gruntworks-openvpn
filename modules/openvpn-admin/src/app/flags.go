@@ -1,21 +1,21 @@
 package app
 
 import (
-	"github.com/urfave/cli"
-	"github.com/gruntwork-io/gruntwork-cli/errors"
-	valid "github.com/asaskevich/govalidator"
-	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"github.com/sirupsen/logrus"
-	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
 	"fmt"
+	valid "github.com/asaskevich/govalidator"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
+	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 const REQUEST_QUEUE_NAME_PREFIX = "openvpn-requests-"
 const REVOCATION_QUEUE_NAME_PREFIX = "openvpn-revocations-"
 
-func setLoggerLevel(cliContext *cli.Context) () {
+func setLoggerLevel(cliContext *cli.Context) {
 	debug := cliContext.Bool(OPTION_DEBUG)
-	if (debug) {
+	if debug {
 		logging.SetGlobalLogLevel(logrus.DebugLevel)
 	}
 }
@@ -149,6 +149,7 @@ func getQueueUrl(awsRegion string, queueNamePrefix string, argName string) (stri
 // Custom errors
 
 type NoQueuesFoundWithPrefix string
+
 func (err NoQueuesFoundWithPrefix) Error() string {
 	return fmt.Sprintf("Could not find any SQS queues with the name prefix '%s'.", string(err))
 }
@@ -158,6 +159,7 @@ type MultipleQueuesFoundWithPrefix struct {
 	QueueUrls []string
 	ArgName   string
 }
+
 func (err MultipleQueuesFoundWithPrefix) Error() string {
 	return fmt.Sprintf("Expected to find exactly one queue with prefix '%s' but found %d: %v. Please specify which queue URL to use using the %s argument.", err.Prefix, len(err.QueueUrls), err.QueueUrls, err.ArgName)
 }

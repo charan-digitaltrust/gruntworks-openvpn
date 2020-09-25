@@ -1,15 +1,15 @@
 package app
 
 import (
-	"regexp"
 	"fmt"
+	"github.com/gruntwork-io/gruntwork-cli/files"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
-	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"github.com/gruntwork-io/gruntwork-cli/files"
-	"io/ioutil"
 )
 
 func createResponseQueue(awsRegion string) (string, error) {
@@ -20,7 +20,7 @@ func createResponseQueue(awsRegion string) (string, error) {
 	return queueUrl, nil
 }
 
-func deleteResponseQueue(awsRegion string, responseQueue string) (error) {
+func deleteResponseQueue(awsRegion string, responseQueue string) error {
 	err := aws_helpers.DeleteQueue(awsRegion, responseQueue)
 	if err != nil {
 		return err
