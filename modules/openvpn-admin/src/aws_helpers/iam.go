@@ -2,10 +2,10 @@ package aws_helpers
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/gruntwork-io/gruntwork-cli/errors"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
 )
 
 type PolicyDocument struct {

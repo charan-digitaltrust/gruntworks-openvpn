@@ -1,14 +1,14 @@
 package aws_helpers
 
 import (
-	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"github.com/google/uuid"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/aws"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/google/uuid"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"strconv"
 	"strings"
-	"github.com/gruntwork-io/gruntwork-cli/errors"
 )
 
 const LOGGER_NAME = "aws_helper"
@@ -37,10 +37,10 @@ func CreateRandomQueue(awsRegion string, prefix string) (string, error) {
 		return "", err
 	}
 
-	return *queue.QueueUrl, nil;
+	return *queue.QueueUrl, nil
 }
 
-func DeleteQueue(awsRegion string, queueUrl string) (error) {
+func DeleteQueue(awsRegion string, queueUrl string) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Deleting SQS Queue %s", queueUrl)
 
@@ -50,7 +50,7 @@ func DeleteQueue(awsRegion string, queueUrl string) (error) {
 	}
 
 	_, err = sqsClient.DeleteQueue(&sqs.DeleteQueueInput{
-		QueueUrl:aws.String(queueUrl),
+		QueueUrl: aws.String(queueUrl),
 	})
 
 	if err != nil {
@@ -59,7 +59,7 @@ func DeleteQueue(awsRegion string, queueUrl string) (error) {
 	return nil
 }
 
-func DeleteMessageFromQueue(awsRegion string, queueUrl string, receipt string) (error) {
+func DeleteMessageFromQueue(awsRegion string, queueUrl string, receipt string) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 	logger.Debugf("Deleting message from queue %s (%s)", queueUrl, receipt)
 
@@ -70,7 +70,7 @@ func DeleteMessageFromQueue(awsRegion string, queueUrl string, receipt string) (
 
 	_, err = sqsClient.DeleteMessage(&sqs.DeleteMessageInput{
 		ReceiptHandle: &receipt,
-		QueueUrl: &queueUrl,
+		QueueUrl:      &queueUrl,
 	})
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func DeleteMessageFromQueue(awsRegion string, queueUrl string, receipt string) (
 	return nil
 }
 
-func SendMessageToQueue(awsRegion string, queueUrl string, message string) (error) {
+func SendMessageToQueue(awsRegion string, queueUrl string, message string) error {
 	logger := logging.GetLogger(LOGGER_NAME)
 
 	sqsClient, err := CreateSqsClient(awsRegion)
@@ -90,7 +90,7 @@ func SendMessageToQueue(awsRegion string, queueUrl string, message string) (erro
 	logger.Debugf("Sending message %s to queue %s", message, queueUrl)
 	res, err := sqsClient.SendMessage(&sqs.SendMessageInput{
 		MessageBody: &message,
-		QueueUrl: &queueUrl,
+		QueueUrl:    &queueUrl,
 	})
 
 	if err != nil {
@@ -124,8 +124,8 @@ func WaitForQueueMessage(awsRegion string, queueUrl string, timeout int) (string
 		return "", "", err
 	}
 
-	cycles := timeout;
-	cycleLength := 1;
+	cycles := timeout
+	cycleLength := 1
 
 	if timeout >= 20 {
 		cycleLength = 20
@@ -133,7 +133,7 @@ func WaitForQueueMessage(awsRegion string, queueUrl string, timeout int) (string
 	}
 
 	for i := 0; i < cycles; i++ {
-		logger.Debugf("Waiting for message on %s (%ss)", queueUrl, strconv.Itoa(i * cycleLength))
+		logger.Debugf("Waiting for message on %s (%ss)", queueUrl, strconv.Itoa(i*cycleLength))
 		result, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 			QueueUrl: aws.String(queueUrl),
 			AttributeNames: aws.StringSlice([]string{

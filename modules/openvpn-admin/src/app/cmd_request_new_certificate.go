@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/urfave/cli"
-	"github.com/gruntwork-io/gruntwork-cli/logging"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/gruntwork-io/gruntwork-cli/errors"
+	"github.com/gruntwork-io/gruntwork-cli/logging"
 	"github.com/gruntwork-io/package-openvpn/modules/openvpn-admin/src/aws_helpers"
+	"github.com/urfave/cli"
 	"io/ioutil"
 )
 
@@ -84,8 +84,8 @@ func requestNewCertificate(cliContext *cli.Context) error {
 
 func sendRequest(awsRegion string, requestUrl string, username string, responseQueue string) error {
 	req := &CertificateRequest{
-		Username: username,
-		ResponseQueue:responseQueue,
+		Username:      username,
+		ResponseQueue: responseQueue,
 	}
 	requestJson, _ := json.Marshal(req)
 
@@ -100,7 +100,7 @@ func processNewCertificateResponse(awsRegion string, resonseQueue string, receip
 	response := CertificateResponse{}
 	json.Unmarshal([]byte(message), &response)
 
-	if (!response.Success) {
+	if !response.Success {
 		aws_helpers.DeleteMessageFromQueue(awsRegion, resonseQueue, receipt)
 		return errors.WithStackTrace(fmt.Errorf(response.ErrorMessage))
 	} else {
@@ -114,7 +114,7 @@ func processNewCertificateResponse(awsRegion string, resonseQueue string, receip
 	return nil
 }
 
-func createOvpnFile(username string, contents string) (error) {
+func createOvpnFile(username string, contents string) error {
 	filename := "./" + username + ".ovpn"
 
 	logger := logging.GetLogger(LOGGER_NAME)

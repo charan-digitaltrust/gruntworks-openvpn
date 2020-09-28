@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/urfave/cli"
-	"github.com/gruntwork-io/gruntwork-cli/errors"
 	"fmt"
+	"github.com/gruntwork-io/gruntwork-cli/errors"
+	"github.com/urfave/cli"
 )
 
 const LOGGER_NAME = "openvpn-admin"
@@ -25,62 +25,62 @@ func CreateApp(version string) *cli.App {
 	with an OpenVPN server installed with the Gruntwork package-openvpn module.`
 
 	awsRegionFlag := cli.StringFlag{
-		Name: OPTION_AWS_REGION,
-		Usage: "The AWS region where your customer master key (CMK) is defined (e.g. us-east-1).",
+		Name:   OPTION_AWS_REGION,
+		Usage:  "The AWS region where your customer master key (CMK) is defined (e.g. us-east-1).",
 		EnvVar: "AWS_DEFAULT_REGION",
 	}
 
 	usernameFlag := cli.StringFlag{
-		Name: OPTION_USERNAME,
+		Name:  OPTION_USERNAME,
 		Usage: "The username that the certificate is being requested for. Defaults to current IAM username when requesting a cert; required when revoking a cert.",
 	}
 
 	timeoutFlag := cli.IntFlag{
-		Name: OPTION_TIMEOUT,
+		Name:  OPTION_TIMEOUT,
 		Usage: "The maximum number of seconds to wait for a response from the OpenVPN server. Defaults to 300",
 		Value: 300,
 	}
 
 	requestUrlFlag := cli.StringFlag{
-		Name: OPTION_REQUEST_URL,
+		Name:  OPTION_REQUEST_URL,
 		Usage: "The SQS url of the certificate request queue. Optional.",
 	}
 
 	revokeUrlFlag := cli.StringFlag{
-		Name: OPTION_REVOKE_URL,
+		Name:  OPTION_REVOKE_URL,
 		Usage: "The SQS url of the certificate revocation queue. Optional.",
 	}
 
 	debugFlag := cli.BoolFlag{
-		Name: OPTION_DEBUG,
-		Usage: "Whether debug logging should be enabled",
+		Name:   OPTION_DEBUG,
+		Usage:  "Whether debug logging should be enabled",
 		EnvVar: "OPENVPN_ADMIN_DEBUG",
 	}
 
 	app.Commands = []cli.Command{
 		{
-			Name: "request",
-			Usage: "Request a new certificate for a user with OpenVPN",
+			Name:   "request",
+			Usage:  "Request a new certificate for a user with OpenVPN",
 			Action: errors.WithPanicHandling(requestNewCertificate),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, timeoutFlag, awsRegionFlag},
+			Flags:  []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, timeoutFlag, awsRegionFlag},
 		},
 		{
-			Name: "revoke",
-			Usage: "Revoke an existing OpenVPN certificate for a user",
+			Name:   "revoke",
+			Usage:  "Revoke an existing OpenVPN certificate for a user",
 			Action: errors.WithPanicHandling(requestCertificateRevocation),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
+			Flags:  []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
 		},
 		{
-			Name: "process-requests",
-			Usage: "Listen for certificate requests and revocations and process those requests",
+			Name:   "process-requests",
+			Usage:  "Listen for certificate requests and revocations and process those requests",
 			Action: errors.WithPanicHandling(processNewCertificateRequests),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
+			Flags:  []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
 		},
 		{
-			Name: "process-revokes",
-			Usage: "Listen for certificate revocations and process those requests",
+			Name:   "process-revokes",
+			Usage:  "Listen for certificate revocations and process those requests",
 			Action: errors.WithPanicHandling(processCertificateRevocationRequests),
-			Flags: []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
+			Flags:  []cli.Flag{debugFlag, requestUrlFlag, revokeUrlFlag, usernameFlag, awsRegionFlag, timeoutFlag},
 		},
 	}
 
@@ -92,7 +92,6 @@ func CreateApp(version string) *cli.App {
 func commandNotFound(cliContext *cli.Context, command string) {
 	fmt.Fprintf(cliContext.App.Writer, "Error: unrecognized command '%s'", command)
 }
-
 
 // Custom errors
 var MissingUsername = fmt.Errorf("--%s cannot be empty", OPTION_USERNAME)
