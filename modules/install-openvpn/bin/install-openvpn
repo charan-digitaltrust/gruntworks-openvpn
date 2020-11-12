@@ -71,8 +71,8 @@ function install_openvpn_package {
 
 function copy_wrapper_scripts {
   log_info "Installing Wrapper Scripts..."
-  cp /gruntwork/install-openvpn/generate-wrapper.sh $CA_PATH
-  cp /gruntwork/install-openvpn/revoke-wrapper.sh $CA_PATH
+  cp gruntwork/install-openvpn/scripts/generate-wrapper.sh $CA_PATH
+  cp gruntwork/install-openvpn/scripts/revoke-wrapper.sh $CA_PATH
   chmod +x $CA_PATH/generate-wrapper.sh
   chmod +x $CA_PATH/revoke-wrapper.sh
 }
