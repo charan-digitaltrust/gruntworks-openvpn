@@ -78,9 +78,21 @@ function copy_wrapper_scripts {
 }
 
 function install_aws_cli {
+  local -r distro_name="$1"
+
   log_info "Install AWS CLI..."
-  apt-get -y install python-pip jq
-  pip install awscli
+  apt-get -y install jq
+
+  if [[ "$distro_name" == "focal" ]]; then # Ubuntu 20.04
+    log_info "install python3-pip for Ubuntu 20.04"
+    apt-get -y install python3-pip
+    pip3 install awscli
+  else
+    log_info "install python-pip for Ubuntu 16.04 or Ubuntu 18.04"
+    apt-get -y install python-pip
+    pip install awscli
+  fi
+
 }
 
 function install_duo_openvpn {
@@ -136,7 +148,7 @@ function install_openvpn {
   install_openvpn_package
   copy_wrapper_scripts
   upgrade_openssl
-  install_aws_cli
+  install_aws_cli "$ubuntu_distro_name"
   if [[ "$duo_version" != "__NONE__" ]]; then
     install_duo_openvpn "$duo_version"
   fi

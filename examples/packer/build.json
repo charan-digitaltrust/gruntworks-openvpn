@@ -48,6 +48,26 @@
         "owners": ["099720109477"]
       },
       "ssh_username": "ubuntu"
+    },
+    {
+      "name": "ubuntu-20-build",
+      "ami_name": "openvpn-server-ubuntu20 {{isotime | clean_resource_name}}",
+      "ami_description": "OpenVPN Server built on Ubuntu 20.04.",
+      "instance_type": "{{user `builder_instance_type`}}",
+      "region": "{{user `aws_region`}}",
+      "type": "amazon-ebs",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "architecture": "x86_64",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*",
+          "block-device-mapping.volume-type": "gp2",
+          "root-device-type": "ebs"
+        },
+        "most_recent": true,
+        "owners": ["099720109477"]
+      },
+      "ssh_username": "ubuntu"
     }
   ],
   "provisioners": [

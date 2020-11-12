@@ -28,3 +28,4 @@ vendor
 *.ovpn
 !/modules/install-openvpn/files/openvpn-client.ovpn
 examples/openvpn-host/.test-data
+*.pem
