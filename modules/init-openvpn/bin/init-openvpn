@@ -343,6 +343,10 @@ function generate_and_revoke_dummy_certificate() {
 # Note that install-openvpn is explicitly installing easyrsa2 on all distros. When we update to easyrsa3 in future, this function will need updating.
 function generate_pki() {
 	log_info "Generating new PKI assets [this will take a long time]..."
+
+	# OpenSSL requires this file to exist or you get an error: https://github.com/openssl/openssl/issues/7754
+  touch ~/.rnd
+
 	#Build the CA
 	./build-ca --batch
 
