@@ -281,6 +281,18 @@ function is_pki_bootstrapped() {
 	[[ "$count" -gt 0 ]]
 }
 
+# This function loosely implements the behviour of 'make-cadir' that is installed by apt-get for easy-rsa
+# This magical script symlinks the easy-rsa scripts so that you can run them as if they're in the current directory with './'
+function make_cadir {
+  local -r dir="$1"
+  mkdir -p "$dir"
+  chmod 700 "$dir"
+
+  ln -s /usr/share/easy-rsa/* "$dir"
+  rm -f "$dir"/vars "$dir"/*.cnf
+  cp /usr/share/easy-rsa/vars /usr/share/easy-rsa/*.cnf "$dir"
+}
+
 function generate_easy_rsa_variables_file() {
 	local -r country="$1"
 	local -r state="$2"
@@ -295,7 +307,7 @@ function generate_easy_rsa_variables_file() {
 	local -r vars_file="$CA_PATH/vars.local"
 
 	log_info "Generating EASY_RSA variables file..."
-	[[ -d "$CA_PATH" ]] || make-cadir $CA_PATH
+	[[ -d "$CA_PATH" ]] || make_cadir $CA_PATH
 
 	cp /gruntwork/install-openvpn/vars.local "$vars_file"
 
@@ -326,6 +338,9 @@ function generate_and_revoke_dummy_certificate() {
 	./revoke-full dummy || true
 }
 
+# We are roughly following this script: https://www.digitalocean.com/community/tutorials/how-to-set-up-and-configure-an-openvpn-server-on-centos-7
+# In the future, when we drop support for older ubuntu’s that install easyrsa2 by default, we can follow this script to use easyrsa3: https://www.digitalocean.com/community/tutorials/how-to-set-up-and-configure-an-openvpn-server-on-ubuntu-20-04
+# Note that install-openvpn is explicitly installing easyrsa2 on all distros. When we update to easyrsa3 in future, this function will need updating.
 function generate_pki() {
 	log_info "Generating new PKI assets [this will take a long time]..."
 	#Build the CA
