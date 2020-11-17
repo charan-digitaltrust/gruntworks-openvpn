@@ -7,12 +7,20 @@ certificates and the OpenVPN server to process those requests.
 
 #### Examples
 
+1. Build the binaries for this module or download the relevant release binary (for your desired distro) on your client 
+machine from [the releases page](https://github.com/gruntwork-io/package-openvpn/releases).
+2. Run the command you need on your client machine
 ```
 $ openvpn-admin request --aws-region us-east-1
 $ openvpn-admin revoke --aws-region us-east-1 --username john.doe
 $ openvpn-admin process-requests --aws-region us-east-1
 $ openvpn-admin process-revokes --aws-region us-east-1
 ```
+_**N.B.:** If the above doesn't work, check if you're running the binary from it's directory, and if it's called `openvpn-admin` or something else._
+
+_**N.B.:**_ You'll need to have your `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` env variables set for aws auth to work with `openvpn-admin`. 
+You can also use `aws-vault` or if you’re on AWS, it will use the IAM role of the instance._
+
 #### Install openvpn-admin on your servers
 
 `openvpn-admin` consists of a single binary. The easiest way to get it onto your servers is to use the [Gruntwork
