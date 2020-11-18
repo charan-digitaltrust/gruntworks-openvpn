@@ -16,7 +16,7 @@ $ openvpn-admin revoke --aws-region us-east-1 --username john.doe
 $ openvpn-admin process-requests --aws-region us-east-1
 $ openvpn-admin process-revokes --aws-region us-east-1
 ```
-_**N.B.:** If the above doesn't work, check if you're running the binary from it's directory, and if it's called `openvpn-admin` or something else._
+_**N.B.:** If the above doesn't work, check if the `openvpn-admin` binary is in your path, and that it's called `openvpn-admin`, and ensure that it has the execute permission set (`chmod +x openvpn-admin`)._
 
 _**N.B.:**_ You'll need to have your `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` env variables set for aws auth to work with `openvpn-admin`. 
 You can also use `aws-vault` or if you’re on AWS, it will use the IAM role of the instance._
