@@ -16,7 +16,7 @@ $ openvpn-admin revoke --aws-region us-east-1 --username john.doe
 $ openvpn-admin process-requests --aws-region us-east-1
 $ openvpn-admin process-revokes --aws-region us-east-1
 ```
-_**N.B.:** If the above doesn't work, check if you're running the binary from it's directory, and if it's called `openvpn-admin` or something else._
+_**N.B.:** If the above doesn't work, check if the `openvpn-admin` binary is in your path, and that it's called `openvpn-admin`, and ensure that it has the execute permission set (`chmod +x openvpn-admin`)._
 
 _**N.B.:** To use the `openvpn-admin` commands above, you'll need to authenticate to AWS. For examples and guidance on how to do so, check out our blog post: [A Comprehensive Guide to Authenticating to AWS on the Command Line](https://blog.gruntwork.io/a-comprehensive-guide-to-authenticating-to-aws-on-the-command-line-63656a686799)_
 

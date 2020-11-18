@@ -339,7 +339,7 @@ function generate_and_revoke_dummy_certificate() {
 }
 
 # We are roughly following this script: https://www.digitalocean.com/community/tutorials/how-to-set-up-and-configure-an-openvpn-server-on-centos-7
-# In the future, when we drop support for older ubuntu’s that install easyrsa2 by default, we can follow this script to use easyrsa3: https://www.digitalocean.com/community/tutorials/how-to-set-up-and-configure-an-openvpn-server-on-ubuntu-20-04
+# In the future, when we drop support for older versions of ubuntu that install easyrsa2 by default, we can follow this script to use easyrsa3: https://www.digitalocean.com/community/tutorials/how-to-set-up-and-configure-an-openvpn-server-on-ubuntu-20-04
 # Note that install-openvpn is explicitly installing easyrsa2 on all distros. When we update to easyrsa3 in future, this function will need updating.
 function generate_pki() {
 	log_info "Generating new PKI assets [this will take a long time]..."

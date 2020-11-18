@@ -70,7 +70,7 @@ function install_openvpn_package {
   wget https://github.com/OpenVPN/easy-rsa/archive/2.2.2.tar.gz
   tar xzvf 2.2.2.tar.gz
 
-  # This is the same as if apt-get installer will do once it downloads & installs the package
+  # This is the same place the apt-get installer puts the easy-rsa code
   mv easy-rsa-2.2.2/easy-rsa/2.0 /usr/share/easy-rsa
 
   rm -rf easy-rsa-2.2.2
