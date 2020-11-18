@@ -331,7 +331,7 @@ function update_default_crl_days() {
 	generate_and_revoke_dummy_certificate
 }
 
-#generate and revoke a dummy certificate to init certificate revocation list (crl)
+# Generate and revoke a dummy certificate to init certificate revocation list (crl)
 function generate_and_revoke_dummy_certificate() {
 	cd $CA_PATH
 	./build-key --batch dummy
@@ -345,18 +345,18 @@ function generate_pki() {
 	log_info "Generating new PKI assets [this will take a long time]..."
 
 	# OpenSSL requires this file to exist or you get an error: https://github.com/openssl/openssl/issues/7754
-  touch ~/.rnd
+	touch ~/.rnd
 
-	#Build the CA
+	# Build the CA
 	./build-ca --batch
 
-	#Generate and sign the server certificate
+	# Generate and sign the server certificate
 	./build-key-server --batch server
 
-	#Build strong Diffie-Hellman params for use during key exchange. This takes a LONG time (10+ minutes)
+	# Build strong Diffie-Hellman params for use during key exchange. This takes a LONG time (10+ minutes)
 	./build-dh
 
-	#generate an HMAC signature to strengthen the server's TLS integrity verification capabilities
+	# Generate an HMAC signature to strengthen the server's TLS integrity verification capabilities
 	openvpn --genkey --secret $OPENVPN_PATH/ta.key
 
 	generate_and_revoke_dummy_certificate

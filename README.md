@@ -130,13 +130,16 @@ See the [examples](/examples) folder for sample code to build the openvpn-admin 
 
 See the [test](/test) folder for details.
 
-## Adding support for a new OS distribution
-    1. Update the conditional logic in the `init-vpn` & `install-vpn` `bin/install.sh` scripts to allow the required OS distro. Other modules may also need updating. 
-    2. Update the packer example to have a configuration for the new OS build 
-    3. Use Packer to create a new AMI.
-    4. Apply some of the example terraform code (e.g. `openvpn-host`).
-    5. SSH into the EC2 instance and see if there's any error logs - e.g. in the `user-data` log. 
-    6. Test by requesting a new certificate from the server.
+## Contributions
+
+#### Adding support for a new OS distribution
+_Checkout [this PR](https://github.com/gruntwork-io/package-openvpn/pull/107) that has added support for Ubuntu 20.04_
+1. Update the conditional logic in the `init-vpn` & `install-vpn` `bin/install.sh` scripts to allow the required OS distro. Other modules may also need updating. 
+1. Update the packer example to have a configuration for the new OS build 
+1. Use Packer to create a new AMI.
+1. Apply some of the example terraform code (e.g. `openvpn-host`).
+1. SSH into the EC2 instance and see if there's any error logs - e.g. in the `user-data` log. 
+1. Test by requesting a new certificate from the server.
 
 ## License
 
