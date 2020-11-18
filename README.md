@@ -133,7 +133,7 @@ See the [test](/test) folder for details.
 ## Contributions
 
 #### Adding support for a new OS distribution
-_Checkout [this PR](https://github.com/gruntwork-io/package-openvpn/pull/107) that has added support for Ubuntu 20.04_
+_Checkout [this PR](https://github.com/gruntwork-io/package-openvpn/pull/107) that adds support for Ubuntu 20.04_
 1. Update the conditional logic in the `init-vpn` & `install-vpn` `bin/install.sh` scripts to allow the required OS distro. Other modules may also need updating. 
 1. Update the packer example to have a configuration for the new OS build 
 1. Use Packer to create a new AMI.
