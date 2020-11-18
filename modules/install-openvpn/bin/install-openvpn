@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Install the latest OpenVPN Server on Ubuntu 16.04 or 18.04 from the OpenVPN apt repositories.
+# Install the latest OpenVPN Server on Ubuntu 16.04, 18.04, оr 20.04 from the OpenVPN apt repositories.
 #
 
 # Immediately exit if any command fails
@@ -36,12 +36,12 @@ function print_usage() {
 	echo "    --duo-version __NONE__ "
 }
 
-# This script only works on ubuntu 16.04 or 18.04
+# This script only works on ubuntu 16.04, 18.04, or 20.04
 function assert_is_supported_ubuntu {
   local -r distro_name="$1"
 
-  if [[ "$distro_name" != "bionic" && "$distro_name" != "xenial" ]]; then
-    log_error "install-openvpn only works on Ubuntu 16.04 or Ubuntu 18.04"
+  if [[ "$distro_name" != "bionic" && "$distro_name" != "xenial" && "$distro_name" != "focal" ]]; then
+    log_error "install-openvpn only works on Ubuntu 16.04, 18.04, or 20.04"
     exit 1
   fi
 }
@@ -64,9 +64,32 @@ function create_apt_sources_list_fragment {
 function install_openvpn_package {
   log_info "Installing OpenVPN package..."
   DEBIAN_FRONTEND=noninteractive apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get -y install openssl easy-rsa openvpn supervisor
+  DEBIAN_FRONTEND=noninteractive apt-get -y install openssl openvpn supervisor
+
+  # We need to explicitly install easy-rsa 2.x as the newer easy-rsa 3.x requires a complete rewrite of this script
+  wget https://github.com/OpenVPN/easy-rsa/archive/2.2.2.tar.gz
+  tar xzvf 2.2.2.tar.gz
+
+  # This is the same place the apt-get installer puts the easy-rsa code
+  mv easy-rsa-2.2.2/easy-rsa/2.0 /usr/share/easy-rsa
+
+  rm -rf easy-rsa-2.2.2
+  rm -f 2.2.2.tar.gz
+
   log_info "Making CA directory in $CA_PATH..."
-  make-cadir $CA_PATH
+  make_cadir $CA_PATH
+}
+
+# This function loosely implements the behviour of 'make-cadir' that is installed by apt-get for easy-rsa
+# This magical script symlinks the easy-rsa scripts so that you can run them as if they're in the current directory with './'
+function make_cadir {
+  local -r dir="$1"
+  mkdir -p "$dir"
+  chmod 700 "$dir"
+
+  ln -s /usr/share/easy-rsa/* "$dir"
+  rm -f "$dir"/vars "$dir"/*.cnf
+  cp /usr/share/easy-rsa/vars /usr/share/easy-rsa/*.cnf "$dir"
 }
 
 function copy_wrapper_scripts {
@@ -78,9 +101,21 @@ function copy_wrapper_scripts {
 }
 
 function install_aws_cli {
+  local -r distro_name="$1"
+
   log_info "Install AWS CLI..."
-  apt-get -y install python-pip jq
-  pip install awscli
+  apt-get -y install jq
+
+  if [[ "$distro_name" == "focal" ]]; then # Ubuntu 20.04
+    log_info "install python3-pip for Ubuntu 20.04"
+    apt-get -y install python3-pip
+    pip3 install awscli
+  else
+    log_info "install python-pip for Ubuntu 16.04 or Ubuntu 18.04"
+    apt-get -y install python-pip
+    pip install awscli
+  fi
+
 }
 
 function install_duo_openvpn {
@@ -136,7 +171,7 @@ function install_openvpn {
   install_openvpn_package
   copy_wrapper_scripts
   upgrade_openssl
-  install_aws_cli
+  install_aws_cli "$ubuntu_distro_name"
   if [[ "$duo_version" != "__NONE__" ]]; then
     install_duo_openvpn "$duo_version"
   fi

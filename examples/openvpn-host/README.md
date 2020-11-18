@@ -30,6 +30,11 @@ Once connected to the OpenVPN host, you can then connected to other services loc
 The OpenVPN host can run any reasonably secure Linux distro. In this example, we use an Ubuntu AMI built in the 
 [packer example](/examples/packer).
 
+## Officially supported OS distros for this package
+- `Ubuntu 16.04`
+- `Ubuntu 18.04`
+- `Ubuntu 20.04`
+
 ## OpenVPN access
 
 Once you have requested and received an OpenVPN Client Configuration (.ovpn) file using the 

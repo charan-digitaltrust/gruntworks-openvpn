@@ -6,6 +6,8 @@ package.
 
 ## How do you use this module?
 
+_**Note:** This module uses explicitly `easy-rsa v2.2.2`. There is planned future work to migrate over to a more recent version. More details can be found on [this issue](https://github.com/gruntwork-io/package-openvpn/issues/108)._
+
 #### Example
 
 See the [example](/examples/openvpn-host) for an example of how to use this module.
@@ -22,4 +24,3 @@ sudo /usr/local/bin/install-openvpn
 
 In order for the [openvpn-server](../openvpn-server) module to work properly, you have to build an AMI with the
 OpenVPN package installed using this module. Please see [example](/examples/packer) for a sample packer build script.
-
