@@ -1,14 +1,12 @@
 defaults: &defaults
   docker:
     - image: 087285199408.dkr.ecr.us-east-1.amazonaws.com/circle-ci-test-image-base:tf13
-
 version: 2
 jobs:
   test:
     <<: *defaults
     steps:
       - checkout
-
       # Run pre-commit hooks and fail the build if any hook finds required changes.
       - run:
           name: run precommit
@@ -19,12 +17,10 @@ jobs:
             pip install pre-commit==1.21.0 cfgv==2.0.1 zipp==1.1.0
             pre-commit install
             pre-commit run --all-files
-
       - run:
           command: |
-              mkdir -p /tmp/logs
-              run-go-tests --path test | tee /tmp/logs/all.log
-
+            mkdir -p /tmp/logs
+            run-go-tests --path test | tee /tmp/logs/all.log
       - run:
           name: parse test output
           command: terratest_log_parser --testlog /tmp/logs/all.log --outputdir /tmp/logs
@@ -33,8 +29,6 @@ jobs:
           path: /tmp/logs
       - store_test_results:
           path: /tmp/logs
-
-
   build:
     <<: *defaults
     steps:
@@ -45,7 +39,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: bin
-
   deploy:
     <<: *defaults
     steps:
@@ -54,7 +47,6 @@ jobs:
       - run: |
           cd /home/circleci/project
           upload-github-release-assets bin/*
-
 workflows:
   version: 2
   build-and-test:
@@ -63,13 +55,16 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+          context:
+            - Gruntwork Admin
       - build:
           requires:
             - test
           filters:
             tags:
               only: /^v.*/
-
+          context:
+            - Gruntwork Admin
       - deploy:
           requires:
             - build
@@ -78,14 +73,5 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-
-
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 6 * * *"
-          filters:
-            branches:
-              only: master
-    jobs:
-      - test
+          context:
+            - Gruntwork Admin
