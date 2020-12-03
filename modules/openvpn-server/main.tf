@@ -265,49 +265,30 @@ resource "aws_eip" "openvpn" {
 # CREATE THE S3 BACKUP BUCKET
 # This bucket is used to store the PKI for OpenVPN for backup purposes should an OpenVPN instance crash
 # ---------------------------------------------------------------------------------------------------------------------
-resource "aws_s3_bucket" "openvpn" {
-  bucket = var.backup_bucket_name
+module "backup_bucket" {
+  source = "git::git@github.com:gruntwork-io/module-security.git//modules/private-s3-bucket?ref=v0.44.0"
 
-  force_destroy = var.backup_bucket_force_destroy
+  name              = var.backup_bucket_name
+  force_destroy     = var.backup_bucket_force_destroy
+  enable_versioning = true
 
-  versioning {
-    enabled = true
-  }
-
-  lifecycle_rule {
-    enabled = var.enable_backup_bucket_noncurrent_version_expiration
-
-    noncurrent_version_expiration {
-      days = var.backup_bucket_noncurrent_version_expiration_days
+  lifecycle_rules = {
+    BackupBucketNoncurrentVersionExpiration = {
+      enabled                       = var.enable_backup_bucket_noncurrent_version_expiration
+      noncurrent_version_expiration = var.backup_bucket_noncurrent_version_expiration_days
     }
   }
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        # If a KMS key is not provided (kms_key_arn is null), the default aws/s3 key is used
-        kms_master_key_id = var.kms_key_arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
+  # If a KMS key is not provided (kms_key_arn is null), the default aws/s3 key is used
+  kms_key_arn = var.kms_key_arn
 
   tags = merge({
     OpenVPNRole = "BackupBucket"
   }, var.tags)
 }
 
-# Block all possibility of accidentally enabling public access to this bucket
-resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket                  = aws_s3_bucket.openvpn.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "aws_s3_bucket_object" "server-prefix" {
-  bucket = aws_s3_bucket.openvpn.bucket
+  bucket = module.backup_bucket.name
   key    = "server/"
   source = "/dev/null"
 }
@@ -331,8 +312,8 @@ data "aws_iam_policy_document" "backup" {
     ]
 
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}",
-      "arn:aws:s3:::${aws_s3_bucket.openvpn.id}/*",
+      "arn:aws:s3:::${module.backup_bucket.name}",
+      "arn:aws:s3:::${module.backup_bucket.name}/*",
     ]
   }
 
