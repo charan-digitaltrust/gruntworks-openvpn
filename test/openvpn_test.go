@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"path/filepath"
+
 	//"os"
 	"strings"
 	"testing"
@@ -17,24 +18,13 @@ import (
 	"github.com/gruntwork-io/terratest/modules/shell"
 	"github.com/gruntwork-io/terratest/modules/ssh"
 	"github.com/gruntwork-io/terratest/modules/terraform"
-	"github.com/gruntwork-io/terratest/modules/test-structure"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOpenVpnInitializationUbuntuXenial(t *testing.T) {
-	// For convenience - uncomment these as well as the "os" import
-	// when doing local testing if you need to skip any sections.
-	//os.Setenv("SKIP_", "true")
-	//os.Setenv("SKIP_build_binaries", "true")
-	//os.Setenv("SKIP_build_ami", "true")
-	//os.Setenv("SKIP_deploy_terraform", "true")
-	//os.Setenv("SKIP_validate", "true")
-	//os.Setenv("SKIP_logs", "true")
-	//os.Setenv("SKIP_cleanup_terraform", "true")
-	//os.Setenv("SKIP_cleanup_ami", "true")
-
+func TestOpenVpnInitializationUbuntuFocal(t *testing.T) {
 	t.Parallel()
-	testOpenVpnInitializationSuite(t, "ubuntu-16", "../examples/packer/build.json", false)
+	testOpenVpnInitializationSuite(t, "ubuntu-20", "../examples/packer/build.json", false)
 }
 
 func TestOpenVpnInitializationUbuntuBionic(t *testing.T) {
