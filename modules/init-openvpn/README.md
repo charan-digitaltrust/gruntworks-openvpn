@@ -34,6 +34,11 @@ You can configure several options to control the behavior of OpenVPN.
 |--ca-expiration-days|The number of days the CA root certificate will be valid for|Optional|3650 (10 years)
 |--cert-expiration-days|The number of days a server or user certificate issued by the CA will be valid for|Optional|3650 (10 years)
 |--crl-expiration-days|The number of days the CA Certificate Revocation List (CRL) will be valid for|Optional|3650 (10 years)
+|--link-mtu|The OpenVPN server-configuration link-mtu to use. OpenVPN default is `$DEFAULT_LINK_MTU`, but depending on your network you may have to decrease it|Optional|`$DEFAULT_LINK_MTU`
+|--search-domain|Push a DNS search domain to clients (e.g., my.domain.internal). May be specified multiple times.|Optional
+|--duo-ikey|Specify the IKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn)|Optional
+|--duo-skey|Specify the SKEY value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn)|Optional
+|--duo-host|Specify the HOST value to use for duo_openvpn plugin (see https://duo.com/docs/openvpn)|Optional
 
 
 #### Configure the OpenVPN Package on your EC2 Instances
