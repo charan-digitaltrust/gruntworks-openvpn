@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y sudo cron rsyslog
 RUN go get github.com/mitchellh/gox
 
 # We need to put Go source code in the GOPATH, which is by default /go
-ENV SRCPATH /go/src/github.com/gruntwork-io/package-openvpn/modules/openvpn-admin
+ENV SRCPATH /go/src/github.com/gruntwork-io/terraform-aws-openvpn/modules/openvpn-admin
 WORKDIR $SRCPATH
 
 # Install Glide

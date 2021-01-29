@@ -266,7 +266,7 @@ resource "aws_eip" "openvpn" {
 # This bucket is used to store the PKI for OpenVPN for backup purposes should an OpenVPN instance crash
 # ---------------------------------------------------------------------------------------------------------------------
 module "backup_bucket" {
-  source = "git::git@github.com:gruntwork-io/module-security.git//modules/private-s3-bucket?ref=v0.44.0"
+  source = "git::git@github.com:gruntwork-io/terraform-aws-security.git//modules/private-s3-bucket?ref=v0.44.0"
 
   name              = var.backup_bucket_name
   force_destroy     = var.backup_bucket_force_destroy

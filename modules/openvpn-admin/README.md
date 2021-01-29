@@ -8,7 +8,7 @@ certificates and the OpenVPN server to process those requests.
 #### Examples
 
 1. Build the binaries for this module or download the relevant release binary (for your desired distro) on your client 
-machine from [the releases page](https://github.com/gruntwork-io/package-openvpn/releases).
+machine from [the releases page](https://github.com/gruntwork-io/terraform-aws-openvpn/releases).
 2. Run the command you need on your client machine
 ```
 $ openvpn-admin request --aws-region us-east-1
@@ -26,11 +26,11 @@ _**N.B.:** To use the `openvpn-admin` commands above, you'll need to authenticat
 Installer](https://github.com/gruntwork-io/gruntwork-installer):
 
 ```
-gruntwork-install --binary-name openvpn-admin --repo https://github.com/gruntwork-io/package-openvpn --tag v0.5.4
+gruntwork-install --binary-name openvpn-admin --repo https://github.com/gruntwork-io/terraform-aws-openvpn --tag v0.5.4
 ```
 
 Alternatively, you can download the binary from the [Releases
-Page](https://github.com/gruntwork-io/package-openvpn/releases).
+Page](https://github.com/gruntwork-io/terraform-aws-openvpn/releases).
 
 
 #### Commandline Options
@@ -66,7 +66,7 @@ mfa_serial=arn:aws:iam::22222222222:mfa/user@company.com
 source_profile=foo-security
 ```
 
-The user can assume the role defined by this profile (using [`aws-auth`](https://github.com/gruntwork-io/module-security/blob/master/modules/aws-auth/README.md) or [`aws-vault`](https://github.com/99designs/aws-vault), run the `openvpn-admin request --aws-region us-east-1 --username foo` command, and then run subsequent commands using the read only role once again.
+The user can assume the role defined by this profile (using [`aws-auth`](https://github.com/gruntwork-io/terraform-aws-security/blob/master/modules/aws-auth/README.md) or [`aws-vault`](https://github.com/99designs/aws-vault), run the `openvpn-admin request --aws-region us-east-1 --username foo` command, and then run subsequent commands using the read only role once again.
 
 
 ### Using profiles

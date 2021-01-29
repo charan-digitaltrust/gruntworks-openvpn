@@ -6,7 +6,7 @@ package.
 
 ## How do you use this module?
 
-_**Note:** This module uses explicitly `easy-rsa v2.2.2`. There is planned future work to migrate over to a more recent version. More details can be found on [this issue](https://github.com/gruntwork-io/package-openvpn/issues/108)._
+_**Note:** This module uses explicitly `easy-rsa v2.2.2`. There is planned future work to migrate over to a more recent version. More details can be found on [this issue](https://github.com/gruntwork-io/terraform-aws-openvpn/issues/108)._
 
 #### Example
 
@@ -16,7 +16,7 @@ See the [example](/examples/openvpn-host) for an example of how to use this modu
 
 ```bash
 #!/bin/bash
-sudo gruntwork-install --module-name install-openvpn --tag v0.4.0 --repo https://github.com/gruntwork-io/package-openvpn
+sudo gruntwork-install --module-name install-openvpn --tag v0.4.0 --repo https://github.com/gruntwork-io/terraform-aws-openvpn
 sudo /usr/local/bin/install-openvpn
 ```
 

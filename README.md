@@ -40,7 +40,7 @@ they will need access to the SQS queues in the account with the OpenVPN server. 
 module](/modules/openvpn-server), you can specify the ARNs of the AWS account where IAM users are defined using the
 `external_account_arns` parameter, and the module will create two IAM roles—one for users and one for admins—that can be
 assumed by users in those accounts to get access to the SQS queues. See the [how to switch between accounts
-documentation](https://github.com/gruntwork-io/module-security/tree/master/modules/cross-account-iam-roles#how-to-switch-between-accounts)
+documentation](https://github.com/gruntwork-io/terraform-aws-security/tree/master/modules/cross-account-iam-roles#how-to-switch-between-accounts)
 for instructions on assuming IAM roles in other AWS accounts.  
 
 #### Connecting to multiple VPNs
@@ -99,11 +99,11 @@ pull the latest version of this module from this repo before runnin gthe standar
 
 You can install the scripts and binaries in the `modules` folder of any repo using the [Gruntwork
 Installer](https://github.com/gruntwork-io/gruntwork-installer). For example, if the scripts you want to install are
-in the `modules/mongodb-scripts` folder of the https://github.com/gruntwork-io/package-mongodb repo, you could install them
+in the `modules/mongodb-scripts` folder of the https://github.com/gruntwork-io/terraform-aws-mongodb repo, you could install them
 as follows:
 
 ```bash
-gruntwork-install --module-name "init-openvpn" --repo "https://github.com/gruntwork-io/package-openvpn" --tag "0.0.1"
+gruntwork-install --module-name "init-openvpn" --repo "https://github.com/gruntwork-io/terraform-aws-openvpn" --tag "0.0.1"
 ```
 
 See the docs for each script & binary for detailed instructions on how to use them.
@@ -133,7 +133,7 @@ See the [test](/test) folder for details.
 ## Contributions
 
 #### Adding support for a new OS distribution
-_Checkout [this PR](https://github.com/gruntwork-io/package-openvpn/pull/107) that adds support for Ubuntu 20.04_
+_Checkout [this PR](https://github.com/gruntwork-io/terraform-aws-openvpn/pull/107) that adds support for Ubuntu 20.04_
 1. Update the conditional logic in the `init-vpn` & `install-vpn` `bin/install.sh` scripts to allow the required OS distro. Other modules may also need updating. 
 1. Update the packer example to have a configuration for the new OS build 
 1. Use Packer to create a new AMI.

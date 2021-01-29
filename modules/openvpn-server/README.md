@@ -30,7 +30,7 @@ Group. You can add custom rules to this Security Group using the `aws_security_g
 
 ```hcl
 module "openvpn" {
-  source = "git::git@github.com:gruntwork-io/package-openvpn.git//modules/openvpn-server?ref=v0.0.40"
+  source = "git::git@github.com:gruntwork-io/terraform-aws-openvpn.git//modules/openvpn-server?ref=v0.0.40"
 
   # (... options omitted...)
 }
@@ -53,7 +53,7 @@ can attach custom policies to this IAM role using the `aws_iam_policy_attachment
 
 ```hcl
 module "openvpn" {
-  source = "git::git@github.com:gruntwork-io/package-openvpn.git//modules/openvpn-server?ref=v0.0.40"
+  source = "git::git@github.com:gruntwork-io/terraform-aws-openvpn.git//modules/openvpn-server?ref=v0.0.40"
 
   # (... options omitted...)
 }

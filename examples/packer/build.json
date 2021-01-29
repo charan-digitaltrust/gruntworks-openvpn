@@ -82,10 +82,10 @@
       "inline": [
         "sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",
         "gruntwork-install --module-name 'bash-commons' --repo 'https://github.com/gruntwork-io/bash-commons' --tag '{{user `bash_commons_version`}}'",
-        "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
-        "gruntwork-install --module-name 'backup-openvpn-pki' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
-        "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
-        "gruntwork-install --module-name 'start-openvpn-admin' --repo 'https://github.com/gruntwork-io/package-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'install-openvpn' --repo 'https://github.com/gruntwork-io/terraform-aws-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'backup-openvpn-pki' --repo 'https://github.com/gruntwork-io/terraform-aws-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'init-openvpn' --repo 'https://github.com/gruntwork-io/terraform-aws-openvpn' --branch '{{user `active_git_branch`}}'",
+        "gruntwork-install --module-name 'start-openvpn-admin' --repo 'https://github.com/gruntwork-io/terraform-aws-openvpn' --branch '{{user `active_git_branch`}}'",
         "sudo /usr/local/bin/install-openvpn"
       ],
       "environment_vars": [

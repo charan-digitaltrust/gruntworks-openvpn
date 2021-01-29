@@ -19,7 +19,7 @@ See the [example](/examples/openvpn-host) for an example of how to use this modu
 #### Installation
 
 ```
-gruntwork-install --module-name backup-openvpn-pki --tag v0.4.1 --repo https://github.com/gruntwork-io/package-openvpn
+gruntwork-install --module-name backup-openvpn-pki --tag v0.4.1 --repo https://github.com/gruntwork-io/terraform-aws-openvpn
 ```
 
 #### Configuration Options
