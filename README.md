@@ -10,6 +10,8 @@ This repo contains modules for running a production-ready OpenVPN server and man
 * [openvpn-server](/modules/openvpn-server) - Terraform templates that deploy OpenVPN
 * [start-openvpn-admin](/modules/start-openvpn-admin) - Scripts to start [openvpn-admin](/modules/openvpn-admin) on the [openvpn-server](/modules/openvpn-server) in order to process certificate requests and revocations
 
+**Note:** The OpenVPN tools offer partial Ubuntu 20.04 support, but have not been tested fully for compatibility with other Gruntwork modules. For the release notes, _checkout [this PR](https://github.com/gruntwork-io/terraform-aws-openvpn/pull/107) that adds support for Ubuntu 20.04_. For issues or contributions, please follow the Contributions section of this README, or simply raise a Github issue.
+
 ## Architecture Overview
 
 #### Server
